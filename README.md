@@ -23,6 +23,7 @@ bool iequals(const std::string& a, const std::string& b)
 
 - All [section (2) man pages](https://man7.org/linux/man-pages/dir_section_2.html)
 - webserv MVP [4min article](https://medium.com/@ahmadesekak/setting-up-a-server-using-c-sockets-124e404593c9) by `asekkak`
+- Nginx [DirectoryStructure](https://wiki.debian.org/Nginx/DirectoryStructure)
 
 ### Abbrev reminders
 
@@ -32,6 +33,9 @@ bool iequals(const std::string& a, const std::string& b)
 - TCP/IP : The internet protocol suite, a framework for organizing comm. protocols
 - IPC : Inter-Process Communication (linux paradigm, multisystem compatible)
 - DHCP : Dynamic Host Configuration Protocol
+
+### Terminology with web resource links
+- [Server blocks](https://www.digitalocean.com/community/tutorials/how-to-set-up-nginx-server-blocks-virtual-hosts-on-ubuntu-16-04) (nginx) == Virtual hosts (apache) ==> can be used to encapsulate configuration details and host more than one domain on a single server
 
 ## RFC highlights
 
