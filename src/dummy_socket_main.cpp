@@ -8,6 +8,8 @@
 
 // $ telnet localhost 9999
 
+#define PORT 9999
+
 int	main(void)
 {
 	// create a socket

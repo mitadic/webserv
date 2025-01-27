@@ -37,6 +37,35 @@ bool iequals(const std::string& a, const std::string& b)
 ### Terminology with web resource links
 - [Server blocks](https://www.digitalocean.com/community/tutorials/how-to-set-up-nginx-server-blocks-virtual-hosts-on-ubuntu-16-04) (nginx) == Virtual hosts (apache) ==> can be used to encapsulate configuration details and host more than one domain on a single server
 
+### Linux recap notes
+
+#### System-wide FD tracking
+
+```bash
+cat /proc/sys/fs/file-nr
+#allocated #allocated-but-unused(i.e."free") #max
+```
+
+#### Non-blocking I/O -- FD readiness verification
+
+##### Atomicity (Kerrisk, page 90):
+> Atomicity is a concept [where] the kernel guarantees that all of the steps in [an atomic] operation are completed without being interrupted by another process or thread.
+
+##### Blocking (Kerrisk, page 1325):
+> Most of the [core linux programs] employ an I/O model under which a process performs I/O on just one file descriptor at a time, and each I/O system call blocks [the thread] until the data is transferred.
+
+##### Multiplexing (Kerrisk, page 1327):
+> In effect, I/O multiplexing, signal-driven I/O, and epoll are all methods of achieving the same result—monitoring one or, commonly, several file descriptors simultaneously to see if they are ready to perform I/O (to be precise, to see whether an I/O system call could be performed without blocking). The transition of a file descriptor into a ready state is triggered by some type of I/O event, such as the arrival of input, the completion of a socket connection, or the availability of space in a previously full socket send buffer after TCP transmits queued data to the socket peer.
+
+> Monitoring multiple file descriptors is useful in applications such as network servers that must simultaneously monitor multiple client sockets, or applications that must simultaneously monitor input from a terminal and a pipe or socket. Note that none of these techniques performs I/O. They merely tell us that a
+file descriptor is ready. Some other system call must then be used to actually perform the I/O.
+
+##### I/O readiness (Kerrisk, page 1329):
+> - Level-triggered notification (select(), poll()): A file descriptor is considered to be ready if it is possible to perform an I/O system call without blocking.
+> - Edge-triggered notification (signal-driven I/O): Notification is provided if there is I/O activity (e.g., new input) on a file descriptor since it was last monitored.
+
+`epoll()` is capable of both checks.
+
 ## RFC highlights
 
 The most overarching and relevant ones would be the **HTTP/1.1** RFC [7230](https://datatracker.ietf.org/doc/html/rfc7230) through RFC 7235 (which obsolete the OG RFC 2616).
