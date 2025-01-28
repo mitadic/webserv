@@ -1,6 +1,6 @@
 CXX		=	c++
 FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-SRC		=	main.cpp
+SRC		=	dummy_socket_main.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

@@ -20,7 +20,11 @@ int	main(void)
 	}
 
 	// specify address and port to assign to the socket
-	sockaddr_in	mysockaddr = {.sin_family = AF_INET, .sin_addr.s_addr = INADDR_ANY, .sin_port = htons(9999) };
+	// sockaddr_in	mysockaddr = { .sin_family = AF_INET, .sin_addr.s_addr = INADDR_ANY, .sin_port = htons(9999) };
+	sockaddr_in	mysockaddr;
+	mysockaddr.sin_family = AF_INET;
+	mysockaddr.sin_addr.s_addr = INADDR_ANY;
+	mysockaddr.sin_port = htons(9999);
 	socklen_t	addrlen = sizeof(mysockaddr);
 
 	// assign IP address and port to the socket
@@ -43,18 +47,23 @@ int	main(void)
 	}
 
 	// Read from the connection
-	char buffer[100];
-	size_t bytesRead = read(connection, buffer, 100);
-	if (bytesRead < 0) {
-		std::cout << "Failed to grab connection. errno: " << errno << std::endl;
-		return (1);
+	char buffer[4096];
+	while (1)
+	{
+		ssize_t bytesRead = read(connection, buffer, 100);
+		if (bytesRead < 0) {
+			std::cout << "Failed to grab connection. errno: " << errno << std::endl;
+			return (1);
+		}
+		if (bytesRead == 0)
+			break;
+		buffer[bytesRead] = '\0';
+		std::cout << "The message was: " << buffer;  // includes the \n
+
+		// Send a message to the connection
+		std::string response = "Good talking to you\n";
+		send(connection, response.c_str(), response.size(), 0);
 	}
-	std::cout << "The message was: " << buffer << std::endl;
-
-	// Send a message to the connection
-	std::string response = "Good talking to you\n";
-	send(connection, response.c_str(), response.size(), 0);
-
 	// Close the connections
 	close(connection);
 	close(sockfd);
