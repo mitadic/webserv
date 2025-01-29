@@ -52,6 +52,9 @@ cat /proc/sys/fs/file-nr
 > Atomicity is a concept [where] the kernel guarantees that all of the steps in [an atomic] operation are completed without being interrupted by another process or thread.
 
 ##### Blocking (Kerrisk, page 1325):
+
+[YT vid showcasing blocking sockets](https://youtu.be/Y5PiHboUctw?feature=shared&t=125)
+
 > Most of the [core linux programs] employ an I/O model under which a process performs I/O on just one file descriptor at a time, and each I/O system call blocks [the thread] until the data is transferred.
 
 ##### Multiplexing (Kerrisk, page 1327):

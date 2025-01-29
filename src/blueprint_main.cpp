@@ -63,10 +63,9 @@ int main(int argc, char* argv[])
 			// Bind to specified host/port  
 			// Start listening
 			int	server_fd = create_non_blocking_server_socket_bind_listen();
-			// Add server socket to epoll interest list
 
 	// Start event loop
-		// Create epoll instance
+		// Create epoll instance (via this fd we refer to the central API DS, it's not used for I/O)
 		int epoll_fd = epoll_create1(0);
 		if (epoll_fd == -1) {
 			perror("epoll_create1 failed");
@@ -74,11 +73,11 @@ int main(int argc, char* argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		// Register the listening socket with epoll
-		struct epoll_event event;
-		event.events = EPOLLIN; // Wait for incoming connections
-		event.data.fd = server_fd;
-		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &event);
+		// Add server socket to epoll interest list
+		struct epoll_event ev;
+		ev.events = EPOLLIN; // Wait for incoming connections
+		ev.data.fd = server_fd;
+		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &ev); // Register the listening socket with epoll
 
 		struct epoll_event events[MAX_EVENTS];
 
