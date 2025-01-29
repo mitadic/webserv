@@ -69,6 +69,14 @@ file descriptor is ready. Some other system call must then be used to actually p
 
 `epoll()` is capable of both checks.
 
+### Shenya takeaways
+
+1. socket_fd is only used for TCP header I/O, whereas the copies of it which accept spawns are what works with the TCP data (the actual request)
+2. No parallelism - that's why there's a need for manual load balancing via "chunking"
+3. Handling only server blocks in the config is sufficient
+4. accept() == epoll_wait() == make the passive socket now...active?
+5. `ulimit -n` will be the limit of connections. Use precautionary `while ((test_fd = open("/dev/null", O_RDONLY)) != -1)` or sth
+
 ## RFC highlights
 
 The most overarching and relevant ones would be the **HTTP/1.1** RFC [7230](https://datatracker.ietf.org/doc/html/rfc7230) through RFC 7235 (which obsolete the OG RFC 2616).
