@@ -19,11 +19,16 @@ bool iequals(const std::string& a, const std::string& b)
 
 ## Resources bundle
 
-### Links
+### Web
 
-- All [section (2) man pages](https://man7.org/linux/man-pages/dir_section_2.html)
-- webserv MVP [4min article](https://medium.com/@ahmadesekak/setting-up-a-server-using-c-sockets-124e404593c9) by `asekkak`
-- Nginx [DirectoryStructure](https://wiki.debian.org/Nginx/DirectoryStructure)
+What | Comment
+:--- | :---
+All [section (2) man pages](https://man7.org/linux/man-pages/dir_section_2.html) | -
+webserv MVP [4min article](https://medium.com/@ahmadesekak/setting-up-a-server-using-c-sockets-124e404593c9) | by `asekkak`
+webserv MVP [5min article](https://m4nnb3ll.medium.com/webserv-building-a-non-blocking-web-server-in-c-98-a-42-project-04c7365e4ec7) | same proj team, different person
+Nginx [DirectoryStructure](https://wiki.debian.org/Nginx/DirectoryStructure) | -
+Nginx [configuration](https://www.solo.io/topics/nginx/nginx-configuration) | basic components && what to avoid
+[rfc2616](https://datatracker.ietf.org/doc/html/rfc2616) | the OG HTTP/1.1 rfc
 
 ### Abbrev reminders
 
