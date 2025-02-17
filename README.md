@@ -1,5 +1,8 @@
 # webserv
 
+<details>
+  <summary>how-to case-insensitive strcmp in C++</summary>
+
 ```C++
 #include <cctype>    // std::tolower
 #include <algorithm> // std::equal
@@ -17,12 +20,15 @@ bool iequals(const std::string& a, const std::string& b)
 }
 ```
 
+</details>
+
 ## Resources bundle
 
 ### Web
 
 What | Comment
 :--- | :---
+[Notion page](https://www.notion.so/42wolfsburgberlin/Webserv-191937251cae80e8aa63d81e3a6855a0) | by Petra
 All [section (2) man pages](https://man7.org/linux/man-pages/dir_section_2.html) | -
 webserv MVP [4min article](https://medium.com/@ahmadesekak/setting-up-a-server-using-c-sockets-124e404593c9) | by `asekkak`
 webserv MVP [5min article](https://m4nnb3ll.medium.com/webserv-building-a-non-blocking-web-server-in-c-98-a-42-project-04c7365e4ec7) | same proj team, different person
