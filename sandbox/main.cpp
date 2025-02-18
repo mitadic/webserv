@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/17 16:53:46 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/18 13:12:00 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,18 @@
 #include <map>
 #include <poll.h>
 #include <algorithm>
+#include <csignal> // For signal handling
+#include <cerrno> // For errno
 
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 
+int g_signal = 0; //put it later to a class and make it extern
+
+void signal_handler(int signal)
+{
+	g_signal = signal;
+}
 
 // Create the listening socket for all ports using IPv4 and TCP (Socket Stream) and store them in a map
 // Create the address struct for all ports, bind and start listening (passive sockets)
@@ -53,16 +61,16 @@ void setup_listening_sockets(int port, std::map<int, sockaddr_in>& map)
 	map[sockfd] = socket_addr;
 }
 
-
 int main()
 {
+	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports = {9992, 9993, 9991};
 	std::map<int, sockaddr_in > connections;
 
 	// Setup listening sockets for each port:
-	for (int i = 0; i < ports.size(); ++i)
+	for (int i = 0; i < (int)ports.size(); ++i)
 	{
-		sockaddr_in socket_addr;
+		//sockaddr_in socket_addr;
 		setup_listening_sockets(ports[i], connections);
 	}
 
@@ -84,17 +92,23 @@ int main()
 	// Start poll and iterate through existing connections:
 	// For listening sockets, accept() any new connections and add to the pollfds. // TODO: NONBLOCK
 	// For client sockets, handle the requests. // TODO: Needs to be NONBLOCK as well?
-	for(;;)
+	while (!g_signal)
 	{
 		int timeout = CONNECTION_TIMEOUT;
 		int poll_count = poll(&fds[0], fds.size(), timeout);
 		if (poll_count == -1)
 		{
+			//if SIGINT (Ctrl+C) is received, exit gracefully
+			if (errno == EINTR) {
+				std::cout << "Signal received. Exiting..." << std::endl;
+				exit(EXIT_SUCCESS);
+			}
 			std::cout << "Poll failed. Errn: " << errno << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
-		for (int i = 0; i < fds.size(); ++i)
+		int i = -1;
+		while (!g_signal && ++i < (int)fds.size())
 		{
 			if (fds[i].revents & POLLIN)
 			{
@@ -124,6 +138,7 @@ int main()
 			}
 		}
 	}
+	//handle graceful exit on SIGINT
 }
 
 
