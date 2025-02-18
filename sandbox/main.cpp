@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/18 13:12:00 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/18 14:31:51 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 
-int g_signal = 0; //put it later to a class and make it extern
+volatile std::sig_atomic_t g_signal = 0;
 
 void signal_handler(int signal)
 {
