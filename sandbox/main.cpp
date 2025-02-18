@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/17 16:53:46 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/18 14:31:51 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,20 @@
 #include <map>
 #include <poll.h>
 #include <algorithm>
+#include <csignal> // For signal handling
+#include <cerrno> // For errno
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define CHUNK_SZ 256
 
+volatile std::sig_atomic_t g_signal = 0;
+
+void signal_handler(int signal)
+{
+	g_signal = signal;
+}
 
 // Create the listening socket for all ports using IPv4 and TCP (Socket Stream) and store them in a map
 // Create the address struct for all ports, bind and start listening (passive sockets)
@@ -56,9 +64,9 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 	map[sockfd] = socket_addr;
 }
 
-
 int main()
 {
+  std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports = { 9992, 9993, 9991 };
 	std::map<int, sockaddr_in > server_blocks;
 
@@ -86,18 +94,24 @@ int main()
 	// Start poll and iterate through server blocks:
 	// For listening sockets, accept() any POLLIN and add to the pollfds. // TODO: NONBLOCK
 	// For client sockets, handle the requests. // TODO: Needs to be NONBLOCK as well?
-	for(;;)
+	while (!g_signal)
 	{
 		int timeout = CONNECTION_TIMEOUT;
 		int events_count = poll(&pfds[0], pfds.size(), timeout);
 		if (events_count == -1)
 		{
+			//if SIGINT (Ctrl+C) is received, exit gracefully
+			if (errno == EINTR) {
+				std::cout << "Signal received. Exiting..." << std::endl;
+				exit(EXIT_SUCCESS);
+			}
 			std::cout << "Poll failed. Errn: " << errno << std::endl;
 			continue;
 		}
 
 		int size_snapshot = pfds.size();
-		for (int i = 0; i < size_snapshot; i++)
+		int i = -1;
+		while (!g_signal && ++i < size_snapshot)
 		{
 			if (pfds[i].revents & POLLIN)
 			{
@@ -148,6 +162,7 @@ int main()
 			}
 		}
 	}
+	//handle graceful exit on SIGINT
 }
 
 
