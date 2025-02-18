@@ -12,6 +12,7 @@
 
 #include <sys/socket.h> // For socket functions
 #include <netinet/in.h> // For sockaddr_in
+#include <unistd.h>		// close()
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -19,13 +20,15 @@
 #include <poll.h>
 #include <algorithm>
 
+#define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
+#define CHUNK_SZ 256
 
 
 // Create the listening socket for all ports using IPv4 and TCP (Socket Stream) and store them in a map
 // Create the address struct for all ports, bind and start listening (passive sockets)
-void setup_listening_sockets(int port, std::map<int, sockaddr_in>& map)
+void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -41,13 +44,13 @@ void setup_listening_sockets(int port, std::map<int, sockaddr_in>& map)
 
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
-		std::cout << "Failed to bind to port " << port << ". Errno:" << errno << std::endl;
-		exit(EXIT_FAILURE);
+		std::cerr << "Failed to bind to port " << port << ". Errno:" << errno << std::endl;
+		return;
 	}
 	if (listen(sockfd, 10) == -1)
 	{
-		std::cout << "Failed to listen on socket. Errno: " << errno << std::endl;
-		exit(EXIT_FAILURE);
+		std::cerr << "Failed to listen on socket. Errno: " << errno << std::endl;
+		return;
 	}
 
 	map[sockfd] = socket_addr;
@@ -56,71 +59,92 @@ void setup_listening_sockets(int port, std::map<int, sockaddr_in>& map)
 
 int main()
 {
-	std::vector<int> ports = {9992, 9993, 9991};
-	std::map<int, sockaddr_in > connections;
+	std::vector<int> ports = { 9992, 9993, 9991 };
+	std::map<int, sockaddr_in > server_blocks;
 
 	// Setup listening sockets for each port:
-	for (int i = 0; i < ports.size(); ++i)
+	for (int i = 0; i < ports.size(); i++)
 	{
-		sockaddr_in socket_addr;
-		setup_listening_sockets(ports[i], connections);
+		setup_listening_socket(ports[i], server_blocks);
 	}
 
-	// Initialize poll structure with the listening sockets
-	std::vector<struct pollfd> fds;
-	for (std::map<int, sockaddr_in>::iterator it = connections.begin(); it != connections.end(); ++it)
+	// Initialize poll structure with the listening sockets, later adds client_fds
+	std::vector<struct pollfd> pfds;
+	for (std::map<int, sockaddr_in>::iterator it = server_blocks.begin(); it != server_blocks.end(); it++)
 	{
 		struct pollfd fd;
 		fd.fd = it->first;
 		fd.events = POLLIN;
-		if (fds.size() >= MAX_CONNECTIONS)
+		if (pfds.size() >= MAX_SERVER_BLOCKS)
 		{
-			std::cout << "Max connections reached." << std::endl;
-			exit(EXIT_FAILURE);
+			std::cerr << "Max connections reached." << std::endl;
+			break;
 		}
-		fds.push_back(fd);
+		pfds.push_back(fd);
 	}
 
-	// Start poll and iterate through existing connections:
-	// For listening sockets, accept() any new connections and add to the pollfds. // TODO: NONBLOCK
+	// Start poll and iterate through server blocks:
+	// For listening sockets, accept() any POLLIN and add to the pollfds. // TODO: NONBLOCK
 	// For client sockets, handle the requests. // TODO: Needs to be NONBLOCK as well?
 	for(;;)
 	{
 		int timeout = CONNECTION_TIMEOUT;
-		int poll_count = poll(&fds[0], fds.size(), timeout);
-		if (poll_count == -1)
+		int events_count = poll(&pfds[0], pfds.size(), timeout);
+		if (events_count == -1)
 		{
 			std::cout << "Poll failed. Errn: " << errno << std::endl;
-			exit(EXIT_FAILURE);
+			continue;
 		}
 
-		for (int i = 0; i < fds.size(); ++i)
+		int size_snapshot = pfds.size();
+		for (int i = 0; i < size_snapshot; i++)
 		{
-			if (fds[i].revents & POLLIN)
+			if (pfds[i].revents & POLLIN)
 			{
-				std::map<int, sockaddr_in>::iterator it = connections.find(fds[i].fd);
-				if (it != connections.end())
+				std::map<int, sockaddr_in>::iterator it = server_blocks.find(pfds[i].fd);
+				if (it != server_blocks.end())
+				// is one of the listeners
 				{
 					int addrlen = sizeof(it->second);
 					int client = accept(it->first, (struct sockaddr*)&it->second, (socklen_t*)&addrlen);
 					if (client == -1)
-						std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
-					else
 					{
-						struct pollfd fd;
-						fd.fd = client;
-						std::cout << fd.fd << std::endl;
-						fd.events = POLLIN;
-						if (fds.size() >= MAX_CONNECTIONS)
-						{
-							std::cout << "Max connections reached." << std::endl;
-							exit(EXIT_FAILURE);
-						}
-						fds.push_back(fd);
+						std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
+						continue;
 					}
+					struct pollfd fd;
+					fd.fd = client;
+					// std::cout << fd.fd << std::endl;
+					fd.events = POLLIN;
+					if (pfds.size() >= MAX_CONNECTIONS)
+					{
+						std::cout << "Max connections reached." << std::endl;
+						continue;
+					}
+					pfds.push_back(fd);
 				}
 				else
-					std::cout << "Request will be handled" << std::endl; // TODO
+				// is established client
+				{
+					char buf[CHUNK_SZ];
+
+					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, 0);
+					if (nbytes <= 0)
+					{
+						if (nbytes == 0)
+							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
+						else
+							perror("recv");
+						close(pfds[i].fd);
+						// throw out the current fds[i]
+						pfds[i] = pfds[size_snapshot - 1];
+						size_snapshot--;
+					}
+					else
+					{
+						std::cout << buf;
+					}
+				}
 			}
 		}
 	}
