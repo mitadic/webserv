@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 11:31:24 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 11:52:39 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <csignal> // For signal handling
 #include <cerrno> // For errno
+#include <fcntl.h> // For fcntl
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
@@ -35,12 +36,25 @@ void signal_handler(int signal)
 	g_signal = signal;
 }
 
+bool make_non_blocking(int &fd)
+{
+	int flags = O_NONBLOCK;
+
+	int status = fcntl(fd, F_SETFL, flags);
+	if (status == -1)
+	{
+		std::perror("fcntl F_SETFL O_NONBLOCK");
+		return (false);
+	}
+	return (true);
+}
+
 // Create the listening socket for all ports using IPv4 and TCP (Socket Stream) and store them in a map
 // Create the address struct for all ports, bind and start listening (passive sockets)
 void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd == -1)
+	if (sockfd == -1 || !make_non_blocking(sockfd))
 	{
 		std::cout << "Failed to create listening socket. Errno: " << errno << std::endl;
 		exit(EXIT_FAILURE);
@@ -112,7 +126,7 @@ int main()
 		{
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
-				std::cout << "Signal received. Exiting..." << std::endl;
+				std::cout << "\nSignal received. Exiting..." << std::endl;
 				exit(EXIT_SUCCESS);
 			}
 			std::cout << "Poll failed. Errn: " << errno << std::endl;
@@ -131,7 +145,7 @@ int main()
 				{
 					int addrlen = sizeof(it->second);
 					int client = accept(it->first, (struct sockaddr*)&it->second, (socklen_t*)&addrlen);
-					if (client == -1)
+					if (client == -1 || !make_non_blocking(client))
 					{
 						std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
 						continue;
