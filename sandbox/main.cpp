@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 17:33:29 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 19:54:24 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,19 +24,15 @@
 #include <cerrno> // For errno
 #include <fcntl.h> // For fcntl
 #include <sys/wait.h> // For waitpid()
+#include <cstring>
+
+
+#include "Cgi.hpp"
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define CHUNK_SZ 256
-#define IS_CGI true
-#define GET true
-#define POST false
-
-typedef struct s_cgi {
-	int *pipe;
-	int client_fd;
-} t_cgi;
 
 volatile std::sig_atomic_t g_signal = 0;
 
@@ -126,10 +122,9 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 	return (0);
 }
 
-void create_cgi_pipe(std::vector<struct pollfd> &pfds, t_cgi &cgi)
+void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 {
-	int pipefd[2];
-	if (pipe(pipefd) < 0)
+	if (pipe(cgi.pipe) < 0)
 	{
 		std::perror("pipe");
 		return;
@@ -144,32 +139,25 @@ void create_cgi_pipe(std::vector<struct pollfd> &pfds, t_cgi &cgi)
 
 	if (pid == 0)
 	{
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
-		if (GET)
-		{
-			execve(path, &path, NULL);
-		}
-		else if (POST)
-		{
-			argv = path + message_body;
-			execve(path, &argv, NULL);
-		}
-
+		dup2(cgi.pipe[1], STDOUT_FILENO);
+		close(cgi.pipe[1]);
+		execve(cgi.path.c_str(), cgi.argv, NULL);
+		std::perror("execve");
+		return;
 	}
-	else {
+	else
+	{
 		pid_t w;
-        int wstatus;
+		int wstatus;
 
-		w = waitpid(pid, &wstatus, NULL);
+		w = waitpid(pid, &wstatus, 0);
 		if (w < 0)
 			return; // placeholder
 
 		struct pollfd fd;
-		fd.fd = pipefd[0]; // read end (bc we read)
+		fd.fd = cgi.pipe[0]; // read end (bc we read)
 		fd.events = POLLIN;
 		pfds.push_back(fd);
-		//cgi.pipe = pipefd;
 	}
 }
 
@@ -179,8 +167,7 @@ int main()
 	std::vector<int> ports;
 	std::map<int, sockaddr_in > server_blocks;
 	std::vector<struct pollfd> pfds;
-	t_cgi cgi;
-	//cgi.pipe = (int *)malloc(sizeof(int) * 2);
+	Cgi cgi;
 
 	ports.push_back(9991);
 	ports.push_back(9992);
@@ -229,13 +216,14 @@ int main()
 				{
 					char buf[CHUNK_SZ];
 
-					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, O_NONBLOCK);
+					memset(buf, 0, CHUNK_SZ);
+					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, MSG_DONTWAIT);
 					if (nbytes <= 0)
 					{
 						if (nbytes == 0)
-							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
+						std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
 						else
-							std::perror("recv");
+						std::perror("recv");
 						close(pfds[i].fd);
 						// throw out the current fds[i]
 						pfds[i] = pfds[size_snapshot - 1];
@@ -246,9 +234,14 @@ int main()
 						//if buffer has a chunk, continue reading (set POLLIN again)
 						//if buffer has a full request parse it and handle it
 						//if buffer has cgi request, handle it (after parsing)
-						if (IS_CGI)
+						if (pfds[i].fd == cgi.pipe[0]) // is cgi response
+								cgi.response = strdup(buf);
+						if (cgi.cgi_flag)
 						{
-							create_cgi_pipe(pfds, cgi);
+							cgi.cgi_flag = false;
+							cgi.request = strdup(buf);
+							cgi.client_fd = pfds[i].fd;
+							handle_cgi(pfds, cgi);
 						}
 						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
 					}
@@ -256,7 +249,10 @@ int main()
 				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
 				{
 					// send response
-					send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, O_NONBLOCK);
+					if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
+						send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
+					else
+						send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, MSG_DONTWAIT);
 				}
 			}
 		}
@@ -266,3 +262,6 @@ int main()
 
 
 // Close connections
+
+
+
