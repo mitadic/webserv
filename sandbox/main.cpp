@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 12:10:16 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 14:46:09 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,14 @@
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define CHUNK_SZ 256
+#define IS_CGI true
+#define GET true
+#define POST false
+
+typedef struct s_cgi {
+	int *pipe;
+	int client_fd;
+} t_cgi;
 
 volatile std::sig_atomic_t g_signal = 0;
 
@@ -117,12 +125,42 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 	return (0);
 }
 
+void create_cgi_pipe(std::vector<struct pollfd> &pfds, t_cgi &cgi)
+{
+	int pipefd[2];
+	pipe(pipefd);
+
+	struct pollfd fd;
+	if (GET)
+	{
+		fd.fd = pipefd[0];
+		//fd.events = POLLOUT;
+		execve(path, &path, NULL);
+	}
+
+	else if (POST)
+	{
+		fd.fd = pipefd[1];
+		fd.events = POLLIN;
+		execve(path, &pipefd[1], NULL);
+	}
+
+	pfds.push_back(fd);
+	cgi.pipe = pipefd;
+
+	//close(pipefd[1]);
+	//dup2(pipefd[0], STDIN_FILENO);
+	//close(pipefd[0]);
+}
+
 int main()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports;
 	std::map<int, sockaddr_in > server_blocks;
 	std::vector<struct pollfd> pfds;
+	t_cgi cgi;
+	//cgi.pipe = (int *)malloc(sizeof(int) * 2);
 
 	ports.push_back(9991);
 	ports.push_back(9992);
@@ -149,7 +187,7 @@ int main()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				exit(EXIT_SUCCESS);
+				break;
 			}
 			std::cout << "Poll failed. Errn: " << errno << std::endl;
 			continue;
@@ -171,7 +209,7 @@ int main()
 				{
 					char buf[CHUNK_SZ];
 
-					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, 0);
+					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, O_NONBLOCK);
 					if (nbytes <= 0)
 					{
 						if (nbytes == 0)
@@ -187,18 +225,23 @@ int main()
 					{
 						//if buffer has a chunk, continue reading (set POLLIN again)
 						//if buffer has a full request parse it and handle it
-						//if buffer has cgi request, handle it
-						std::cout << "read "<< nbytes << "bytes: " << buf << std::endl;
+						//if buffer has cgi request, handle it (after parsing)
+						if (IS_CGI)
+						{
+							create_cgi_pipe(pfds, cgi);
+						}
+						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
 					}
 				}
 				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
 				{
 					// send response
+					send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, O_NONBLOCK);
 				}
 			}
 		}
 	}
-	//handle graceful exit on SIGINT
+	//cleanup
 }
 
 
