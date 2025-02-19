@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 11:52:39 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 12:10:16 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,28 @@ void init_pfds(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in > &se
 	}
 }
 
+int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::iterator &it)
+{
+	int addrlen = sizeof(it->second);
+	int client = accept(it->first, (struct sockaddr*)&it->second, (socklen_t*)&addrlen);
+	if (client == -1 || !make_non_blocking(client))
+	{
+		std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
+		return (1);
+	}
+	struct pollfd fd;
+	fd.fd = client;
+	// std::cout << fd.fd << std::endl;
+	fd.events = POLLIN;
+	if (pfds.size() >= MAX_CONNECTIONS)
+	{
+		std::cout << "Max connections reached." << std::endl;
+		return (1);
+	}
+	pfds.push_back(fd);
+	return (0);
+}
+
 int main()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
@@ -140,26 +162,10 @@ int main()
 			if (pfds[i].revents & (POLLIN | POLLOUT))
 			{
 				std::map<int, sockaddr_in>::iterator it = server_blocks.find(pfds[i].fd);
-				if (it != server_blocks.end())
-				// is one of the listeners
+				if (it != server_blocks.end()) // is one of the listeners
 				{
-					int addrlen = sizeof(it->second);
-					int client = accept(it->first, (struct sockaddr*)&it->second, (socklen_t*)&addrlen);
-					if (client == -1 || !make_non_blocking(client))
-					{
-						std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
+					if (accept_client(pfds, it) == 1)
 						continue;
-					}
-					struct pollfd fd;
-					fd.fd = client;
-					// std::cout << fd.fd << std::endl;
-					fd.events = POLLIN;
-					if (pfds.size() >= MAX_CONNECTIONS)
-					{
-						std::cout << "Max connections reached." << std::endl;
-						continue;
-					}
-					pfds.push_back(fd);
 				}
 				else if (pfds[i].revents & POLLIN) // is established client and wants to read
 				{
@@ -179,6 +185,9 @@ int main()
 					}
 					else
 					{
+						//if buffer has a chunk, continue reading (set POLLIN again)
+						//if buffer has a full request parse it and handle it
+						//if buffer has cgi request, handle it
 						std::cout << "read "<< nbytes << "bytes: " << buf << std::endl;
 					}
 				}
