@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 10:42:33 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 11:03:27 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 
 int main()
 {
-  std::signal(SIGINT, signal_handler); // handles Ctrl+C
+	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports;
 	std::map<int, sockaddr_in > server_blocks;
 
@@ -118,7 +118,7 @@ int main()
 		int i = -1;
 		while (!g_signal && ++i < size_snapshot)
 		{
-			if (pfds[i].revents & POLLIN)
+			if (pfds[i].revents & (POLLIN | POLLOUT))
 			{
 				std::map<int, sockaddr_in>::iterator it = server_blocks.find(pfds[i].fd);
 				if (it != server_blocks.end())
@@ -142,8 +142,7 @@ int main()
 					}
 					pfds.push_back(fd);
 				}
-				else
-				// is established client
+				else if (pfds[i].revents & POLLIN) // is established client and wants to read
 				{
 					char buf[CHUNK_SZ];
 
@@ -163,6 +162,10 @@ int main()
 					{
 						std::cout << buf;
 					}
+				}
+				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
+				{
+					// send response
 				}
 			}
 		}
