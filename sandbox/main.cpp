@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 14:46:09 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 17:33:29 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include <csignal> // For signal handling
 #include <cerrno> // For errno
 #include <fcntl.h> // For fcntl
+#include <sys/wait.h> // For waitpid()
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
@@ -128,29 +129,48 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 void create_cgi_pipe(std::vector<struct pollfd> &pfds, t_cgi &cgi)
 {
 	int pipefd[2];
-	pipe(pipefd);
-
-	struct pollfd fd;
-	if (GET)
+	if (pipe(pipefd) < 0)
 	{
-		fd.fd = pipefd[0];
-		//fd.events = POLLOUT;
-		execve(path, &path, NULL);
+		std::perror("pipe");
+		return;
 	}
 
-	else if (POST)
+	pid_t pid = fork(); //create child
+	if (pid < 0)
 	{
-		fd.fd = pipefd[1];
+		std::perror("fork");
+		return;
+	}
+
+	if (pid == 0)
+	{
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+		if (GET)
+		{
+			execve(path, &path, NULL);
+		}
+		else if (POST)
+		{
+			argv = path + message_body;
+			execve(path, &argv, NULL);
+		}
+
+	}
+	else {
+		pid_t w;
+        int wstatus;
+
+		w = waitpid(pid, &wstatus, NULL);
+		if (w < 0)
+			return; // placeholder
+
+		struct pollfd fd;
+		fd.fd = pipefd[0]; // read end (bc we read)
 		fd.events = POLLIN;
-		execve(path, &pipefd[1], NULL);
+		pfds.push_back(fd);
+		//cgi.pipe = pipefd;
 	}
-
-	pfds.push_back(fd);
-	cgi.pipe = pipefd;
-
-	//close(pipefd[1]);
-	//dup2(pipefd[0], STDIN_FILENO);
-	//close(pipefd[0]);
 }
 
 int main()
