@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 11:03:27 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 11:31:24 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,24 +65,8 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 	map[sockfd] = socket_addr;
 }
 
-int main()
+void init_pfds(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in > &server_blocks)
 {
-	std::signal(SIGINT, signal_handler); // handles Ctrl+C
-	std::vector<int> ports;
-	std::map<int, sockaddr_in > server_blocks;
-
-	ports.push_back(9991);
-	ports.push_back(9992);
-	ports.push_back(9993);
-
-	// Setup listening sockets for each port:
-	for (int i = 0; i < (int)ports.size(); i++)
-	{
-		setup_listening_socket(ports[i], server_blocks);
-	}
-
-	// Initialize poll structure with the listening sockets, later adds client_fds
-	std::vector<struct pollfd> pfds;
 	for (std::map<int, sockaddr_in>::iterator it = server_blocks.begin(); it != server_blocks.end(); it++)
 	{
 		struct pollfd fd;
@@ -95,6 +79,27 @@ int main()
 		}
 		pfds.push_back(fd);
 	}
+}
+
+int main()
+{
+	std::signal(SIGINT, signal_handler); // handles Ctrl+C
+	std::vector<int> ports;
+	std::map<int, sockaddr_in > server_blocks;
+	std::vector<struct pollfd> pfds;
+
+	ports.push_back(9991);
+	ports.push_back(9992);
+	ports.push_back(9993);
+
+	// Setup listening sockets for each port:
+	for (int i = 0; i < (int)ports.size(); i++)
+	{
+		setup_listening_socket(ports[i], server_blocks);
+	}
+
+	// Initialize poll structure with the listening sockets, later adds client_fds
+	init_pfds(pfds, server_blocks);
 
 	// Start poll and iterate through server blocks:
 	// For listening sockets, accept() any POLLIN and add to the pollfds. // TODO: NONBLOCK
@@ -160,7 +165,7 @@ int main()
 					}
 					else
 					{
-						std::cout << buf;
+						std::cout << "read "<< nbytes << "bytes: " << buf << std::endl;
 					}
 				}
 				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
