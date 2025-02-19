@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/18 14:31:51 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/19 10:42:33 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <unistd.h>		// close()
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <vector>
 #include <map>
 #include <poll.h>
@@ -67,11 +68,15 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 int main()
 {
   std::signal(SIGINT, signal_handler); // handles Ctrl+C
-	std::vector<int> ports = { 9992, 9993, 9991 };
+	std::vector<int> ports;
 	std::map<int, sockaddr_in > server_blocks;
 
+	ports.push_back(9991);
+	ports.push_back(9992);
+	ports.push_back(9993);
+
 	// Setup listening sockets for each port:
-	for (int i = 0; i < ports.size(); i++)
+	for (int i = 0; i < (int)ports.size(); i++)
 	{
 		setup_listening_socket(ports[i], server_blocks);
 	}
@@ -148,7 +153,7 @@ int main()
 						if (nbytes == 0)
 							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
 						else
-							perror("recv");
+							std::perror("recv");
 						close(pfds[i].fd);
 						// throw out the current fds[i]
 						pfds[i] = pfds[size_snapshot - 1];
