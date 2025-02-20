@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/19 19:54:24 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/02/20 12:50:58 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
-#define CHUNK_SZ 256
+#define BUFF_SZ 256
 
 volatile std::sig_atomic_t g_signal = 0;
 
@@ -143,7 +143,7 @@ void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 
 		dup2(cgi.pipe[1], STDOUT_FILENO);
 		close(cgi.pipe[1]);
-		execve(cgi.path.c_str(), cgi.argv, NULL);
+		execve("/usr/bin/python3", cgi.argv, NULL);
 		std::perror("execve");
 		return;
 	}
@@ -163,11 +163,25 @@ void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 			std::perror("waitpid");
 			return; // placeholder
 		}
+		std::cout << "DEBUG: waitpid done" << std::endl;
 
-		struct pollfd fd;
-		fd.fd = cgi.pipe[0]; // read end (bc we read)
-		fd.events = POLLIN;
-		pfds.push_back(fd);
+		char readbuff[BUFF_SZ];
+		ssize_t bytes_read = 0;
+		while ((bytes_read = read(cgi.pipe[0], readbuff, BUFF_SZ)) > 0)
+		{
+			cgi.response.append(readbuff);
+			readbuff[bytes_read] = 0;
+			std::cout << "readbuff: " << readbuff << std::endl;
+		}
+
+		// struct pollfd fd;
+		// fd.fd = cgi.pipe[0]; // read end (bc we read)
+		// fd.events = POLLIN;
+		// pfds.push_back(fd);
+
+		std::cout << "CGI response: " << cgi.response << std::endl;
+
+		close(cgi.pipe[0]);
 	}
 }
 
@@ -179,9 +193,9 @@ int main()
 	std::vector<struct pollfd> pfds;
 	Cgi cgi;
 
-	ports.push_back(9991);
-	ports.push_back(9992);
-	ports.push_back(9993);
+	ports.push_back(9991);  //
+	ports.push_back(9992);  //
+	ports.push_back(9993);  //
 
 	// Setup listening sockets for each port:
 	for (size_t i = 0; i < ports.size(); i++)
@@ -224,15 +238,15 @@ int main()
 				}
 				else if (pfds[i].revents & POLLIN) // is established client and wants to read
 				{
-					char buf[CHUNK_SZ];
+					char buf[BUFF_SZ];
 
-					memset(buf, 0, CHUNK_SZ);
-					int nbytes = recv(pfds[i].fd, buf, CHUNK_SZ, MSG_DONTWAIT);
+					memset(buf, 0, BUFF_SZ);
+					int nbytes = recv(pfds[i].fd, buf, BUFF_SZ, MSG_DONTWAIT);
 					if (nbytes <= 0)
 					{
 						if (nbytes == 0)
 							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
-						else
+						else 
 						{
 							std::perror("recv");
 							close(pfds[i].fd);
@@ -246,14 +260,17 @@ int main()
 						//if buffer has a chunk, continue reading (set POLLIN again)
 						//if buffer has a full request parse it and handle it
 						//if buffer has cgi request, handle it (after parsing)
-						if (pfds[i].fd == cgi.pipe[0]) // is cgi response
-								cgi.response = strdup(buf);
+
+						// if (pfds[i].fd == cgi.pipe[0]) // is cgi response
+						//		cgi.response = strdup(buf);
+
 						if (cgi.cgi_flag)
 						{
 							cgi.cgi_flag = false;
 							cgi.request = strdup(buf);
 							cgi.client_fd = pfds[i].fd;
 							handle_cgi(pfds, cgi);
+							pfds[i].events = POLLOUT;
 						}
 						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
 					}
@@ -261,10 +278,15 @@ int main()
 				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
 				{
 					// send response
-					if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
-						send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
-					else
-						send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, MSG_DONTWAIT);
+					//if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
+					//	send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
+					//else
+					//	send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, MSG_DONTWAIT);
+					send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
+					close(pfds[i].fd);
+					// throw out the current fds[i]
+					pfds[i] = pfds[size_snapshot - 1];
+					size_snapshot--;
 				}
 			}
 		}
