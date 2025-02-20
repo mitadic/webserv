@@ -6,7 +6,7 @@
 /*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/17 11:04:22 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/20 12:50:58 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/02/20 17:50:46 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@
 #include <cstring>
 
 
-#include "Cgi.hpp"
+#include "CgiHandler.hpp"
+#include "Request.hpp"
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
@@ -122,7 +123,7 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 	return (0);
 }
 
-void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
+void handle_cgi(std::vector<struct pollfd> &pfds, CgiHandler &cgi, std::vector<int> pipe_ends_for_cgi)
 {
 	if (pipe(cgi.pipe) < 0)
 	{
@@ -163,35 +164,39 @@ void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 			std::perror("waitpid");
 			return; // placeholder
 		}
-		std::cout << "DEBUG: waitpid done" << std::endl;
 
-		char readbuff[BUFF_SZ];
-		ssize_t bytes_read = 0;
-		while ((bytes_read = read(cgi.pipe[0], readbuff, BUFF_SZ)) > 0)
-		{
-			cgi.response.append(readbuff);
-			readbuff[bytes_read] = 0;
-			std::cout << "readbuff: " << readbuff << std::endl;
-		}
+		// char readbuff[BUFF_SZ];
+		// ssize_t bytes_read = 0;
+		// while ((bytes_read = read(cgi.pipe[0], readbuff, BUFF_SZ)) > 0)
+		// {
+		// 	cgi.response.append(readbuff);
+		// 	readbuff[bytes_read] = 0;
+		// 	std::cout << "readbuff: " << readbuff << std::endl;
+		// }
+		// std::cout << "CGI response: " << cgi.response << std::endl;
+		// close(cgi.pipe[0]);
 
-		// struct pollfd fd;
-		// fd.fd = cgi.pipe[0]; // read end (bc we read)
-		// fd.events = POLLIN;
-		// pfds.push_back(fd);
 
-		std::cout << "CGI response: " << cgi.response << std::endl;
+		// place cgi.pipe[0] both into pfds, and into pipe_ends_for_cgi
+		struct pollfd fd;
+		fd.fd = cgi.pipe[0]; // read end (bc we read)
+		pipe_ends_for_cgi.push_back(cgi.pipe[0]);
+		fd.events = POLLIN;
+		pfds.push_back(fd);
 
-		close(cgi.pipe[0]);
 	}
 }
 
 int main()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
-	std::vector<int> ports;
-	std::map<int, sockaddr_in > server_blocks;
-	std::vector<struct pollfd> pfds;
-	Cgi cgi;
+	std::vector<int> ports;  //
+	std::map<int, sockaddr_in > server_blocks;  //
+	// std::vector<int> pipe_ends_for_cgi;
+	std::vector<struct pollfd> pfds;  //
+	std::vector<CgiHandler> cgi_objects;
+	// CgiHandler cgi;  // now default constructor disallowed
+	std::vector<Request> reqs(MAX_CONNECTIONS);
 
 	ports.push_back(9991);  //
 	ports.push_back(9992);  //
@@ -207,8 +212,9 @@ int main()
 	init_pfds(pfds, server_blocks);
 
 	// Start poll and iterate through server blocks:
-	// For listening sockets, accept() any POLLIN and add to the pollfds. // TODO: NONBLOCK
-	// For client sockets, handle the requests. // TODO: Needs to be NONBLOCK as well?
+	// For listening sockets, accept() any POLLIN and add to the pollfds
+	// For client sockets, handle the requests.
+		// For cgi sockets, 
 	while (!g_signal)
 	{
 		int timeout = CONNECTION_TIMEOUT;
@@ -220,7 +226,7 @@ int main()
 				std::cout << "\nSignal received. Exiting..." << std::endl;
 				break;
 			}
-			std::cout << "Poll failed. Errn: " << errno << std::endl;
+			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
 
@@ -234,15 +240,33 @@ int main()
 				if (it != server_blocks.end()) // is one of the listeners
 				{
 					if (accept_client(pfds, it) == 1)
-						continue;
+						reqs[pfds[i].fd] = Request(pfds[i].fd);
 				}
-				else if (pfds[i].revents & POLLIN) // is established client and wants to read
+				else if (reqs[pfds[i].fd].is_cgi) // is CGI request
+				{
+					char readbuff[BUFF_SZ];
+					ssize_t bytes_read = 0;
+					bytes_read = read(pfds[i].fd, readbuff, BUFF_SZ);
+					if (bytes_read)
+					{
+						cgi.response.append(readbuff);
+						// readbuff[bytes_read] = 0;
+						// std::cout << "readbuff: " << readbuff << std::endl;
+					}
+					// std::cout << "CGI response: " << cgi.response << std::endl;
+					else
+					{
+						close(pfds[i].fd);
+					}
+				}
+				else if (pfds[i].revents & POLLIN) // is established client and has a request
 				{
 					char buf[BUFF_SZ];
 
 					memset(buf, 0, BUFF_SZ);
 					int nbytes = recv(pfds[i].fd, buf, BUFF_SZ, MSG_DONTWAIT);
-					if (nbytes <= 0)
+
+					if (nbytes <= 0)  // error or finished reading the request
 					{
 						if (nbytes == 0)
 							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
@@ -255,7 +279,7 @@ int main()
 							size_snapshot--;
 						}
 					}
-					else
+					else  // read the request
 					{
 						//if buffer has a chunk, continue reading (set POLLIN again)
 						//if buffer has a full request parse it and handle it
@@ -263,19 +287,20 @@ int main()
 
 						// if (pfds[i].fd == cgi.pipe[0]) // is cgi response
 						//		cgi.response = strdup(buf);
-
-						if (cgi.cgi_flag)
+						
+						CgiHandler cgi(pfds[i].fd);
+						if (cgi.cgi_flag)  //
 						{
-							cgi.cgi_flag = false;
+							cgi.cgi_flag = false;  //
 							cgi.request = strdup(buf);
 							cgi.client_fd = pfds[i].fd;
-							handle_cgi(pfds, cgi);
-							pfds[i].events = POLLOUT;
+							handle_cgi(pfds, cgi, pipe_ends_for_cgi);
+							// pfds[i].events = POLLOUT;
 						}
 						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
 					}
 				}
-				else if (pfds[i].revents & POLLOUT) // is established client and wants to write
+				else if (pfds[i].revents & POLLOUT) // is established client and our response is ready
 				{
 					// send response
 					//if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
