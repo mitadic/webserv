@@ -49,7 +49,7 @@ class Cgi {
 
 	bool cgi_flag;
 	std::string response;
-	int *pipe;
+	int pipe[2];
 	int client_fd;
 	std::string request;
 	std::string path;

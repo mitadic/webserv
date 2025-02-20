@@ -139,6 +139,8 @@ void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 
 	if (pid == 0)
 	{
+		close(cgi.pipe[0]);  // close the end not used in child right away
+
 		dup2(cgi.pipe[1], STDOUT_FILENO);
 		close(cgi.pipe[1]);
 		execve(cgi.path.c_str(), cgi.argv, NULL);
@@ -150,9 +152,17 @@ void handle_cgi(std::vector<struct pollfd> &pfds, Cgi &cgi)
 		pid_t w;
 		int wstatus;
 
+		if (close(cgi.pipe[1]) < 0)  // close the end used in child before waiting on child
+		{
+			std::perror("close");
+			return;
+		}
 		w = waitpid(pid, &wstatus, 0);
 		if (w < 0)
+		{
+			std::perror("waitpid");
 			return; // placeholder
+		}
 
 		struct pollfd fd;
 		fd.fd = cgi.pipe[0]; // read end (bc we read)
@@ -174,7 +184,7 @@ int main()
 	ports.push_back(9993);
 
 	// Setup listening sockets for each port:
-	for (int i = 0; i < (int)ports.size(); i++)
+	for (size_t i = 0; i < ports.size(); i++)
 	{
 		setup_listening_socket(ports[i], server_blocks);
 	}
@@ -221,13 +231,15 @@ int main()
 					if (nbytes <= 0)
 					{
 						if (nbytes == 0)
-						std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
+							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
 						else
-						std::perror("recv");
-						close(pfds[i].fd);
-						// throw out the current fds[i]
-						pfds[i] = pfds[size_snapshot - 1];
-						size_snapshot--;
+						{
+							std::perror("recv");
+							close(pfds[i].fd);
+							// throw out the current fds[i]
+							pfds[i] = pfds[size_snapshot - 1];
+							size_snapshot--;
+						}
 					}
 					else
 					{
@@ -258,6 +270,8 @@ int main()
 		}
 	}
 	//cleanup
+	for (std::vector<struct pollfd>::iterator it = pfds.begin(); it != pfds.end(); it++)
+		close(it->fd);
 }
 
 
