@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import cgi
+#import cgi
 
-print("Hello World\n")  # Required HTTP header
+print("Hello World")  # Required HTTP header
 
