@@ -23,7 +23,6 @@
 #include <csignal> // For signal handling
 #include <cerrno> // For errno
 #include <fcntl.h> // For fcntl
-#include <sys/wait.h> // For waitpid()
 #include <cstring>
 
 
@@ -33,7 +32,8 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
-#define BUFF_SZ 256
+#define BUF_SZ 256
+#define OK 0
 
 volatile std::sig_atomic_t g_signal = 0;
 
@@ -120,78 +120,15 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 		return (1);
 	}
 	pfds.push_back(fd);
-	return (0);
-}
-
-void handle_cgi(std::vector<struct pollfd> &pfds, CgiHandler &cgi, std::vector<int> pipe_ends_for_cgi)
-{
-	if (pipe(cgi.pipe) < 0)
-	{
-		std::perror("pipe");
-		return;
-	}
-
-	pid_t pid = fork(); //create child
-	if (pid < 0)
-	{
-		std::perror("fork");
-		return;
-	}
-
-	if (pid == 0)
-	{
-		close(cgi.pipe[0]);  // close the end not used in child right away
-
-		dup2(cgi.pipe[1], STDOUT_FILENO);
-		close(cgi.pipe[1]);
-		execve("/usr/bin/python3", cgi.argv, NULL);
-		std::perror("execve");
-		return;
-	}
-	else
-	{
-		pid_t w;
-		int wstatus;
-
-		if (close(cgi.pipe[1]) < 0)  // close the end used in child before waiting on child
-		{
-			std::perror("close");
-			return;
-		}
-		w = waitpid(pid, &wstatus, 0);
-		if (w < 0)
-		{
-			std::perror("waitpid");
-			return; // placeholder
-		}
-
-		// char readbuff[BUFF_SZ];
-		// ssize_t bytes_read = 0;
-		// while ((bytes_read = read(cgi.pipe[0], readbuff, BUFF_SZ)) > 0)
-		// {
-		// 	cgi.response.append(readbuff);
-		// 	readbuff[bytes_read] = 0;
-		// 	std::cout << "readbuff: " << readbuff << std::endl;
-		// }
-		// std::cout << "CGI response: " << cgi.response << std::endl;
-		// close(cgi.pipe[0]);
-
-
-		// place cgi.pipe[0] both into pfds, and into pipe_ends_for_cgi
-		struct pollfd fd;
-		fd.fd = cgi.pipe[0]; // read end (bc we read)
-		pipe_ends_for_cgi.push_back(cgi.pipe[0]);
-		fd.events = POLLIN;
-		pfds.push_back(fd);
-
-	}
+	return (OK);
 }
 
 int main()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports;  //
-	std::map<int, sockaddr_in > server_blocks;  //
+	std::map<int, sockaddr_in > server_blocks;
+	std::map<int, pollfd> cgi_pipes;
 	// std::vector<int> pipe_ends_for_cgi;
 	std::vector<struct pollfd> pfds;  //
 	std::vector<CgiHandler> cgi_objects;
@@ -204,17 +141,11 @@ int main()
 
 	// Setup listening sockets for each port:
 	for (size_t i = 0; i < ports.size(); i++)
-	{
 		setup_listening_socket(ports[i], server_blocks);
-	}
 
 	// Initialize poll structure with the listening sockets, later adds client_fds
 	init_pfds(pfds, server_blocks);
 
-	// Start poll and iterate through server blocks:
-	// For listening sockets, accept() any POLLIN and add to the pollfds
-	// For client sockets, handle the requests.
-		// For cgi sockets, 
 	while (!g_signal)
 	{
 		int timeout = CONNECTION_TIMEOUT;
@@ -230,89 +161,87 @@ int main()
 			continue;
 		}
 
-		int size_snapshot = pfds.size();
-		int i = -1;
-		while (!g_signal && ++i < size_snapshot)
+		std::vector<pollfd>::iterator pfds_it = pfds.begin();
+		while (!g_signal && pfds_it != pfds.end())
 		{
-			if (pfds[i].revents & (POLLIN | POLLOUT))
-			{
-				std::map<int, sockaddr_in>::iterator it = server_blocks.find(pfds[i].fd);
-				if (it != server_blocks.end()) // is one of the listeners
-				{
-					if (accept_client(pfds, it) == 1)
-						reqs[pfds[i].fd] = Request(pfds[i].fd);
-				}
-				else if (reqs[pfds[i].fd].is_cgi) // is CGI request
-				{
-					char readbuff[BUFF_SZ];
-					ssize_t bytes_read = 0;
-					bytes_read = read(pfds[i].fd, readbuff, BUFF_SZ);
-					if (bytes_read)
-					{
-						cgi.response.append(readbuff);
-						// readbuff[bytes_read] = 0;
-						// std::cout << "readbuff: " << readbuff << std::endl;
-					}
-					// std::cout << "CGI response: " << cgi.response << std::endl;
-					else
-					{
-						close(pfds[i].fd);
-					}
-				}
-				else if (pfds[i].revents & POLLIN) // is established client and has a request
-				{
-					char buf[BUFF_SZ];
+			int fd = pfds_it->fd;
 
-					memset(buf, 0, BUFF_SZ);
-					int nbytes = recv(pfds[i].fd, buf, BUFF_SZ, MSG_DONTWAIT);
+			if (pfds_it->revents & (POLLIN | POLLOUT))  // catch events on listeners, clients && cgi
+			{
+				std::map<int, sockaddr_in>::iterator sb_it = server_blocks.find(fd);
+				if (sb_it != server_blocks.end()) // is one of the listeners
+				{
+					if (accept_client(pfds, sb_it) != OK)
+						continue;
+					reqs[fd] = Request(fd);
+				}
+				else if (pfds_it->revents & POLLIN) // is established client or CGI pipe : READ
+				{
+					char buf[BUF_SZ];
+
+					std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
+					memset(buf, 0, BUF_SZ);
+					int nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
 
 					if (nbytes <= 0)  // error or finished reading the request
 					{
 						if (nbytes == 0)
-							std::cout << "poll: socket " << pfds[i].fd << " hung up\n";
-						else 
+						{
+							if (cgi_pipes_it != cgi_pipes.end()) // is a CGI pipe
+							{
+								// prep response
+								close(fd);
+								cgi_pipes[fd].events = POLLOUT;
+								pfds.erase(pfds_it);
+								break;  // will reset to pfds.begin()
+
+							}
+
+							// parse request
+
+							if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
+								reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
+							else // prep response
+								pfds_it->events = POLLOUT;
+						}
+						else
 						{
 							std::perror("recv");
-							close(pfds[i].fd);
-							// throw out the current fds[i]
-							pfds[i] = pfds[size_snapshot - 1];
-							size_snapshot--;
+							close(fd);
+							pfds.erase(pfds_it);
+							break;  // will reset to pfds.begin()
 						}
 					}
-					else  // read the request
+					else  // read the request || continue reading
 					{
-						//if buffer has a chunk, continue reading (set POLLIN again)
-						//if buffer has a full request parse it and handle it
-						//if buffer has cgi request, handle it (after parsing)
-
-						// if (pfds[i].fd == cgi.pipe[0]) // is cgi response
-						//		cgi.response = strdup(buf);
-						
-						CgiHandler cgi(pfds[i].fd);
-						if (cgi.cgi_flag)  //
-						{
-							cgi.cgi_flag = false;  //
-							cgi.request = strdup(buf);
-							cgi.client_fd = pfds[i].fd;
-							handle_cgi(pfds, cgi, pipe_ends_for_cgi);
-							// pfds[i].events = POLLOUT;
-						}
+						if (cgi_pipes_it != cgi_pipes.end()) // is a CGI pipe
+							reqs[fd].response.append(buf);
+						else
+							reqs[fd].request.append(buf);
 						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
 					}
 				}
-				else if (pfds[i].revents & POLLOUT) // is established client and our response is ready
+				else if (pfds_it->revents & POLLOUT) // is established client : WRITE
 				{
 					// send response
 					//if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
 					//	send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
 					//else
 					//	send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, MSG_DONTWAIT);
-					send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
-					close(pfds[i].fd);
-					// throw out the current fds[i]
-					pfds[i] = pfds[size_snapshot - 1];
-					size_snapshot--;
+					size_t	sz_to_send = BUF_SZ;
+					if (reqs[fd].response.substr(reqs[fd].total_sent).size() < BUF_SZ)
+						sz_to_send = reqs[fd].response.size() - reqs[fd].response.substr(reqs[fd].total_sent).size();
+
+					if (sz_to_send)
+						send(fd, reqs[fd].response.substr(reqs[fd].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
+					else
+					{
+						close(fd);
+						pfds.erase(pfds_it);
+						break;  // will reset to pfds.begin()
+					}
 				}
+				pfds_it++;
 			}
 		}
 	}
