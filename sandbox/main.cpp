@@ -223,11 +223,14 @@ int main()
 			else if (pfds_it->revents & POLLOUT) // is established client : WRITE
 			{
 				size_t	sz_to_send = BUF_SZ;
-				if (reqs[fd].response.substr(reqs[fd].total_sent).size() < BUF_SZ)
-					sz_to_send = reqs[fd].response.size() - reqs[fd].response.substr(reqs[fd].total_sent).size();
+				if (reqs[fd].response.size() - reqs[fd].total_sent < BUF_SZ)
+					sz_to_send = reqs[fd].response.size() - reqs[fd].total_sent;
 
 				if (sz_to_send)
+				{
 					send(fd, reqs[fd].response.substr(reqs[fd].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
+					reqs[fd].total_sent += sz_to_send;
+				}
 				else
 				{
 					close(fd);
@@ -261,26 +264,25 @@ int main()
 			else  // when recv() finishes, there's no flag
 			{
 				if (reqs[fd].request.empty()) // no revent and empty request? Can this even happen?
+					std::cout << "no flag on revents, and request is empty" << std::endl;
+				else
 				{
-					// std::cout << "no flag on revents, and request is empty" << std::endl;
-					continue;
-				}
+					// parse request
 
-				// parse request
-
-				std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[fd].request << "\"" << std::endl;
-				if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
-				{
-					reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
-					reqs[fd].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+					std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[fd].request << "\"" << std::endl;
+					if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
+					{
+						reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
+						reqs[fd].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+					}
+					// else if request contains job_id and the job was finished
+						// connect this client_id to that extant situation (request? handler? BIG QUESTION)
+						// form response
+					else  // ready to be sending basic HTML back
+						reqs[fd].response = "Hi. Default non-CGI response";
+					
+					pfds_it->events = POLLOUT;
 				}
-				// else if request contains job_id and the job was finished
-					// connect this client_id to that extant situation (request? handler? BIG QUESTION)
-					// form response
-				else  // ready to be sending basic HTML back
-					reqs[fd].response = "Hi. Default non-CGI response";
-				
-				pfds_it->events = POLLOUT;
 			}
 			pfds_it++;
 		}
