@@ -156,6 +156,17 @@ h2 {
 	z-index: 100;
 }
 
+/* CONTACT FORM
+----------------------------------------------*/
+
+.contact-form form {
+	display: flex;
+	flex-direction: column;
+	color: #46add8;
+	text-align: left;
+	font-size: 1.5rem;
+	gap: 1rem;
+}
 
 /* ERROR PAGES
 ----------------------------------------------*/
