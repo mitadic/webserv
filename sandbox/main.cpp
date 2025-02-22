@@ -32,7 +32,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
-#define BUF_SZ 256
+#define BUF_SZ 2
 #define OK 0
 
 volatile std::sig_atomic_t g_signal = 0;
@@ -62,8 +62,8 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1 || !make_non_blocking(sockfd))
 	{
-		std::cout << "Failed to create listening socket. Errno: " << errno << std::endl;
-		exit(EXIT_FAILURE);
+		std::cerr << "Failed to create listening socket. Errno: " << errno << std::endl;
+		return;
 	}
 
 	sockaddr_in socket_addr;
@@ -83,6 +83,7 @@ void setup_listening_socket(int port, std::map<int, sockaddr_in>& map)
 	}
 
 	map[sockfd] = socket_addr;
+	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << port << std::endl;
 }
 
 void init_pfds(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in > &server_blocks)
@@ -107,7 +108,7 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 	int client = accept(it->first, (struct sockaddr*)&it->second, (socklen_t*)&addrlen);
 	if (client == -1 || !make_non_blocking(client))
 	{
-		std::cout << "Failed to grab connection. Errn: " << errno << std::endl;
+		std::cerr << "Failed to grab connection. Errn: " << errno << std::endl;
 		return (1);
 	}
 	struct pollfd fd;
@@ -116,10 +117,11 @@ int accept_client(std::vector<struct pollfd> &pfds, std::map<int, sockaddr_in>::
 	fd.events = POLLIN;
 	if (pfds.size() >= MAX_CONNECTIONS)
 	{
-		std::cout << "Max connections reached." << std::endl;
+		std::cerr << "Max connections reached." << std::endl;
 		return (1);
 	}
 	pfds.push_back(fd);
+	std::cout << "New client accepted on FD " << client << std::endl;
 	return (OK);
 }
 
@@ -127,13 +129,14 @@ int main()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 	std::vector<int> ports;  //
-	std::map<int, sockaddr_in > server_blocks;
-	std::map<int, pollfd> cgi_pipes;
-	// std::vector<int> pipe_ends_for_cgi;
+
+	// enable lookup "is this a server_block | cgi_pipe"
+	std::map<int, sockaddr_in > server_blocks;	// pfd.fd <= sockaddr_in	| listener_fd to socketaddr_in
+	std::map<int, pollfd> cgi_pipes;			// cli_fd <= pipe_fd[0]		| pipe_fd to client_fd
+	std::vector<Request> reqs(MAX_CONNECTIONS); // pfd.fd <= reqs[pfd.fd]   | client_fd to req
+
 	std::vector<struct pollfd> pfds;  //
 	std::vector<CgiHandler> cgi_objects;
-	// CgiHandler cgi;  // now default constructor disallowed
-	std::vector<Request> reqs(MAX_CONNECTIONS);
 
 	ports.push_back(9991);  //
 	ports.push_back(9992);  //
@@ -160,89 +163,126 @@ int main()
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
-
+		// else if (events_count == 0)
+		// 	continue;
+		std::cout << "pfds.size(): " << pfds.size() << std::endl;
 		std::vector<pollfd>::iterator pfds_it = pfds.begin();
 		while (!g_signal && pfds_it != pfds.end())
 		{
 			int fd = pfds_it->fd;
 
-			if (pfds_it->revents & (POLLIN | POLLOUT))  // catch events on listeners, clients && cgi
+			std::map<int, sockaddr_in>::iterator sb_it = server_blocks.find(fd);
+			if (sb_it != server_blocks.end()) // is one of the listeners
 			{
-				std::map<int, sockaddr_in>::iterator sb_it = server_blocks.find(fd);
-				if (sb_it != server_blocks.end()) // is one of the listeners
+				if (pfds_it->revents & POLLIN)
 				{
 					if (accept_client(pfds, sb_it) != OK)
 						continue;
-					reqs[fd] = Request(fd);
+					reqs[fd].client_fd = fd;
 				}
-				else if (pfds_it->revents & POLLIN) // is established client or CGI pipe : READ
+			}
+
+			else if (pfds_it->revents & POLLIN)  // catch events on clients and CGI pipes : READ
+			{
+				char buf[BUF_SZ];
+				int nbytes;
+				memset(buf, 0, BUF_SZ);
+
+				std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
+				if (cgi_pipes_it != cgi_pipes.end())
 				{
-					char buf[BUF_SZ];
-
-					std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
-					memset(buf, 0, BUF_SZ);
-					int nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
-
-					if (nbytes <= 0)  // error or finished reading the request
+					nbytes = read(fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
+					std::cout << "read "<< nbytes << " bytes from cgi_pipe: " << buf << std::endl;
+					if (nbytes < 0)
+					{
+						std::perror("read(pipe_fd)");
+						close(fd);
+						// deal with the client pfd too
+						pfds.erase(pfds_it);
+						break;  // will reset to pfds.begin()
+					}
+					reqs[cgi_pipes_it->second.fd].cgi_output.append(buf);
+				}
+				else  // is client, request reading to be done
+				{
+					nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
+					std::cout << "read "<< nbytes << " bytes from request: " << buf << std::endl;
+					if (nbytes <= 0)  // error or hangup
 					{
 						if (nbytes == 0)
-						{
-							if (cgi_pipes_it != cgi_pipes.end()) // is a CGI pipe
-							{
-								// prep response
-								close(fd);
-								cgi_pipes[fd].events = POLLOUT;
-								pfds.erase(pfds_it);
-								break;  // will reset to pfds.begin()
-
-							}
-
-							// parse request
-
-							if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
-								reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
-							else // prep response
-								pfds_it->events = POLLOUT;
-						}
+							std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
 						else
-						{
 							std::perror("recv");
-							close(fd);
-							pfds.erase(pfds_it);
-							break;  // will reset to pfds.begin()
-						}
-					}
-					else  // read the request || continue reading
-					{
-						if (cgi_pipes_it != cgi_pipes.end()) // is a CGI pipe
-							reqs[fd].response.append(buf);
-						else
-							reqs[fd].request.append(buf);
-						std::cout << "read "<< nbytes << " bytes: " << buf << std::endl;
-					}
-				}
-				else if (pfds_it->revents & POLLOUT) // is established client : WRITE
-				{
-					// send response
-					//if (pfds[i].fd == cgi.client_fd) // && check if cgi response is ready with POLLHUP
-					//	send(pfds[i].fd, cgi.response.c_str(), strlen(cgi.response.c_str()), MSG_DONTWAIT);
-					//else
-					//	send(pfds[i].fd, "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 12\n\nHello world!", 78, MSG_DONTWAIT);
-					size_t	sz_to_send = BUF_SZ;
-					if (reqs[fd].response.substr(reqs[fd].total_sent).size() < BUF_SZ)
-						sz_to_send = reqs[fd].response.size() - reqs[fd].response.substr(reqs[fd].total_sent).size();
-
-					if (sz_to_send)
-						send(fd, reqs[fd].response.substr(reqs[fd].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
-					else
-					{
 						close(fd);
 						pfds.erase(pfds_it);
 						break;  // will reset to pfds.begin()
 					}
+					reqs[fd].request.append(buf);
 				}
-				pfds_it++;
 			}
+			else if (pfds_it->revents & POLLOUT) // is established client : WRITE
+			{
+				size_t	sz_to_send = BUF_SZ;
+				if (reqs[fd].response.substr(reqs[fd].total_sent).size() < BUF_SZ)
+					sz_to_send = reqs[fd].response.size() - reqs[fd].response.substr(reqs[fd].total_sent).size();
+
+				if (sz_to_send)
+					send(fd, reqs[fd].response.substr(reqs[fd].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
+				else
+				{
+					close(fd);
+					pfds.erase(pfds_it);
+					break;  // will reset to pfds.begin()
+				}
+			}
+			else if (pfds_it->revents & POLLHUP)
+			{
+				// if cgi_pipe, EOF on pipe_fd
+				std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
+				if (cgi_pipes_it != cgi_pipes.end())
+				{
+					close(fd);
+					pfds.erase(pfds_it);
+					break;  // will reset to pfds.begin()
+				}
+				// else (is client or listener)
+				else
+				{
+					std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
+					close(fd);
+					pfds.erase(pfds_it);
+					break;  // will reset to pfds.begin()
+				}
+			}
+			else if (pfds_it->revents & (POLLERR | POLLNVAL))
+			{
+				std::cout << "POLLERR | POLLNVAL" << std::endl;
+			}
+			else  // when recv() finishes, there's no flag
+			{
+				if (reqs[fd].request.empty()) // no revent and empty request? Can this even happen?
+				{
+					// std::cout << "no flag on revents, and request is empty" << std::endl;
+					continue;
+				}
+
+				// parse request
+
+				std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[fd].request << "\"" << std::endl;
+				if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
+				{
+					reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
+					reqs[fd].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+				}
+				// else if request contains job_id and the job was finished
+					// connect this client_id to that extant situation (request? handler? BIG QUESTION)
+					// form response
+				else  // ready to be sending basic HTML back
+					reqs[fd].response = "Hi. Default non-CGI response";
+				
+				pfds_it->events = POLLOUT;
+			}
+			pfds_it++;
 		}
 	}
 	//cleanup
