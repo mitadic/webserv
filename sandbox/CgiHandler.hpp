@@ -16,8 +16,8 @@
 #include <sys/wait.h> // For waitpid()
 #include <cstdlib>
 
-#define GET true
-#define POST false
+#define IS_GET true
+#define IS_POST false
 #define CGI_PATH "cgi.py"
 #define PRG_NAME "python3"
 #define REQUEST_BODY "mayonnaise"
@@ -30,13 +30,13 @@ public:
 	{
 		// request = REQUEST_BODY;
 		path = CGI_PATH;
-		if (GET)
+		if (IS_GET)
 		{
 			argv[0] = const_cast<char *>(PRG_NAME);
 			argv[1] = const_cast<char *>(path.c_str());
 			argv[2] = 0;
 		}
-		else if (POST)
+		else if (IS_POST)
 		{
 			argv[0] = const_cast<char *>(PRG_NAME);
 			argv[1] = const_cast<char *>(path.c_str());
