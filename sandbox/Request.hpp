@@ -9,6 +9,16 @@ public:
     Request() {}
     ~Request() {}
 
+	void reset()
+	{
+		request.clear();
+		response.clear();
+		client_fd = -1;
+		total_sent = 0;
+		is_cgi = false;
+		cgi_output.clear();
+	}
+
 	std::string host;            // Host: example.com
 	std::string mime_type;       // Content-Type: application/json (refers to own payload)
 	std::string request;

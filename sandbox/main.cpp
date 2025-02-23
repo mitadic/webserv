@@ -163,9 +163,8 @@ int main()
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
-		// else if (events_count == 0)
-		// 	continue;
 		std::cout << "pfds.size(): " << pfds.size() << std::endl;
+
 		std::vector<pollfd>::iterator pfds_it = pfds.begin();
 		while (!g_signal && pfds_it != pfds.end())
 		{
@@ -188,11 +187,12 @@ int main()
 				int nbytes;
 				memset(buf, 0, BUF_SZ);
 
+				if (reqs[fd].is_cgi)
+
 				std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
 				if (cgi_pipes_it != cgi_pipes.end())
 				{
 					nbytes = read(fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
-					std::cout << "read "<< nbytes << " bytes from cgi_pipe: " << buf << std::endl;
 					if (nbytes < 0)
 					{
 						std::perror("read(pipe_fd)");
@@ -201,12 +201,13 @@ int main()
 						pfds.erase(pfds_it);
 						break;  // will reset to pfds.begin()
 					}
+					// buf[nbytes] = 0;
+					// std::cout << "read "<< nbytes << " bytes from cgi_pipe: " << buf << std::endl;
 					reqs[cgi_pipes_it->second.fd].cgi_output.append(buf);
 				}
 				else  // is client, request reading to be done
 				{
 					nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
-					std::cout << "read "<< nbytes << " bytes from request: " << buf << std::endl;
 					if (nbytes <= 0)  // error or hangup
 					{
 						if (nbytes == 0)
@@ -217,6 +218,8 @@ int main()
 						pfds.erase(pfds_it);
 						break;  // will reset to pfds.begin()
 					}
+					// buf[nbytes] = 0;
+					// std::cout << "read "<< nbytes << " bytes from request: " << buf << std::endl;
 					reqs[fd].request.append(buf);
 				}
 			}
@@ -233,6 +236,7 @@ int main()
 				}
 				else
 				{
+					reqs[fd].reset();
 					close(fd);
 					pfds.erase(pfds_it);
 					break;  // will reset to pfds.begin()
@@ -261,28 +265,27 @@ int main()
 			{
 				std::cout << "POLLERR | POLLNVAL" << std::endl;
 			}
-			else  // when recv() finishes, there's no flag
+			else if (!reqs[fd].request.empty())  // when recv() finishes, there's no flag
 			{
-				if (reqs[fd].request.empty()) // no revent and empty request? Can this even happen?
-					std::cout << "no flag on revents, and request is empty" << std::endl;
-				else
-				{
+				// if (reqs[fd].request.empty()) // no revent and empty request? Can this even happen?
+				// 	std::cout << "no flag on revents, and request is empty" << std::endl;
+				// else
+				// {
 					// parse request
 
-					std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[fd].request << "\"" << std::endl;
-					if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
-					{
-						reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
-						reqs[fd].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
-					}
-					// else if request contains job_id and the job was finished
-						// connect this client_id to that extant situation (request? handler? BIG QUESTION)
-						// form response
-					else  // ready to be sending basic HTML back
-						reqs[fd].response = "Hi. Default non-CGI response";
-					
-					pfds_it->events = POLLOUT;
+				std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[fd].request << "\"" << std::endl;
+				if (reqs[fd].request.find(".py") != reqs[fd].request.npos) // if cgi request
+				{
+					reqs[fd].cgi.handle_cgi(pfds, cgi_pipes);
+					reqs[fd].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
 				}
+				// else if request contains job_id and the job was finished
+					// connect this client_id to that extant situation (request? handler? BIG QUESTION)
+					// form response
+				else  // ready to be sending basic HTML back
+					reqs[fd].response = "Hi. Default non-CGI response\n";
+				pfds_it->events = POLLOUT;
+				// }
 			}
 			pfds_it++;
 		}
