@@ -1,5 +1,6 @@
 
 #include "Config.hpp"
+#include "Log.hpp"
 #include <fstream>
 #include <arpa/inet.h>
 
@@ -12,19 +13,30 @@ std::string trim(const std::string& str)
     return str.substr(first, (last - first + 1));
 }
 
-/* Function for parsing any type of config file */
-//note: same host and port names
-void Config::parse_config(std::string filename, std::vector<ServerBlock> & server_blocks)
+std::stringstream load_file(const std::string & filename)
 {
-    std::ifstream   file(filename);
-    std::string     line;
+    std::ifstream       file(filename);
+    std::stringstream   content;
     
-    //put it first into a stringstream -> and close it, then parse
     if (filename.substr(filename.find_last_of(".") + 1) != "conf")
         throw std::runtime_error("*.conf file extension required");
     if (!file.is_open())
         throw std::runtime_error("couldn't open config file");
-    while (getline(file, line))
+    content << file.rdbuf();
+    file.close();
+    Log::log("Loaded config file:" + filename);
+    return (content);
+}
+
+/* Function for parsing any type of config file */
+//note: same host and port names
+void Config::parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks)
+{
+    std::string         line;
+    std::stringstream   content;
+
+    content = load_file(filename);
+    while (getline(content, line))
     {
         line = trim(line);
         if (line.empty())
@@ -32,21 +44,21 @@ void Config::parse_config(std::string filename, std::vector<ServerBlock> & serve
         else if (line == "server {")
         {
             ServerBlock server_block;
-            parse_server_block(server_block, file, line);
+            parse_server_block(server_block, content, line);
             server_blocks.push_back(server_block);
+            Log::log("New server block added");
             if (line != "}")
                 throw std::runtime_error("in config file: missing closing bracket '}'");
         }
         else
             throw std::runtime_error("in config file: unexpected line");
     }
-    file.close();
+    // iterate through serverblocks and remove double entries (same host and port)
 }
 
-void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & line)
+void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
-    
-    while (getline(file, line))
+    while (getline(content, line))
     {
         line = trim(line); // remove leading and trailing whitespaces
         if (line.empty()) // skip empty lines
@@ -62,19 +74,19 @@ void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & 
             if (directive == "listen")
             {
                 // check value
-                block.port = std::stoi(value);
+                block.port = std::atoi(value.c_str());
             }
-            else if (directive == "server_name")
+            else if (directive == "host")
             {
                 // check value
                 block.host = inet_addr(value.c_str());
             }
             else if (directive == "error_page")
             {
-                // check value, split value
-                block.error_pages.push_back(std::make_pair(404,"error/404.html")); //change this
+                // check value, split value into 2
+                block.error_pages[std::atoi(value1.c_str())] = value2; //change this
             }
-            else if (directive == "max_client_body")
+            else if (directive == "max_client_body_size")
             {
                 // check value
                 block.max_client_body = std::stoi(value);
@@ -82,8 +94,9 @@ void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & 
             else if (directive == "location")
             {
                 Location location;
-                //parse_location(location, file, value);
+                //parse_location(location, content, value);
                 block.locations.push_back(location);
+                Log::log("New location inside server block added");
             }
             else
                 throw std::runtime_error("in sever block: unexpected line");
