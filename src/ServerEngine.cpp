@@ -171,7 +171,7 @@ void ServerEngine::run()
 	for (size_t i = 0; i < ports.size(); i++)
 		setup_listening_socket(ports[i]);
 
-	// Initialize poll structure with the listening sockets, later adds client_fds
+	// Initialize poll structure with the listener_pfds, later adds client_pfds
 	init_pfds();
 
 	while (!g_signal)
@@ -269,6 +269,7 @@ void ServerEngine::run()
 				{
 					reqs[idx].reset();
 					close(fd);
+					reqs.erase(reqs.begin() + idx);  // the only place where we erase a Request?
 					pfds.erase(pfds_it);
 					pfd_info_map.erase(meta_it);
 					break;  // will reset to pfds.begin()
@@ -283,13 +284,10 @@ void ServerEngine::run()
 					pfds.erase(pfds_it);
 					// do not erase pfd_info_map, it's staying
 
-					// formulate response 
-					// reqs[idx].response = "We did the CGI, here it is: brrrrr\n";
 					reqs[idx].cgi_status = AWAIT_CLIENT_RECONNECT;
 					break;  // will reset to pfds.begin()
 				}
-				// else (is client or listener)
-				else
+				else // is client or listener
 				{
 					std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
 					close(fd);
