@@ -1,0 +1,246 @@
+/* COLOR PALETTE
+
+Ebony Clay	#26293a (dark blue)
+
+Moon Mist	#dbdcc9 (light grey)
+
+Shakespeare	#46add8 (light blue)
+
+Astral		#3281ab (blue)
+
+Dark grey	#222
+
+*/
+
+
+/* GLOBAL STYLES
+----------------------------------------*/
+
+
+
+html {
+	box-sizing: border-box;
+	font-size: 62.5%; /* set default to 10px using 62.5 method */
+}
+
+html, body {
+	overflow-x: hidden;
+	width: 100%;
+}
+
+
+body {
+	font-family: Arial, sans-serif;
+	line-height: 1.6;
+	text-align: center;
+	background-color: #26293a;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: center;
+	min-height: 100vh;
+}
+
+h1, h2 {
+	color: #dbdcc9;
+	font-family: "Markazi Text", serif;
+	font-optical-sizing: auto;
+	font-style: normal;
+}
+
+h1 {
+	font-size: 6rem;
+	margin: 0;
+	line-height: 0.9;
+}
+
+h2 {
+	font-size: 3rem;
+	margin: 0;
+	font-weight: 400;  /* Use a value from 400 to 700 */
+}
+
+
+/* HOME
+----------------------------------------*/
+
+.container {
+	flex-grow: 1;
+	text-align: center;
+	margin-top: 30px;
+}
+
+.logo {
+	width: 400px;
+	height: auto;
+	margin-bottom: 20px;
+}
+
+.button-list {
+	list-style: none;
+	padding: 0;
+	margin-top: 20px;
+	margin-bottom: 50px;
+	display: flex;
+	justify-content: center;
+	gap: 15px;
+}
+
+.btn {
+	font-family: "Zain", serif;
+	font-weight: 500;
+	font-style: normal;
+	display:inline-block;
+	padding: 6px 15px;
+	text-decoration: none;
+	background-color: #46add8;
+	color: #222;
+	font-size: 1.9rem;
+	text-transform: uppercase;
+	border-radius: 8px;
+	transition: 0,3s;
+}
+
+.btn:hover {
+	background-color: #3281ab;
+}
+
+
+/* ABOUT
+----------------------------------------------*/
+
+.banner {
+	position: sticky;
+	top: 0;
+    left: 0;
+	width: 100%;
+	height: 600px;
+	background: url('../images/banner.webp') top center no-repeat;
+	background-size: cover;
+	background-attachment: fixed; /* Creates the parallax effect */
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	text-align: center;
+	color: #dbdcc9;
+	padding-bottom:40px;
+	}
+
+.banner h2 {
+	font-size: 5rem;
+	background: rgba(0, 0, 0, 0.7);
+	padding: 10px 20px;
+	border-radius: 5px;
+}
+
+.content {
+	padding-top: 650px;
+	padding: 20px;
+	text-align: center;
+	flex-grow: 1;
+	margin-bottom: 50px;
+}
+
+.content p {
+	margin-bottom: 2rem;
+	color: #46add8;
+	font-size: 1.6rem;
+}
+
+.backhome{
+	position: fixed;
+	left: 10px;
+	top: 10px;
+	z-index: 100;
+}
+
+/* CONTACT FORM
+----------------------------------------------*/
+
+.contact-form form {
+	display: flex;
+	flex-direction: column;
+	color: #46add8;
+	text-align: left;
+	font-size: 1.5rem;
+	gap: 1rem;
+}
+
+/* ERROR PAGES
+----------------------------------------------*/
+
+.error-container {
+	text-align: center;
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: fit-content;
+}
+
+.error-container h2 {
+	font-size: 4rem;
+	color: #dbdcc9;
+	background: rgba(0, 0, 0, 0.7);
+	padding: 10px 20px;
+	border-radius: 5px;
+	display: inline-block;
+}
+
+.error-container p {
+	font-size: 1.7rem;
+	color: #26293a;
+	margin-bottom: 50px;
+	background: rgba(255, 255, 255, 0.7);
+	padding: 10px 20px;
+	border-radius: 5px;
+	text-align: center;
+	display: block;
+	box-sizing: border-box;
+}
+
+/* Background Image for Error Pages */
+.error-page {
+	background: url('../images/error.webp') center/cover no-repeat;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+
+.error-page::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+}
+
+/* Ensures content appears above the overlay */
+.error-page * {
+	position: relative;
+	z-index: 1;
+}
+
+.error-header {
+	margin-top: -150px;
+}
+
+/* FOOTER
+----------------------------------------------*/
+
+footer {
+	background-color: #222;
+	color: white;
+	padding: 10px;
+	text-align: center;
+	width: 100%;
+	position: relative;
+	font-size: 1.5rem;
+	bottom: 0;
+}

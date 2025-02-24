@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Delete files</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="css/styles.css">
+	</head>
+	<body>
+		<a href="index.html" class="btn backhome">Back to homepage</a>
+		<!-- //  Header  //-->
+		<div class="container">
+			<img src="images/logo.webp" alt="Three socketeers logo" class="logo">
+			<h1> Delete file:</h1>
+
+			<!-- //  Get filename: // -->
+			<input type="text" id="filename" placeholder="example.txt">
+			<button class="btn" id="deleteBtn">Delete File</button>
+			<script>
+				document.getElementById('deleteBtn').addEventListener('click', () => {
+				  // Get the typed filename from the input field.
+				  const filename = document.getElementById('filename').value.trim();
+
+				  // Ensure a filename was entered.
+				  if (!filename) {
+					alert('Please enter a filename.');
+					return;
+				  }
+
+				  // Construct the URL and send a DELETE request using fetch.
+				  fetch(`upload/${filename}`, { method: 'DELETE' })
+					.then(response => {
+					  if (response.ok) {
+						alert('File deleted successfully!');
+						// Optionally, remove the file's element from the UI.
+					  } else {
+						alert('Failed to delete the file.');
+					  }
+					})
+					.catch(error => {
+					  console.error('Error during deletion:', error);
+					  alert('An error occurred while attempting to delete the file.');
+					});
+				});
+			  </script>
+		</div>
+
+		 <!--//  FOOTER  //-->
+		 <footer>
+			<p>© 2025 aarponen / mitadic / pbencze </p>
+		 </footer>
+	</body>
+</html>

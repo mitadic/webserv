@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Files</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+	<a href="index.html" class="btn backhome">Back to homepage</a>
+    <!-- Header/Logo section -->
+    <div class="container">
+      <img src="images/logo.webp" alt="Three Socketeers logo" class="logo">
+      <h1>Upload File</h1>
+      <h2>Select a file and click "Upload".</p>
+
+      <!-- Upload Form -->
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="file"></label>
+        <input type="file" id="file" name="file" required>
+        <button type="submit" class="btn">Upload</button>
+      </form>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>© 2025 aarponen / mitadic / pbencze</p>
+    </footer>
+  </body>
+</html>

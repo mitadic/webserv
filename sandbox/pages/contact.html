@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contact Us</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+	<a href="index.html" class="btn backhome">Back to homepage</a>
+    <!-- Contact form-->
+	<div class="container">
+		<img src="images/logo.webp" alt="Three socketeers logo" class="logo">
+		<h1>Contact Us</h1>
+		<h2>Leave us a message:</h2>
+		<div class="contact-form">
+			<form action="/contact" method="post">
+				<label for="name">Your Name:</label>
+				<input type="text" id="name" name="name" required>
+				<label for="message">Your Message:</label>
+				<textarea id="message" name="message" rows="5" required></textarea>
+				<button class="btn" type="submit">Send Message</button>
+			</form>
+		</div>
+	</div>
+    <!-- Footer -->
+    <footer>
+      <p>© 2025 aarponen / mitadic / pbencze</p>
+    </footer>
+  </body>
+</html>
