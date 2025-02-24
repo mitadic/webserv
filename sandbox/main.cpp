@@ -187,7 +187,7 @@ int main()
 				int nbytes;
 				memset(buf, 0, BUF_SZ);
 
-				if (reqs[fd].is_cgi)
+				// if (reqs[fd].is_cgi)
 
 				std::map<int, pollfd>::iterator cgi_pipes_it = cgi_pipes.find(fd);
 				if (cgi_pipes_it != cgi_pipes.end())
