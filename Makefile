@@ -1,11 +1,14 @@
 CXX		=	c++
-FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-SRC		=	dummy_socket_main.cpp
+# FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
+FLAGS	=	-g -std=c++98
+SRC		=	main.cpp \
+			ServerEngine.cpp \
+			CgiHandler.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/
 I_DIR	=	./incl/
-NAME	=	webserv
+NAME	=	a.out
 
 
 all: $(NAME)
