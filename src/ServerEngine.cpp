@@ -2,7 +2,7 @@
 
 ServerEngine::ServerEngine() {
 		
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 10; i++)
 		ports.push_back(9991 + i);
 }
 
@@ -117,8 +117,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		// connect this client_id to that extant situation (request? handler? BIG QUESTION)
 		// form response
 	}
-	// else if (reqs[idx].request.find(".html") != reqs[idx].request.npos)
-	else
+	else if (reqs[idx].request.find("about.html") != reqs[idx].request.npos)
 	{
 		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8\n\n";
 
@@ -138,7 +137,27 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		if (fSrc.is_open())
 			std::cerr << "Files not closed despite statements" << std::endl;
 	}
-	// else  // ready to be sending basic HTML back
+	else if (reqs[idx].request.find("styles.css") != reqs[idx].request.npos)
+	{
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8\n\n";
+
+		std::ifstream	fSrc;
+		fSrc.open("./www/html/css/styles.css", std::ios::in);
+		if (!fSrc.is_open()) {
+			std::cerr << "Error opening file <" << "styles.css" << ">" << std::endl;
+			return;
+		}
+
+		std::string	line;
+		while (std::getline(fSrc, line))
+		{
+			reqs[idx].response += line;
+		}
+		fSrc.close();
+		if (fSrc.is_open())
+			std::cerr << "Files not closed despite statements" << std::endl;
+	}
+	else  // ready to be sending basic HTML back
 	// 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
 	
 	pfds_it->events = POLLOUT;
