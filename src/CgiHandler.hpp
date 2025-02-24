@@ -18,7 +18,7 @@
 
 #define IS_GET true
 #define IS_POST false
-#define CGI_PATH "cgi.py"
+#define CGI_PATH "src/cgi.py"
 #define PRG_NAME "python3"
 #define REQUEST_BODY "mayonnaise"
 
