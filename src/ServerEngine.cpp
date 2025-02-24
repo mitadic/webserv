@@ -2,7 +2,7 @@
 
 ServerEngine::ServerEngine() {
 		
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 5; i++)
 		ports.push_back(9991 + i);
 }
 
@@ -158,7 +158,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 			std::cerr << "Files not closed despite statements" << std::endl;
 	}
 	else  // ready to be sending basic HTML back
-	// 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
+	 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
 	
 	pfds_it->events = POLLOUT;
 }
