@@ -14,6 +14,7 @@
 #include <cerrno> // For errno
 #include <fcntl.h> // For fcntl
 #include <cstring>
+#include <fstream>
 
 #include "Types.hpp"
 #include "Request.hpp"

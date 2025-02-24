@@ -117,9 +117,29 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		// connect this client_id to that extant situation (request? handler? BIG QUESTION)
 		// form response
 	}
-	
-	else  // ready to be sending basic HTML back
-		reqs[idx].response = "Hi. Default non-CGI response.$\n";
+	// else if (reqs[idx].request.find(".html") != reqs[idx].request.npos)
+	else
+	{
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8\n\n";
+
+		std::ifstream	fSrc;
+		fSrc.open("./www/html/about.html", std::ios::in);
+		if (!fSrc.is_open()) {
+			std::cerr << "Error opening file <" << "about.html" << ">" << std::endl;
+			return;
+		}
+
+		std::string	line;
+		while (std::getline(fSrc, line))
+		{
+			reqs[idx].response += line;
+		}
+		fSrc.close();
+		if (fSrc.is_open())
+			std::cerr << "Files not closed despite statements" << std::endl;
+	}
+	// else  // ready to be sending basic HTML back
+	// 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
 	
 	pfds_it->events = POLLOUT;
 }
@@ -149,7 +169,7 @@ void ServerEngine::run()
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
-		std::cout << "pfds.size(): " << pfds.size() << std::endl;
+		// std::cout << "pfds.size(): " << pfds.size() << std::endl;
 
 
 
