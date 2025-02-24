@@ -8,6 +8,9 @@ volatile std::sig_atomic_t g_signal = 0;  // declared in ServerEngine.hpp
 
 int main(int argc, char **argv) {
 
+    (void)argv;
+    (void)argc;
+    
     ServerEngine engine;
     
     engine.run();

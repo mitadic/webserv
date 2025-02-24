@@ -1,6 +1,6 @@
 CXX		=	c++
 # FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-FLAGS	=	-g -std=c++98
+FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
 SRC		=	main.cpp \
 			ServerEngine.cpp \
 			CgiHandler.cpp

@@ -5,11 +5,11 @@
 class Request {
 public:
     Request() :
-		cgi_status(NOT_CGI),
 		request(""),
 		response(""),
 		total_sent(0),
-		client_fd(-1)
+		client_fd(-1),
+		cgi_status(NOT_CGI)
 	{}
     ~Request() {}
 

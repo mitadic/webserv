@@ -51,7 +51,10 @@ void ServerEngine::setup_listening_socket(int port)
 		return;
 	}
 
-	pfd_info_map[sockfd] = (pfd_info){ .type = LISTENER_SOCKET, .sockaddr = socket_addr };  // map insertion
+	pfd_info info = {};
+	info.type = LISTENER_SOCKET;
+	info.sockaddr = socket_addr;
+	pfd_info_map[sockfd] = info;
 
 	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << port << std::endl;
 }
@@ -94,7 +97,11 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	// Full engine procedure of adding and mapping a new client 
 	pfds.push_back(fd);
 	reqs.push_back(Request());
-	pfd_info_map[client] = (pfd_info){ .type = CLIENT_CONNECTION_SOCKET, .reqs_idx = reqs.size() - 1 };
+	
+	pfd_info info = {};
+	info.type = CLIENT_CONNECTION_SOCKET;
+	info.reqs_idx = reqs.size() - 1;
+	pfd_info_map[client] = info;
 
 	std::cout << "New client accepted on FD " << client << std::endl;
 }
