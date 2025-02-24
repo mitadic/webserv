@@ -39,6 +39,7 @@ public:
 	void	setup_listening_socket(int port);
 	void	init_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
+	void	set_response(std::vector<pollfd>::iterator pfds_it, int idx);
 
 	static void	signal_handler(int signal);
 

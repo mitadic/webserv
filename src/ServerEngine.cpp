@@ -99,6 +99,31 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	std::cout << "New client accepted on FD " << client << std::endl;
 }
 
+void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
+{
+	// parse request
+
+	std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[idx].request << "\"" << std::endl;
+	if (reqs[idx].request.find(".py") != reqs[idx].request.npos) // if cgi request
+	{
+		reqs[idx].cgi.handle_cgi(pfds, pfd_info_map, idx);
+		reqs[idx].cgi_status = READ_PIPE;
+		reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+	}
+
+	// else if request contains job_id and the job was finished
+	else if (reqs[idx].request.find("job_id") != reqs[idx].request.npos)
+	{
+		// connect this client_id to that extant situation (request? handler? BIG QUESTION)
+		// form response
+	}
+	
+	else  // ready to be sending basic HTML back
+		reqs[idx].response = "Hi. Default non-CGI response.$\n";
+	
+	pfds_it->events = POLLOUT;
+}
+
 void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
@@ -140,7 +165,10 @@ void ServerEngine::run()
 			if (fd_meta.type == LISTENER_SOCKET)
 			{
 				if (pfds_it->revents & POLLIN)
+				{
 					accept_client(fd, fd_meta);
+					break;
+				}
 			}
 
 			else if (pfds_it->revents & POLLIN)  // catch events on clients and CGI pipes : READ
@@ -178,9 +206,13 @@ void ServerEngine::run()
 						pfd_info_map.erase(meta_it);
 						break;  // will reset to pfds.begin()
 					}
-					// buf[nbytes] = 0;
-					// std::cout << "read "<< nbytes << " bytes from request: " << buf << std::endl;
 					reqs[idx].request.append(buf);
+					if (reqs[idx].request.find("$") != reqs[idx].request.npos) // if (pretend) proper HTTP ending
+					{
+						std::cout << "Caught (pretend) proper HTTP ending" << std::endl;
+						set_response(pfds_it, idx);
+						break;
+					}
 				}
 			}
 			else if (pfds_it->revents & POLLOUT) // is established client : WRITE
@@ -213,7 +245,7 @@ void ServerEngine::run()
 					// do not erase pfd_info_map, it's staying
 
 					// formulate response 
-					reqs[idx].response = "We did the CGI, here it is: brrrrr";
+					// reqs[idx].response = "We did the CGI, here it is: brrrrr\n";
 					reqs[idx].cgi_status = AWAIT_CLIENT_RECONNECT;
 					break;  // will reset to pfds.begin()
 				}
@@ -232,24 +264,8 @@ void ServerEngine::run()
 			}
 			else if (fd_meta.type == CLIENT_CONNECTION_SOCKET && !reqs[idx].request.empty())  // when recv() finishes, there's no flag
 			{
-				// parse request
-
-				std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[idx].request << "\"" << std::endl;
-				if (reqs[idx].request.find(".py") != reqs[fd].request.npos) // if cgi request
-				{
-					reqs[idx].cgi.handle_cgi(pfds, pfd_info_map, idx);
-					reqs[idx].cgi_status = READ_PIPE;
-					reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
-				}
-
-				// else if request contains job_id and the job was finished
-					// connect this client_id to that extant situation (request? handler? BIG QUESTION)
-					// form response
-				
-				else  // ready to be sending basic HTML back
-					reqs[idx].response = "Hi. Default non-CGI response.$\n";
-				
-				pfds_it->events = POLLOUT;
+				set_response(pfds_it, idx);  // setting response in invalid HTTP req, CONNECTION_TIMEOUT scenario
+				break;
 			}
 			pfds_it++;
 		}
