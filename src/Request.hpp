@@ -1,6 +1,9 @@
 #pragma once
 
 #include "CgiHandler.hpp"
+#include "Utils.hpp"
+#include <stdexcept>
+
 
 class Request {
 public:
@@ -27,6 +30,7 @@ public:
 	std::string mime_type;       // Content-Type: application/json (refers to own payload)
 	std::string request;
     std::string response;
+	std::string uri;             // /index.html
 	int			total_sent;
 	long long   content_length;  // Content-Length: 27
 	short       method;          // GET POST DELETE
@@ -36,6 +40,13 @@ public:
 	CgiHandler  cgi;
 	std::string cgi_job_id;
 	std::string cgi_output;
+
+	// for request handling
+
+	std::string handleMethod();
+	std::string processGet();
+	std::string processPost();
+	std::string processDelete();
 
 private:
 
