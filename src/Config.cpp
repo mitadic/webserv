@@ -1,6 +1,16 @@
 
 #include "Config.hpp"
 #include <fstream>
+#include <arpa/inet.h>
+
+std::string trim(const std::string& str)
+{
+    size_t first = str.find_first_not_of(" \t");
+    if (first == std::string::npos)
+        return ""; // String is all whitespace
+    size_t last = str.find_last_not_of(" \t");
+    return str.substr(first, (last - first + 1));
+}
 
 /* Function for parsing any type of config file */
 void Config::parse_config(std::string filename, std::vector<ServerBlock> & server_blocks)
@@ -31,16 +41,6 @@ void Config::parse_config(std::string filename, std::vector<ServerBlock> & serve
     file.close();
 }
 
-std::string trim(const std::string& str)
-{
-    size_t first = str.find_first_not_of(" \t");
-    if (first == std::string::npos)
-        return ""; // String is all whitespace
-    size_t last = str.find_last_not_of(" \t");
-    return str.substr(first, (last - first + 1));
-}
-
-
 void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & line)
 {
     
@@ -59,29 +59,35 @@ void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & 
         {
             if (directive == "listen")
             {
+                // check value
                 block.port = std::stoi(value);
             }
             else if (directive == "server_name")
             {
+                // check value
                 block.host = inet_addr(value.c_str());
             }
             else if (directive == "error_page")
             {
-                block.error_pages[std::stoi(value)] = ss.str();
+                // check value, split value
+                block.error_pages.push_back(std::make_pair(404,"error/404.html")); //change this
             }
             else if (directive == "max_client_body")
             {
+                // check value
                 block.max_client_body = std::stoi(value);
             }
             else if (directive == "location")
             {
                 Location location;
-                parse_location(location, file);
+                //parse_location(location, file, value);
                 block.locations.push_back(location);
             }
             else
                 throw std::runtime_error("in sever block: unexpected line");
         }
+        else
+            throw std::runtime_error("in sever block: unexpected line");
     }
 }
 

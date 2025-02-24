@@ -17,8 +17,10 @@ class Config {
         static void parse_config(std::string filename, std::vector<ServerBlock> & server_blocks);
         //void        parse_server_block(ServerBlock & block, std::ifstream &file);
         
-        private:
+    private:
         std::stringstream   _input;
-    };
+};
+
+void parse_server_block(ServerBlock & block, std::ifstream &file, std::string & line);
 
 #endif
