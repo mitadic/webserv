@@ -13,15 +13,17 @@ std::string trim(const std::string& str)
 }
 
 /* Function for parsing any type of config file */
+//note: same host and port names
 void Config::parse_config(std::string filename, std::vector<ServerBlock> & server_blocks)
 {
     std::ifstream   file(filename);
     std::string     line;
     
+    //put it first into a stringstream -> and close it, then parse
     if (filename.substr(filename.find_last_of(".") + 1) != "conf")
-    throw std::runtime_error("*.conf file extension required");
+        throw std::runtime_error("*.conf file extension required");
     if (!file.is_open())
-    throw std::runtime_error("couldn't open config file");
+        throw std::runtime_error("couldn't open config file");
     while (getline(file, line))
     {
         line = trim(line);

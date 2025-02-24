@@ -9,7 +9,7 @@
 
 class ServerBlock {
     public:
-        int         socket_fd; // or do we store it only in pfds?
+        //int         socket_fd; // or do we store it only in pfds?
         int         port;
         in_addr_t   host;
 
