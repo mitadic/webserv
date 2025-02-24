@@ -207,7 +207,7 @@ void ServerEngine::run()
 						break;  // will reset to pfds.begin()
 					}
 					reqs[idx].request.append(buf);
-					if (reqs[idx].request.find("$") != reqs[idx].request.npos) // if (pretend) proper HTTP ending
+					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if (pretend) proper HTTP ending
 					{
 						std::cout << "Caught (pretend) proper HTTP ending" << std::endl;
 						set_response(pfds_it, idx);
@@ -262,11 +262,11 @@ void ServerEngine::run()
 			{
 				std::cout << "POLLERR | POLLNVAL" << std::endl;
 			}
-			else if (fd_meta.type == CLIENT_CONNECTION_SOCKET && !reqs[idx].request.empty())  // when recv() finishes, there's no flag
-			{
-				set_response(pfds_it, idx);  // setting response in invalid HTTP req, CONNECTION_TIMEOUT scenario
-				break;
-			}
+			// else if (fd_meta.type == CLIENT_CONNECTION_SOCKET && !reqs[idx].request.empty())  // when recv() finishes, there's no flag
+			// {
+			// 	set_response(pfds_it, idx);  // setting response in invalid HTTP req, CONNECTION_TIMEOUT scenario
+			// 	break;
+			// }
 			pfds_it++;
 		}
 	}
