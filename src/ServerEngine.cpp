@@ -122,7 +122,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8\n\n";
 
 		std::ifstream	fSrc;
-		fSrc.open("./www/html/about.html", std::ios::in);
+		fSrc.open("./www/three-socketeers/about.html", std::ios::in);
 		if (!fSrc.is_open()) {
 			std::cerr << "Error opening file <" << "about.html" << ">" << std::endl;
 			return;
@@ -142,7 +142,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8\n\n";
 
 		std::ifstream	fSrc;
-		fSrc.open("./www/html/css/styles.css", std::ios::in);
+		fSrc.open("./www/three-socketeers/css/styles.css", std::ios::in);
 		if (!fSrc.is_open()) {
 			std::cerr << "Error opening file <" << "styles.css" << ">" << std::endl;
 			return;
