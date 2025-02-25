@@ -2,31 +2,43 @@
 #include "Config.hpp"
 
 /**
- * @brief Removes trailing and leading spaces from a string, as well as trailing comments
+ * @brief Removes trailing and leading spaces from a string, as well as trailing comments;
+ * replaces consecutive spaces with a single space.
  */
 std::string Config::trim(const std::string & str)
 {
     std::string result = str;
 
-    size_t comment = result.find("#"); // remove trailing comment
+    // replace tabs with spaces
+    std::replace(result.begin(), result.end(), '\t', ' ');
+
+    // remove trailing comment
+    size_t comment = result.find("#");
     if (comment != std::string::npos)
         result = result.substr(0, comment);
 
-    size_t first = result.find_first_not_of(" \t"); // remove spaces
+    // remove spaces
+    size_t first = result.find_first_not_of(" ");
     if (first == std::string::npos)
-        return ""; // String is all whitespace
-    size_t last = result.find_last_not_of(" \t");
+        return ""; // string is all whitespace
+    size_t last = result.find_last_not_of(" ");
     return (result.substr(first, (last - first + 1)));
-}
 
-/**
- * @brief Replaces tabs in a string with spaces
- */
-std::string Config::replace_tabs_with_spaces(std::string & line)
-{
-    std::string result = line;
-    std::replace(result.begin(), result.end(), '\t', ' ');
-    return (result);
+    // replace consecutive spaces with single space
+    std::string cleaned;
+    bool consecutive_spaces = false;
+    for (size_t i = 0; i < result.size(); ++i) {
+        if (result[i] == ' ') {
+            if (!consecutive_spaces) {
+                cleaned += ' ';
+                consecutive_spaces = true;
+            }
+        } else {
+            cleaned += result[i];
+            consecutive_spaces = false;
+        }
+    }
+    return (cleaned);
 }
 
 /**
@@ -58,7 +70,6 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
     content = load_file(filename);
     while (getline(content, line))
     {
-        line = replace_tabs_with_spaces(line);
         line = trim(line);
         if (line.empty()) // skip empty lines
             continue ;
@@ -81,16 +92,14 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
 {
     while (getline(content, line))
     {
-        line = replace_tabs_with_spaces(line);
-        line = trim(line); // remove leading and trailing whitespaces and comments
+        line = trim(line); // remove abundant whitespaces and comments
         if (line.empty()) // skip empty lines
             continue ;
 
         if (line == "}") // end of server block
             return ;
-        else if (line[line.size() - 1] == ';') // check if ';' is there and remove it from the line
-            line = line.substr(0, line.size() - 1);
-        else if (line.find("location") != std::string::npos && line[line.size() - 1] == '{') // remove } from location line
+        else if (line[line.size() - 1] == ';' 
+            || (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ;
             line = line.substr(0, line.size() - 1);
         else
             throw std::runtime_error("in server block: missing semicolon: " + line);
@@ -99,43 +108,59 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
     // / iterate through locations and remove double entries (same name or root?)
 }
 
+int Config::has_only_digits(char *str)
+{
+    while (str && *str)
+    {
+        if (!std::isdigit(*str++))
+            return (0);
+    }
+    return (1);
+}
+
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
-        value = trim(value);
         if (directive == "listen")
         {
-            // check value and amount (only 1 port allowed)
+            if (block.port != -1)
+                throw std::runtime_error("server cannot have multiple ports");
+            // optional: add more checks for valid ports
+            if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
+                throw std::runtime_error("invalid port number" + value);
             block.port = std::atoi(value.c_str());
         }
         else if (directive == "host")
         {
-            // check value and amount (only 1 host allowed)
+            if (block.host != inet_addr("255.255.255.255"))
+                throw std::runtime_error("host already declared");
             block.host = inet_addr(value.c_str());
-            // check if host is valid
+            // optional: add more checks for valid ip addresses
+            if (block.host == inet_addr("255.255.255.255"))
+                throw std::runtime_error("invalid IP address");
         }
         else if (directive == "error_page")
         {
-            // check for double values (same error code)
-            // check if error code is valid
-            // ? check if page exists
-            std::string value1, value2;
+            std::string code, path;
             std::stringstream ss(value);
-            if (!getline(ss, value1, ' ') || !getline(ss, value2))
+            if (!getline(ss, code, ' ') || !getline(ss, path) || path.find(' ') != std::string::npos)
                 throw std::runtime_error("in server block: error_page directive requires 2 arguments");
-            value2 = trim(value2);
-            if (value2.empty() || value2.find(' ') != std::string::npos)
-                throw std::runtime_error("in server block: error_page directive requires 2 arguments");
-            block.error_pages[std::atoi(value1.c_str())] = value2; 
+            if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
+                throw std::runtime_error("invalid error code " + code);
+            // optional: check if path is a valid syntax and valid path
+            if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
+                throw std::runtime_error("error page already exists for " + code);
+            block.error_pages[std::atoi(code.c_str())] = path;
         }
         else if (directive == "client_max_body_size")
         {
-            // check value, check occurence
-            // check if size is too big or too small?
-            block.max_client_body = std::atoi(value.c_str());
+            if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str())))
+                throw std::runtime_error("max body size already declared or invalid size");
+            block.max_client_body = std::atol(value.c_str());
+            // optional: check if size is too big or too small, check for overflow, change type
         }
         else if (directive == "location")
         {
@@ -158,7 +183,6 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 
     while (getline(content, line))
     {
-        line = replace_tabs_with_spaces(line);
         line = trim(line); // remove leading and trailing whitespaces
         if (line.empty() || line[0] == '#') // skip empty lines and comments
             continue ;

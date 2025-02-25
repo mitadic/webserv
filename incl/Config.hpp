@@ -21,8 +21,10 @@ namespace Config {
         void parse_location(std::string & line, Location & block, std::stringstream & content);
         void parse_location_block_directives(std::string & line, Location & block, std::stringstream & content);
         std::stringstream load_file(const std::string & filename);
+        
+        // utils -> later to be added to namespace Utils
         std::string trim(const std::string & str);
-        std::string replace_tabs_with_spaces(std::string & line);
+        int has_only_digits(char *str);
 };
 
 
