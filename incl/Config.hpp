@@ -14,6 +14,8 @@
 namespace Config {
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
+        std::stringstream Config::load_file(const std::string & filename);
+        std::string Config::trim(const std::string & str);
 };
 
 

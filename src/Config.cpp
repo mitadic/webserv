@@ -7,7 +7,7 @@
 /**
  * @brief Removes trailing and leading spaces from a string
  */
-std::string trim(const std::string & str)
+std::string Config::trim(const std::string & str)
 {
     size_t first = str.find_first_not_of(" \t");
     if (first == std::string::npos)
@@ -19,7 +19,7 @@ std::string trim(const std::string & str)
 /**
  * @brief Loads (the config) file into a stringstream
  */
-std::stringstream load_file(const std::string & filename)
+std::stringstream Config::load_file(const std::string & filename)
 {
     std::ifstream       file(filename);
     std::stringstream   content;
@@ -46,7 +46,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
     while (getline(content, line))
     {
         line = trim(line);
-        if (line.empty())
+        if (line.empty() || line[0] == '#') // skip empty lines and comments
             continue ;
         else if (line == "server {")
         {
@@ -54,8 +54,8 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
             parse_server_block(server_block, content, line);
             server_blocks.push_back(server_block);
             Log::log("New server block added");
-            if (line != "}")
-                throw std::runtime_error("in config file: missing closing bracket '}'");
+            // if (line != "}") -> no need, checked in other function
+                // throw std::runtime_error("in config file: missing closing bracket '}'");
         }
         else
             throw std::runtime_error("in config file: unexpected line");
@@ -71,10 +71,8 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
     while (getline(content, line))
     {
         line = trim(line); // remove leading and trailing whitespaces
-        if (line.empty()) // skip empty lines
+        if (line.empty() || line[0] == '#') // skip empty lines and comments
             continue ;
-        else if (line == "}") // end of server block
-            return ;
 
         std::string         directive, value;
         std::stringstream   ss(line);
@@ -83,22 +81,23 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
         {
             if (directive == "listen")
             {
-                // check value
+                // check value and amount (only 1 port allowed)
                 block.port = std::atoi(value.c_str());
             }
             else if (directive == "host")
             {
-                // check value
+                // check value and amount (only 1 host allowed)
                 block.host = inet_addr(value.c_str());
             }
             else if (directive == "error_page")
             {
                 // check value, split value into 2
+                // check for double values (same error code)
                 block.error_pages[std::atoi(value1.c_str())] = value2; //change this
             }
             else if (directive == "max_client_body_size")
             {
-                // check value
+                // check value, check occurence
                 block.max_client_body = std::atoi(value.c_str());
             }
             else if (directive == "location")
@@ -111,6 +110,8 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
             else
                 throw std::runtime_error("in sever block: unexpected line");
         }
+        else if (line == "}") // end of server block
+            return ;
         else
             throw std::runtime_error("in sever block: unexpected line");
     }
