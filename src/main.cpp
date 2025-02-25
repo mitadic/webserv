@@ -1,6 +1,7 @@
 #include "ServerEngine.hpp"
 #include "../incl/ServerBlock.hpp"
 #include "../incl/Config.hpp"
+#include "../incl/Log.hpp"
 
 
 volatile std::sig_atomic_t g_signal = 0;  // declared in ServerEngine.hpp
@@ -19,7 +20,8 @@ int main(int argc, char **argv) {
             Config::parse_config(argv[1], server_blocks);
         else
             throw std::runtime_error("usage: ./webserv [config_file]");
-        engine.run();
+        Log::log(server_blocks);
+        //engine.run();
     }
     catch (std::exception & e)
     {

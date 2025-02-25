@@ -4,7 +4,10 @@ FLAGS	=	-g -std=c++98
 SRC		=	main.cpp \
 			ServerEngine.cpp \
 			CgiHandler.cpp \
-			Config.cpp 
+			Config.cpp \
+			Log.cpp \
+			Location.cpp \
+			ServerBlock.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/
