@@ -9,6 +9,7 @@ public:
 		response(""),
 		total_sent(0),
 		client_fd(-1),
+		timed_out(false),
 		cgi_status(NOT_CGI)
 	{}
     ~Request() {}
@@ -31,6 +32,7 @@ public:
 	long long   content_length;  // Content-Length: 27
 	short       method;          // GET POST DELETE
 	int         client_fd;
+	bool		timed_out;
 
 	int			cgi_status;
 	CgiHandler  cgi;

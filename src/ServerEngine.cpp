@@ -97,7 +97,6 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	// Full engine procedure of adding and mapping a new client 
 	pfds.push_back(fd);
 	reqs.push_back(Request());
-	
 	pfd_info info = {};
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.reqs_idx = reqs.size() - 1;
@@ -142,7 +141,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		}
 		fSrc.close();
 		if (fSrc.is_open())
-			std::cerr << "Files not closed despite statements" << std::endl;
+			std::cerr << "File not closed despite statements" << std::endl;
 	}
 	else if (reqs[idx].request.find("styles.css") != reqs[idx].request.npos)
 	{
@@ -162,12 +161,30 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		}
 		fSrc.close();
 		if (fSrc.is_open())
-			std::cerr << "Files not closed despite statements" << std::endl;
+			std::cerr << "File not closed despite statements" << std::endl;
 	}
 	else  // ready to be sending basic HTML back
 	 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
 	
+	reqs[idx].request.clear();
 	pfds_it->events = POLLOUT;
+}
+
+void ServerEngine::set_basic_response(std::vector<pollfd>::iterator pfds_it, int idx, std::string response)
+{
+	reqs[idx].response = response;
+	reqs[idx].request.clear();
+	pfds_it->events = POLLOUT;
+}
+
+void ServerEngine::print_pfds()
+{
+	std::vector<pollfd>::iterator it = pfds.begin();
+	while (it != pfds.end())
+	{
+		std::cout << "fd: " << it->fd << ", type: " << pfd_info_map[it->fd].type << std::endl;
+		it++;
+	}
 }
 
 void ServerEngine::run()
@@ -244,18 +261,21 @@ void ServerEngine::run()
 					if (nbytes <= 0)  // error or hangup
 					{
 						if (nbytes == 0)
+						{
 							std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
+							if (close(fd) == -1)
+								perror("close");
+							pfds.erase(pfds_it);
+							reqs.erase(reqs.begin() + idx);
+						}
 						else
 							std::perror("recv");
-						close(fd);
-						pfds.erase(pfds_it);
-						pfd_info_map.erase(meta_it);
+						set_basic_response(pfds_it, idx, "HTTP/1.1 503 recv() fail");
 						break;  // will reset to pfds.begin()
 					}
 					reqs[idx].request.append(buf);
-					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if (pretend) proper HTTP ending
+					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if proper HTTP ending
 					{
-						std::cout << "Caught (pretend) proper HTTP ending" << std::endl;
 						set_response(pfds_it, idx);
 						break;
 					}
@@ -269,16 +289,19 @@ void ServerEngine::run()
 
 				if (sz_to_send)
 				{
-					send(fd, reqs[idx].response.substr(reqs[idx].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
+					if (send(fd, reqs[idx].response.substr(reqs[idx].total_sent).c_str(), sz_to_send, MSG_DONTWAIT) == -1)
+						perror("send");
 					reqs[idx].total_sent += sz_to_send;
 				}
 				else
 				{
-					reqs[idx].reset();
-					close(fd);
-					reqs.erase(reqs.begin() + idx);  // the only place where we erase a Request?
-					pfds.erase(pfds_it);
-					pfd_info_map.erase(meta_it);
+					if (reqs[idx].timed_out)
+					{
+						reqs[idx].reset();
+						close(fd);
+						pfds.erase(pfds_it);
+						pfd_info_map.erase(meta_it);
+					}
 					break;  // will reset to pfds.begin()
 				}
 			}
@@ -296,9 +319,12 @@ void ServerEngine::run()
 				}
 				else // is client or listener
 				{
+					std::cout << "fd: " << fd << ", type: " << fd_meta.type << " is hanging up\n";
 					std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
-					close(fd);
+					if (close(fd) == -1)
+						perror("close");
 					pfds.erase(pfds_it);
+					reqs.erase(reqs.begin() + idx);
 					break;  // will reset to pfds.begin()
 				}
 			}
@@ -306,12 +332,17 @@ void ServerEngine::run()
 			{
 				std::cout << "POLLERR | POLLNVAL" << std::endl;
 			}
-			// else if (fd_meta.type == CLIENT_CONNECTION_SOCKET && !reqs[idx].request.empty())  // when recv() finishes, there's no flag
-			// {
-			// 	set_response(pfds_it, idx);  // setting response in invalid HTTP req, CONNECTION_TIMEOUT scenario
-			// 	break;
-			// }
+			else if (fd_meta.type == CLIENT_CONNECTION_SOCKET)  // no flag, so CONNECTION_TIMEOUT 
+			{
+				if (!reqs[idx].request.empty())
+					set_basic_response(pfds_it, idx, "HTTP/1.1 400 Bad Request\n");
+				else  // request is empty, we can close client connection
+					set_basic_response(pfds_it, idx, "HTTP/1.1 408 Request Timeout\n");  // this would need more time
+				reqs[idx].timed_out = true;
+				break;
+			}
 			pfds_it++;
 		}
 	}
+	std::cout << "Exited main loop, as if g_signal occurred" << std::endl;
 }

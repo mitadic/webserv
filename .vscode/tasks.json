@@ -10,7 +10,10 @@
             "args": [
                 "-std=c++98",
                 "-g",
-                "${workspaceFolder}/src/*.cpp",
+                "-I${workspaceFolder}/incl/",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/ServerEngine.cpp",
+                "${workspaceFolder}/src/CgiHandler.cpp",
                 "-o",
                 "${workspaceFolder}/src/a.out"
             ],
