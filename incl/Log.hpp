@@ -12,6 +12,9 @@
 # define WHITE "\033[0m"
 # define PURPLE "\033[35m"
 
+/**
+ * @brief Class with static method overloads for logging debug messages
+ */
 class Log {
     public:
         static void log(const std::string & message);

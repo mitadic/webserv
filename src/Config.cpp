@@ -72,7 +72,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
 }
 
 /**
- * @brief Parses one server {...} part of the config file
+ * @brief Parses one server {...} part of the config file into a server block
  */
 void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
