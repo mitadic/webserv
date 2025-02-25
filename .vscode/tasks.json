@@ -14,6 +14,7 @@
                 "${workspaceFolder}/src/main.cpp",
                 "${workspaceFolder}/src/ServerEngine.cpp",
                 "${workspaceFolder}/src/CgiHandler.cpp",
+                "${workspaceFolder}/src/Request.cpp",
                 "-o",
                 "${workspaceFolder}/src/a.out"
             ],

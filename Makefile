@@ -3,7 +3,8 @@ CXX		=	c++
 FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
 SRC		=	main.cpp \
 			ServerEngine.cpp \
-			CgiHandler.cpp
+			CgiHandler.cpp \
+			Request.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

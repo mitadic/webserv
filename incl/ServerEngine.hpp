@@ -38,10 +38,10 @@ public:
 	void	run();
 	bool	make_non_blocking(int &fd);
 	void	setup_listening_socket(int port);
-	void	init_pfds();
+	void	init_listener_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
-	void	set_response(std::vector<pollfd>::iterator pfds_it, int idx);
-	void	set_basic_response(std::vector<pollfd>::iterator pfds_it, int idx, std::string response);
+	void	set_response(std::vector<pollfd>::iterator& pfds_it, int idx);
+	void	set_basic_response(std::vector<pollfd>::iterator& pfds_it, int idx, std::string response);
 
 	void	print_pfds();
 

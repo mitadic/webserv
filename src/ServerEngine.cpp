@@ -59,7 +59,7 @@ void ServerEngine::setup_listening_socket(int port)
 	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << port << std::endl;
 }
 
-void ServerEngine::init_pfds()
+void ServerEngine::init_listener_pfds()
 {
 	for (std::map<int, pfd_info>::iterator it = pfd_info_map.begin(); it != pfd_info_map.end(); it++)
 	{
@@ -105,9 +105,8 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	std::cout << "New client accepted on FD " << client << std::endl;
 }
 
-void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
+void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 {
-	// parse request
 
 	std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[idx].request << "\"" << std::endl;
 	if (reqs[idx].request.find(".py") != reqs[idx].request.npos) // if cgi request
@@ -170,7 +169,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 	pfds_it->events = POLLOUT;
 }
 
-void ServerEngine::set_basic_response(std::vector<pollfd>::iterator pfds_it, int idx, std::string response)
+void ServerEngine::set_basic_response(std::vector<pollfd>::iterator& pfds_it, int idx, std::string response)
 {
 	reqs[idx].response = response;
 	reqs[idx].request.clear();
@@ -191,17 +190,14 @@ void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 
-	// Setup listening sockets for each port:
 	for (size_t i = 0; i < ports.size(); i++)
 		setup_listening_socket(ports[i]);
 
-	// Initialize poll structure with the listener_pfds, later adds client_pfds
-	init_pfds();
+	init_listener_pfds();
 
 	while (!g_signal)
 	{
-		int timeout = CONNECTION_TIMEOUT;
-		int events_count = poll(&pfds[0], pfds.size(), timeout);
+		int events_count = poll(&pfds[0], pfds.size(), CONNECTION_TIMEOUT);
 		if (events_count == -1)
 		{
 			//if SIGINT (Ctrl+C) is received, exit gracefully
@@ -212,7 +208,6 @@ void ServerEngine::run()
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
-		// std::cout << "pfds.size(): " << pfds.size() << std::endl;
 
 
 
@@ -258,24 +253,23 @@ void ServerEngine::run()
 				else  // is client, request reading to be done
 				{
 					nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
-					if (nbytes <= 0)  // error or hangup
+					if (nbytes <= 0)  // hangup or error
 					{
 						if (nbytes == 0)
-						{
-							std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
-							if (close(fd) == -1)
-								perror("close");
-							pfds.erase(pfds_it);
-							reqs.erase(reqs.begin() + idx);
-						}
+							std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
 						else
 							std::perror("recv");
+						if (close(fd) == -1)
+							perror("close");
+						pfds.erase(pfds_it);
+						reqs.erase(reqs.begin() + idx);
 						set_basic_response(pfds_it, idx, "HTTP/1.1 503 recv() fail");
 						break;  // will reset to pfds.begin()
 					}
 					reqs[idx].request.append(buf);
 					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if proper HTTP ending
 					{
+						reqs[idx].parse();
 						set_response(pfds_it, idx);
 						break;
 					}
@@ -293,16 +287,25 @@ void ServerEngine::run()
 						perror("send");
 					reqs[idx].total_sent += sz_to_send;
 				}
-				else
+				else  // sz_to_send == 0
 				{
 					if (reqs[idx].timed_out)
 					{
-						reqs[idx].reset();
+						std::cout << "timeout: client on socket " << pfds_it->fd << ", closing connection\n";
 						close(fd);
 						pfds.erase(pfds_it);
-						pfd_info_map.erase(meta_it);
+						if (!reqs[idx].await_reconnection)
+						{
+							reqs.erase(reqs.begin() + idx);
+							pfd_info_map.erase(meta_it);
+						}
 					}
-					break;  // will reset to pfds.begin()
+					else
+					{
+						reqs[idx].reset();
+						pfds_it->events = POLLIN;
+					}
+					break;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
 				}
 			}
 			else if (pfds_it->revents & POLLHUP)
@@ -317,10 +320,9 @@ void ServerEngine::run()
 					reqs[idx].cgi_status = AWAIT_CLIENT_RECONNECT;
 					break;  // will reset to pfds.begin()
 				}
-				else // is client or listener
+				else
 				{
-					std::cout << "fd: " << fd << ", type: " << fd_meta.type << " is hanging up\n";
-					std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
+					std::cout << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown\n";
 					if (close(fd) == -1)
 						perror("close");
 					pfds.erase(pfds_it);
@@ -344,5 +346,4 @@ void ServerEngine::run()
 			pfds_it++;
 		}
 	}
-	std::cout << "Exited main loop, as if g_signal occurred" << std::endl;
 }
