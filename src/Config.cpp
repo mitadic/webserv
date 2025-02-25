@@ -82,7 +82,22 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
         else
             throw std::runtime_error("in config file: unexpected line");
     }
+    validate_blocks(server_blocks);
     // iterate through serverblocks and remove double entries (same host and port)
+}
+
+/**
+ * @brief Loops through server blocks and checks for missing directives
+ */
+void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
+{
+    std::vector<ServerBlock>::iterator server;
+    for (server = server_blocks.begin(); server != server_blocks.end(); ++server)
+    {
+        if (server->port == -1 || server->host == inet_addr("255.255.255.255") || server->max_client_body == 0)
+            throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
+    // check for same hosts and ports
+    }
 }
 
 /**
@@ -99,13 +114,16 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
         if (line == "}") // end of server block
             return ;
         else if (line[line.size() - 1] == ';' 
-            || (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ;
-            line = line.substr(0, line.size() - 1);
+            || (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ';'
+            {
+                line = line.substr(0, line.size() - 1);
+                line = trim(line);
+            }   
         else
             throw std::runtime_error("in server block: missing semicolon: " + line);
         parse_server_block_directives(line, block, content);
     }
-    // / iterate through locations and remove double entries (same name or root?)
+    // iterate through locations and remove double entries (same name or root?)
 }
 
 int Config::has_only_digits(char *str)
@@ -178,13 +196,15 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
+    if (line.find(' ') != std::string::npos)
+        throw std::runtime_error("invalid path");
+    // optional: check if location path and syntax are valid
     block.location = line;
-    // check if location is valid
 
     while (getline(content, line))
     {
-        line = trim(line); // remove leading and trailing whitespaces
-        if (line.empty() || line[0] == '#') // skip empty lines and comments
+        line = trim(line); // remove unnecessary whitespaces
+        if (line.empty()) // skip empty lines
             continue ;
 
         if (line == "}") // end of block
@@ -203,29 +223,32 @@ void Config::parse_location_block_directives(std::string & line, Location & bloc
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
-        value = trim(value);
         if (directive == "root")
         {
-            // check for double declaration
             // check if valid, if contains spaces etc.
-            block.root = value;
+            if (block.root.empty() == false)
+                throw std::runtime_error("double occurrence of 'root'");
+            block.root = value; 
         }
         else if (directive == "index")
         {
-            // check for double declaration
+            if (block.index.empty() == false)
+                throw std::runtime_error("double occurrence of 'index'");
             // check if valid, if contains spaces etc.
             block.index = value;
         }
         else if (directive == "upload")
         {
-            // check for double declaration
-            // check if valid, if contains spaces etc.
+            if (block.upload_location.empty() == false)
+                throw std::runtime_error("double occurrence of 'upload'");
+            // check if path is valid or contains spaces etc.
             block.upload_allowed = true;
             block.upload_location = value;
         }
         else if (directive == "allowed_methods")
         {
-            // check for double declaration
+            if (block.get == true || block.post == true || block.del == true)
+                throw std::runtime_error("double occurrence of 'allowed_methods'");
             // parse methods with strtok
             if (value.find("GET") != std::string::npos) //hardcoded solution tb removed
                 block.get = true;
@@ -236,30 +259,30 @@ void Config::parse_location_block_directives(std::string & line, Location & bloc
         }
         else if (directive == "autoindex")
         {
-            // check for double declaration
+            if (block.autoindex == true)
+                throw std::runtime_error("double declaration of 'autoindex'");
             if (value == "on")
                 block.autoindex = true;
             else if (value != "off")
-                throw std::runtime_error("in location block: autoindex has to be on or off");
+                throw std::runtime_error("in location block: autoindex requires value 'on' or 'off'");
         }
         else if (directive == "cgi_extension")
         {
-            // check for double declaration
+            if (block.cgi_extensions.empty() == false)
+                throw std::runtime_error("double declaration of 'cgi_extension'");
             // parse extensions with strtok
             std::string extension = ".py"; // hardcoded solution tb removed
             block.cgi_extensions.push_back(extension);
         }
         else if (directive == "return")
         {
-            // check for double declaration
-            std::string value1, value2;
+            if (block.redirect.second.empty() == false)
+                throw std::runtime_error("double declaration of 'return'");
+            std::string code, url;
             std::stringstream ss(value);
-            if (!getline(ss, value1, ' ') || !getline(ss, value2))
+            if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
                 throw std::runtime_error("in location block: return directive requires 2 arguments");
-            value2 = trim(value2);
-            if (value2.empty() || value2.find(' ') != std::string::npos)
-                throw std::runtime_error("in location block: return directive requires 2 arguments");
-            block.redirect = std::make_pair(std::atoi(value1.c_str()), value2);
+            block.redirect = std::make_pair(std::atoi(code.c_str()), url);
         }
         else
             throw std::runtime_error("in location block: unknown directive: " + directive);
