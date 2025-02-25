@@ -17,6 +17,9 @@
 namespace Config {
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
+        void parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content);
+        void parse_location(std::string & line, Location & block, std::stringstream & content);
+        void parse_location_block_directives(std::string & line, Location & block, std::stringstream & content);
         std::stringstream load_file(const std::string & filename);
         std::string trim(const std::string & str);
         std::string replace_tabs_with_spaces(std::string & line);

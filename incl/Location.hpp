@@ -18,7 +18,7 @@ class Location{
         bool                get, post, del;
         bool                autoindex;
         std::vector<std::string>    cgi_extensions;       
-        std::map<int, std::string>  redirect;
+        std::pair<int, std::string>  redirect;
 
     private:
 };
