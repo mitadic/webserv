@@ -4,7 +4,10 @@
 #include <fstream>
 #include <arpa/inet.h>
 
-std::string trim(const std::string& str)
+/**
+ * @brief Removes trailing and leading spaces from a string
+ */
+std::string trim(const std::string & str)
 {
     size_t first = str.find_first_not_of(" \t");
     if (first == std::string::npos)
@@ -13,6 +16,9 @@ std::string trim(const std::string& str)
     return str.substr(first, (last - first + 1));
 }
 
+/**
+ * @brief Loads (the config) file into a stringstream
+ */
 std::stringstream load_file(const std::string & filename)
 {
     std::ifstream       file(filename);
@@ -28,8 +34,9 @@ std::stringstream load_file(const std::string & filename)
     return (content);
 }
 
-/* Function for parsing any type of config file */
-//note: same host and port names
+/**
+ * @brief Parses the config file into a vector of server blocks
+ */
 void Config::parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks)
 {
     std::string         line;
@@ -56,6 +63,9 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
     // iterate through serverblocks and remove double entries (same host and port)
 }
 
+/**
+ * @brief Parses one server {...} part of the config file
+ */
 void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
     while (getline(content, line))
@@ -89,7 +99,7 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
             else if (directive == "max_client_body_size")
             {
                 // check value
-                block.max_client_body = std::stoi(value);
+                block.max_client_body = std::atoi(value.c_str());
             }
             else if (directive == "location")
             {
