@@ -34,11 +34,13 @@ namespace Config {
         void parse_autoindex(Location & block, std::string & value);
         void parse_root(Location & block, std::string & value);
         void parse_index(Location & block, std::string & value);
+        std::string check_location(Location & block, std::string & value);
 
         void parse_client_body(ServerBlock & block, std::string & value);
         void parse_error_page(ServerBlock & block, std::string & value);
         void parse_host(ServerBlock & block, std::string & value);
         void parse_port(ServerBlock & block, std::string & value);
+;
 };
 
 

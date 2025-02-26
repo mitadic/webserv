@@ -113,12 +113,11 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
 
         if (line == "}") // end of server block
             return ;
-        else if (line[line.size() - 1] == ';' 
-            || (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ';'
-            {
-                line = line.substr(0, line.size() - 1);
-                line = trim(line);
-            }   
+        else if (line[line.size() - 1] == ';') // remove ';'
+        {
+            line = line.substr(0, line.size() - 1);
+            line = trim(line);
+        }   
         else
             throw std::runtime_error("in server block: missing semicolon: " + line);
         parse_server_block_directives(line, block, content);
@@ -166,11 +165,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
-    if (line.find(' ') != std::string::npos)
-        throw std::runtime_error("invalid path");
-    // optional: check if location path and syntax are valid
-    block.location = line;
-
+    block.location = check_location(block, line);
     while (getline(content, line))
     {
         line = trim(line); // remove unnecessary whitespaces
@@ -249,6 +244,24 @@ void    Config::parse_cgi_extension(Location & block, std::string & value)
             block.cgi_extensions.push_back(extension);
         token = std::strtok(nullptr, " ");
     }
+}
+
+std::string    Config::check_location(Location & block, std::string & value)
+{ 
+    std::string name;
+    char *str = std::strcpy(str, value.c_str());
+    char *token = std::strtok(str, " ");
+    name = token;
+    // optional: check if path has correct syntzax
+    if (!token)
+        throw std::runtime_error("Location: missing location name");
+    token = std::strtok(nullptr, " ");
+    if (std::strcmp(token, "{"))
+        throw std::runtime_error("Location: missing curly bracket");
+    token = std::strtok(nullptr, " ");
+    if (token)
+        throw std::runtime_error("Location: too many arguments");
+    return (name);
 }
 
 void    Config::parse_redirect(Location & block, std::string & value)
