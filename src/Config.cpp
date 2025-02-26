@@ -143,44 +143,13 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
         if (directive == "listen")
-        {
-            if (block.port != -1)
-                throw std::runtime_error("server cannot have multiple ports");
-            // optional: add more checks for valid ports
-            if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
-                throw std::runtime_error("invalid port number" + value);
-            block.port = std::atoi(value.c_str());
-        }
+            parse_port(block, value);
         else if (directive == "host")
-        {
-            if (block.host != inet_addr("255.255.255.255"))
-                throw std::runtime_error("host already declared");
-            block.host = inet_addr(value.c_str());
-            // optional: add more checks for valid ip addresses
-            if (block.host == inet_addr("255.255.255.255"))
-                throw std::runtime_error("invalid IP address");
-        }
+            parse_host(block, value);
         else if (directive == "error_page")
-        {
-            std::string code, path;
-            std::stringstream ss(value);
-            if (!getline(ss, code, ' ') || !getline(ss, path) || path.find(' ') != std::string::npos)
-                throw std::runtime_error("in server block: error_page directive requires 2 arguments");
-            if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
-                throw std::runtime_error("invalid error code " + code);
-            // optional: check if path is a valid syntax and valid path
-            if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
-                throw std::runtime_error("error page already exists for " + code);
-            block.error_pages[std::atoi(code.c_str())] = path;
-        }
+            parse_error_page(block, value);
         else if (directive == "client_max_body_size")
-        {
-            if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str()))
-                || (std::strtod(value.c_str(), NULL) > UINT32_MAX))
-                throw std::runtime_error("max body size already declared or invalid size");
-            block.max_client_body = std::atol(value.c_str());
-            // optional: change type or size
-        }
+            parse_client_body(block, value);
         else if (directive == "location")
         {
             Location location;
@@ -329,3 +298,43 @@ void    Config::parse_upload(Location & block, std::string & value)
     block.upload_location = value;
 }
 
+void    Config::parse_client_body(ServerBlock & block, std::string & value)
+{
+    if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str()))
+        || (std::strtod(value.c_str(), NULL) > UINT32_MAX))
+        throw std::runtime_error("max body size already declared or invalid size");
+    block.max_client_body = std::atol(value.c_str());
+    // optional: change type or size
+}
+void Config::parse_error_page(ServerBlock & block, std::string & value)
+{
+    std::string code, path;
+    std::stringstream ss(value);
+    if (!getline(ss, code, ' ') || !getline(ss, path) || path.find(' ') != std::string::npos)
+        throw std::runtime_error("in server block: error_page directive requires 2 arguments");
+    if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
+        throw std::runtime_error("invalid error code " + code);
+    // optional: check if path is a valid syntax and valid path
+    if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
+        throw std::runtime_error("error page already exists for " + code);
+    block.error_pages[std::atoi(code.c_str())] = path;
+}
+
+void Config::parse_host(ServerBlock & block, std::string & value)
+{
+    if (block.host != inet_addr("255.255.255.255"))
+        throw std::runtime_error("host already declared");
+    block.host = inet_addr(value.c_str());
+    // optional: add more checks for valid ip addresses
+    if (block.host == inet_addr("255.255.255.255"))
+        throw std::runtime_error("invalid IP address");
+}
+void Config::parse_port(ServerBlock & block, std::string & value)
+{
+    if (block.port != -1)
+        throw std::runtime_error("server cannot have multiple ports");
+    // optional: add more checks for valid ports
+    if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
+        throw std::runtime_error("invalid port number" + value);
+    block.port = std::atoi(value.c_str());
+}
