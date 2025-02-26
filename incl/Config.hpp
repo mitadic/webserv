@@ -15,6 +15,11 @@
 
 # define DEFAULT_CONF "conf/default.conf"
 
+typedef enum e_path {
+        LOCATION,
+        ROOT,
+} t_path;
+
 namespace Config {
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
@@ -40,8 +45,7 @@ namespace Config {
         void parse_error_page(ServerBlock & block, std::string & value);
         void parse_host(ServerBlock & block, std::string & value);
         void parse_port(ServerBlock & block, std::string & value);
-;
+        void check_valid_path(std::string path, t_path type);
 };
-
 
 #endif

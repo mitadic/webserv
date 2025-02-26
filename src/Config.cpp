@@ -262,13 +262,13 @@ std::string    Config::check_location(Location & block, std::string & value)
     std::strcpy(str, value.c_str());
     char *token = std::strtok(str, " ");
     name = token;
-    // optional: check if path has correct syntax
     if (!token)
         throw std::runtime_error("Location: missing location name");
     token = std::strtok(nullptr, " ");
     if (token)
         throw std::runtime_error("Location: too many arguments");
     Log::log("inside check loc");
+    check_valid_path(name, LOCATION);
     return (name);
 }
 
@@ -297,14 +297,14 @@ void    Config::parse_index(Location & block, std::string & value)
 {
     if (block.index.empty() == false)
         throw std::runtime_error("double occurrence of 'index'");
-    // check if valid, if contains spaces etc.
+    check_valid_path(value, ROOT);
     block.index = value;
 }
 
 
 void    Config::parse_root(Location & block, std::string & value)
 {
-    // check if valid, if contains spaces etc.
+    check_valid_path(value, ROOT);
     if (block.root.empty() == false)
         throw std::runtime_error("double occurrence of 'root'");
     block.root = value;
@@ -314,7 +314,7 @@ void    Config::parse_upload(Location & block, std::string & value)
 {
     if (block.upload_location.empty() == false)
         throw std::runtime_error("double occurrence of 'upload'");
-    // check if path is valid or contains spaces etc.
+    check_valid_path(value, ROOT);
     block.upload_allowed = true;
     block.upload_location = value;
 }
@@ -331,11 +331,11 @@ void Config::parse_error_page(ServerBlock & block, std::string & value)
 {
     std::string code, path;
     std::stringstream ss(value);
-    if (!getline(ss, code, ' ') || !getline(ss, path) || path.find(' ') != std::string::npos)
+    if (!getline(ss, code, ' ') || !getline(ss, path))
         throw std::runtime_error("in server block: error_page directive requires 2 arguments");
     if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
         throw std::runtime_error("invalid error code " + code);
-    // optional: check if path is a valid syntax and valid path
+    check_valid_path(path, ROOT);
     if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
         throw std::runtime_error("error page already exists for " + code);
     block.error_pages[std::atoi(code.c_str())] = path;
@@ -358,4 +358,17 @@ void Config::parse_port(ServerBlock & block, std::string & value)
     if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
         throw std::runtime_error("invalid port number" + value);
     block.port = std::atoi(value.c_str());
+}
+
+/**
+ * @brief Checks if root or location name have a valid syntax
+ */
+void Config::check_valid_path(std::string path, t_path type)
+{
+    if (path[0] != '/')
+        throw std::runtime_error("Invalid path: absolute path has to start with '/'");
+    if (type == ROOT && path[path.size() - 1] == '/')
+        throw std::runtime_error("Invalid path: root should not end with '/'");
+    if (path.find("//") || path.find_first_of("*?$\\% ") != std::string::npos)
+        throw std::runtime_error("Invalid path: contains '//' or one of the characters ' *?$\\%'");
 }
