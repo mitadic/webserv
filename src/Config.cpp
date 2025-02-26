@@ -64,6 +64,7 @@ std::stringstream Config::load_file(const std::string & filename)
  */
 void Config::parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks)
 {
+    Log::log("inside parse config");
     std::string         line;
     std::stringstream   content;
 
@@ -105,6 +106,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
  */
 void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
+    Log::log("inside parse server block");
     while (getline(content, line))
     {
         line = trim(line); // remove abundant whitespaces and comments
@@ -113,7 +115,8 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
 
         if (line == "}") // end of server block
             return ;
-        else if (line[line.size() - 1] == ';') // remove ';'
+        else if (line[line.size() - 1] == ';' 
+            || (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ';'
         {
             line = line.substr(0, line.size() - 1);
             line = trim(line);
@@ -137,6 +140,7 @@ int Config::has_only_digits(char *str)
 
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
+    Log::log("inside parse server block directives");
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
@@ -165,6 +169,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
+    Log::log("inside parse location");
     block.location = check_location(block, line);
     while (getline(content, line))
     {
@@ -184,6 +189,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
+    Log::log("inside parse location block directives");
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
@@ -214,7 +220,8 @@ void    Config::parse_allowed_methods(Location & block, std::string & value)
     if (block.get == true || block.post == true || block.del == true)
         throw std::runtime_error("double occurrence of 'allowed_methods'");
 
-    char *str = std::strcpy(str, value.c_str());
+    char str[value.size() + 1];
+    std::strcpy(str, value.c_str());
     char *token = std::strtok(str, " ");
     while (token)
     {
@@ -235,7 +242,8 @@ void    Config::parse_cgi_extension(Location & block, std::string & value)
     if (block.cgi_extensions.empty() == false)
         throw std::runtime_error("double declaration of 'cgi_extension'");
         
-    char *str = std::strcpy(str, value.c_str());
+    char str[value.size() + 1];
+    std::strcpy(str, value.c_str());
     char *token = std::strtok(str, " ");
     while (token)
     {
@@ -249,18 +257,18 @@ void    Config::parse_cgi_extension(Location & block, std::string & value)
 std::string    Config::check_location(Location & block, std::string & value)
 { 
     std::string name;
-    char *str = std::strcpy(str, value.c_str());
+
+    char str[value.size() + 1];
+    std::strcpy(str, value.c_str());
     char *token = std::strtok(str, " ");
     name = token;
-    // optional: check if path has correct syntzax
+    // optional: check if path has correct syntax
     if (!token)
         throw std::runtime_error("Location: missing location name");
     token = std::strtok(nullptr, " ");
-    if (std::strcmp(token, "{"))
-        throw std::runtime_error("Location: missing curly bracket");
-    token = std::strtok(nullptr, " ");
     if (token)
         throw std::runtime_error("Location: too many arguments");
+    Log::log("inside check loc");
     return (name);
 }
 
