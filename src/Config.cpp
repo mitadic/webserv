@@ -92,12 +92,27 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
  */
 void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
+    Log::log("Before validation:");
+    Log::log(server_blocks);
     std::vector<ServerBlock>::iterator server;
+    std::map<int, in_addr_t> host_port_combo;
     for (server = server_blocks.begin(); server != server_blocks.end(); ++server)
     {
         if (server->port == -1 || server->host == inet_addr("255.255.255.255") || server->max_client_body == 0)
             throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
-    // check for same hosts and ports
+        // check for same hosts and ports
+        // check if root exists => does 1 root always have to exist?
+        if (host_port_combo.find(server->port) != host_port_combo.end())
+        {
+            if (host_port_combo[server->port] == server->host)
+            {
+                Log::log("same host-port combination, removing server block...");
+                server = server_blocks.erase(server); // remove server block from blocks
+                server--; // adjust iterator
+            }
+        }
+        else 
+            host_port_combo[server->port] = server->host;
     }
 }
 
@@ -180,7 +195,10 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
         if (line == "}") // end of block
             return ;
         else if (line[line.size() - 1] == ';') // check if ';' is there and remove it from the line
+        {
             line = line.substr(0, line.size() - 1);
+            line = trim(line);
+        } 
         else
             throw std::runtime_error("in location block: missing semicolon: " + line);
         parse_location_block_directives(line, block, content);
