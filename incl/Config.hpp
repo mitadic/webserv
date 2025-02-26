@@ -45,7 +45,7 @@ namespace Config {
         void parse_error_page(ServerBlock & block, std::string & value);
         void parse_host(ServerBlock & block, std::string & value);
         void parse_port(ServerBlock & block, std::string & value);
-        void check_valid_path(std::string path, t_path type);
+        void check_valid_path(std::string & path, t_path type);
 };
 
 #endif

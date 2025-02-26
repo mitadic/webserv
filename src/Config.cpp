@@ -22,7 +22,7 @@ std::string Config::trim(const std::string & str)
     if (first == std::string::npos)
         return ""; // string is all whitespace
     size_t last = result.find_last_not_of(" ");
-    return (result.substr(first, (last - first + 1)));
+    result = result.substr(first, (last - first + 1));
 
     // replace consecutive spaces with single space
     std::string cleaned;
@@ -267,7 +267,6 @@ std::string    Config::check_location(Location & block, std::string & value)
     token = std::strtok(nullptr, " ");
     if (token)
         throw std::runtime_error("Location: too many arguments");
-    Log::log("inside check loc");
     check_valid_path(name, LOCATION);
     return (name);
 }
@@ -297,7 +296,9 @@ void    Config::parse_index(Location & block, std::string & value)
 {
     if (block.index.empty() == false)
         throw std::runtime_error("double occurrence of 'index'");
-    check_valid_path(value, ROOT);
+    if (value != "index.html")
+        throw std::runtime_error("expected 'index.html'");
+    // optional: allow index.htm besides index.html
     block.index = value;
 }
 
@@ -363,12 +364,13 @@ void Config::parse_port(ServerBlock & block, std::string & value)
 /**
  * @brief Checks if root or location name have a valid syntax
  */
-void Config::check_valid_path(std::string path, t_path type)
+void Config::check_valid_path(std::string & path, t_path type)
 {
+    Log::log(path);
     if (path[0] != '/')
         throw std::runtime_error("Invalid path: absolute path has to start with '/'");
     if (type == ROOT && path[path.size() - 1] == '/')
         throw std::runtime_error("Invalid path: root should not end with '/'");
-    if (path.find("//") || path.find_first_of("*?$\\% ") != std::string::npos)
+    if (path.find("//") != std::string::npos || path.find_first_of("*?$\\% ") != std::string::npos)
         throw std::runtime_error("Invalid path: contains '//' or one of the characters ' *?$\\%'");
 }
