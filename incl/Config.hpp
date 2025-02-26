@@ -21,6 +21,7 @@ typedef enum e_path {
 } t_path;
 
 namespace Config {
+        // Parsing
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
         void parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content);
@@ -29,9 +30,12 @@ namespace Config {
         void validate_blocks(std::vector<ServerBlock> & server_blocks);
         std::stringstream load_file(const std::string & filename);
         
-        // utils -> later to be added to namespace Utils
+        // Utils
         std::string trim(const std::string & str);
         int has_only_digits(char *str);
+        void check_valid_path(std::string & path, t_path type);
+
+        // Location block utils
         void parse_allowed_methods(Location & block, std::string & value);
         void parse_cgi_extension(Location & block, std::string & value);
         void parse_redirect(Location & block, std::string & value);
@@ -41,11 +45,12 @@ namespace Config {
         void parse_index(Location & block, std::string & value);
         std::string check_location(Location & block, std::string & value);
 
+        // Server block utils
         void parse_client_body(ServerBlock & block, std::string & value);
         void parse_error_page(ServerBlock & block, std::string & value);
         void parse_host(ServerBlock & block, std::string & value);
         void parse_port(ServerBlock & block, std::string & value);
-        void check_valid_path(std::string & path, t_path type);
+        
 };
 
 #endif

@@ -55,7 +55,7 @@ std::stringstream Config::load_file(const std::string & filename)
         throw std::runtime_error("couldn't open config file");
     content << file.rdbuf();
     file.close();
-    Log::log("Loaded config file: " + filename);
+    Log::log("loaded config file: " + filename);
     return (content);
 }
 
@@ -94,14 +94,16 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
     Log::log("Before validation:");
     Log::log(server_blocks);
+    
+    if (server_blocks.empty())
+        throw std::runtime_error("Empty vector of server blocks");
+
     std::vector<ServerBlock>::iterator server;
     std::map<int, in_addr_t> host_port_combo;
     for (server = server_blocks.begin(); server != server_blocks.end(); ++server)
     {
         if (server->port == -1 || server->host == inet_addr("255.255.255.255") || server->max_client_body == 0)
             throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
-        // check for same hosts and ports
-        // check if root exists => does 1 root always have to exist?
         if (host_port_combo.find(server->port) != host_port_combo.end())
         {
             if (host_port_combo[server->port] == server->host)
@@ -113,6 +115,19 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
         }
         else 
             host_port_combo[server->port] = server->host;
+        if (server->locations.empty())
+            continue ;
+        //optional: throw std::runtime_error("missing location block inside server block");
+        std::vector<Location>::iterator location;
+        for (location = server->locations.begin(); location != server->locations.end(); ++location)
+        {
+            continue ;
+            // go through location blocks
+            // optional: check if root / exists
+            // optional: check if location is empty?
+            // sort by prefix: longest -> shortest
+            // error for same prefixes
+        }
     }
 }
 
@@ -140,7 +155,6 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
             throw std::runtime_error("in server block: missing semicolon: " + line);
         parse_server_block_directives(line, block, content);
     }
-    // iterate through locations and remove double entries (same name or root?)
 }
 
 int Config::has_only_digits(char *str)
@@ -155,7 +169,6 @@ int Config::has_only_digits(char *str)
 
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
-    Log::log("inside parse server block directives");
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
@@ -184,14 +197,16 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
-    Log::log("inside parse location");
     block.location = check_location(block, line);
+    int directive_count = 0;
     while (getline(content, line))
     {
         line = trim(line); // remove unnecessary whitespaces
         if (line.empty()) // skip empty lines
             continue ;
 
+        if (line == "}" && directive_count == 0)
+            throw std::runtime_error("empty location block");
         if (line == "}") // end of block
             return ;
         else if (line[line.size() - 1] == ';') // check if ';' is there and remove it from the line
@@ -202,12 +217,12 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
         else
             throw std::runtime_error("in location block: missing semicolon: " + line);
         parse_location_block_directives(line, block, content);
+        directive_count++;
     }
 }
 
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
-    Log::log("inside parse location block directives");
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
@@ -243,14 +258,14 @@ void    Config::parse_allowed_methods(Location & block, std::string & value)
     char *token = std::strtok(str, " ");
     while (token)
     {
-        if (std::strcmp(token, "GET") == 0)
+        if (std::strcmp(token, "GET") == 0 && block.get == false)
             block.get = true;
-        else if (std::strcmp(token, "POST") == 0)
+        else if (std::strcmp(token, "POST") == 0 && block.post == false)
             block.post = true;
-        else if (std::strcmp(token, "DELETE") == 0)
+        else if (std::strcmp(token, "DELETE") == 0 && block.del == false)
             block.del = true;
         else
-            throw std::runtime_error("Unknown method in location block");
+            throw std::runtime_error("Unknown or duplicate method in location block");
         token = std::strtok(nullptr, " ");
     }
 }
@@ -297,6 +312,8 @@ void    Config::parse_redirect(Location & block, std::string & value)
     std::stringstream ss(value);
     if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
         throw std::runtime_error("in location block: return directive requires 2 arguments");
+    if (block.location == url)
+        throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
     block.redirect = std::make_pair(std::atoi(code.c_str()), url);
 }
 
@@ -355,6 +372,7 @@ void Config::parse_error_page(ServerBlock & block, std::string & value)
     if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
         throw std::runtime_error("invalid error code " + code);
     check_valid_path(path, ROOT);
+    // optional: check if the path really does exist with stat()
     if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
         throw std::runtime_error("error page already exists for " + code);
     block.error_pages[std::atoi(code.c_str())] = path;
@@ -373,10 +391,12 @@ void Config::parse_port(ServerBlock & block, std::string & value)
 {
     if (block.port != -1)
         throw std::runtime_error("server cannot have multiple ports");
-    // optional: add more checks for valid ports
     if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
         throw std::runtime_error("invalid port number" + value);
     block.port = std::atoi(value.c_str());
+    if (block.port > 65535 || block.port < 0)
+        throw std::runtime_error("invalid port number range");
+    // optional: add more checks for valid ports
 }
 
 /**
