@@ -8,6 +8,7 @@
 # include <sstream>
 # include <fstream>
 # include <arpa/inet.h>
+# include <limits>
 
 # include "Log.hpp"
 # include "ServerBlock.hpp"
@@ -26,6 +27,13 @@ namespace Config {
         // utils -> later to be added to namespace Utils
         std::string trim(const std::string & str);
         int has_only_digits(char *str);
+        void parse_allowed_methods(Location & block, std::string & value);
+        void parse_cgi_extension(Location & block, std::string & value);
+        void parse_redirect(Location & block, std::string & value);
+        void parse_upload(Location & block, std::string & value);
+        void parse_autoindex(Location & block, std::string & value);
+        void parse_root(Location & block, std::string & value);
+        void parse_index(Location & block, std::string & value);
 };
 
 

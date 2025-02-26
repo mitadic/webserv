@@ -175,10 +175,11 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
         }
         else if (directive == "client_max_body_size")
         {
-            if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str())))
+            if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str()))
+                || (std::strtod(value.c_str(), NULL) > UINT32_MAX))
                 throw std::runtime_error("max body size already declared or invalid size");
             block.max_client_body = std::atol(value.c_str());
-            // optional: check if size is too big or too small, check for overflow, change type
+            // optional: change type or size
         }
         else if (directive == "location")
         {
@@ -224,70 +225,107 @@ void Config::parse_location_block_directives(std::string & line, Location & bloc
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
         if (directive == "root")
-        {
-            // check if valid, if contains spaces etc.
-            if (block.root.empty() == false)
-                throw std::runtime_error("double occurrence of 'root'");
-            block.root = value; 
-        }
+            parse_root(block, value); 
         else if (directive == "index")
-        {
-            if (block.index.empty() == false)
-                throw std::runtime_error("double occurrence of 'index'");
-            // check if valid, if contains spaces etc.
-            block.index = value;
-        }
+            parse_index(block, value);
         else if (directive == "upload")
-        {
-            if (block.upload_location.empty() == false)
-                throw std::runtime_error("double occurrence of 'upload'");
-            // check if path is valid or contains spaces etc.
-            block.upload_allowed = true;
-            block.upload_location = value;
-        }
+            parse_upload(block, value);
         else if (directive == "allowed_methods")
-        {
-            if (block.get == true || block.post == true || block.del == true)
-                throw std::runtime_error("double occurrence of 'allowed_methods'");
-            // parse methods with strtok
-            if (value.find("GET") != std::string::npos) //hardcoded solution tb removed
-                block.get = true;
-            if (value.find("POST") != std::string::npos)
-                block.post = true;
-            if (value.find("DELETE") != std::string::npos)
-                block.del = true;
-        }
+            parse_allowed_methods(block, value);
         else if (directive == "autoindex")
-        {
-            if (block.autoindex == true)
-                throw std::runtime_error("double declaration of 'autoindex'");
-            if (value == "on")
-                block.autoindex = true;
-            else if (value != "off")
-                throw std::runtime_error("in location block: autoindex requires value 'on' or 'off'");
-        }
+            parse_autoindex(block, value);
         else if (directive == "cgi_extension")
-        {
-            if (block.cgi_extensions.empty() == false)
-                throw std::runtime_error("double declaration of 'cgi_extension'");
-            // parse extensions with strtok
-            std::string extension = ".py"; // hardcoded solution tb removed
-            block.cgi_extensions.push_back(extension);
-        }
+            parse_cgi_extension(block, value);
         else if (directive == "return")
-        {
-            if (block.redirect.second.empty() == false)
-                throw std::runtime_error("double declaration of 'return'");
-            std::string code, url;
-            std::stringstream ss(value);
-            if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
-                throw std::runtime_error("in location block: return directive requires 2 arguments");
-            block.redirect = std::make_pair(std::atoi(code.c_str()), url);
-        }
+            parse_redirect(block, value);
         else
             throw std::runtime_error("in location block: unknown directive: " + directive);
     }
     else
         throw std::runtime_error("in location block: unexpected line: " + line);
+}
+
+void    Config::parse_allowed_methods(Location & block, std::string & value)
+{
+    if (block.get == true || block.post == true || block.del == true)
+        throw std::runtime_error("double occurrence of 'allowed_methods'");
+
+    char *str = std::strcpy(str, value.c_str());
+    char *token = std::strtok(str, " ");
+    while (token)
+    {
+        if (std::strcmp(token, "GET") == 0)
+            block.get = true;
+        else if (std::strcmp(token, "POST") == 0)
+            block.post = true;
+        else if (std::strcmp(token, "DELETE") == 0)
+            block.del = true;
+        else
+            throw std::runtime_error("Unknown method in location block");
+        token = std::strtok(nullptr, " ");
+    }
+}
+
+void    Config::parse_cgi_extension(Location & block, std::string & value)
+{
+    if (block.cgi_extensions.empty() == false)
+        throw std::runtime_error("double declaration of 'cgi_extension'");
+        
+    char *str = std::strcpy(str, value.c_str());
+    char *token = std::strtok(str, " ");
+    while (token)
+    {
+        // optional: implement checks if extension is accepted
+        std::string extension = token;
+            block.cgi_extensions.push_back(extension);
+        token = std::strtok(nullptr, " ");
+    }
+}
+
+void    Config::parse_redirect(Location & block, std::string & value)
+{
+    if (block.redirect.second.empty() == false)
+        throw std::runtime_error("double declaration of 'return'");
+    std::string code, url;
+    std::stringstream ss(value);
+    if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
+        throw std::runtime_error("in location block: return directive requires 2 arguments");
+    block.redirect = std::make_pair(std::atoi(code.c_str()), url);
+}
+
+void    Config::parse_autoindex(Location & block, std::string & value)
+{
+    if (block.autoindex == true)
+        throw std::runtime_error("double declaration of 'autoindex'");
+    if (value == "on")
+        block.autoindex = true;
+    else if (value != "off")
+        throw std::runtime_error("in location block: autoindex requires value 'on' or 'off'");
+}
+
+void    Config::parse_index(Location & block, std::string & value)
+{
+    if (block.index.empty() == false)
+        throw std::runtime_error("double occurrence of 'index'");
+    // check if valid, if contains spaces etc.
+    block.index = value;
+}
+
+
+void    Config::parse_root(Location & block, std::string & value)
+{
+    // check if valid, if contains spaces etc.
+    if (block.root.empty() == false)
+        throw std::runtime_error("double occurrence of 'root'");
+    block.root = value;
+}
+
+void    Config::parse_upload(Location & block, std::string & value)
+{
+    if (block.upload_location.empty() == false)
+        throw std::runtime_error("double occurrence of 'upload'");
+    // check if path is valid or contains spaces etc.
+    block.upload_allowed = true;
+    block.upload_location = value;
 }
 
