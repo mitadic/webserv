@@ -24,7 +24,6 @@ std::stringstream Config::load_file(const std::string & filename)
  */
 void Config::parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks)
 {
-    Log::log("inside parse config");
     std::string         line;
     std::stringstream   content;
 
@@ -36,6 +35,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
             continue ;
         if (line == "server {")
         {
+            Log::log("new server block");
             ServerBlock server_block;
             parse_server_block(server_block, content, line);
             server_blocks.push_back(server_block);
@@ -48,7 +48,8 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
 }
 
 /**
- * @brief Loops through server blocks and checks for missing directives
+ * @brief Loops through server blocks and checks for missing directives,
+ * for same host-port combinations and for same prefixes in location blocks
  */
 void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
@@ -58,36 +59,35 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
     if (server_blocks.empty())
         throw std::runtime_error("Empty vector of server blocks");
 
-    std::vector<ServerBlock>::iterator server;
+    std::vector<ServerBlock>::iterator server_it;
     std::map<int, in_addr_t> host_port_combo;
-    for (server = server_blocks.begin(); server != server_blocks.end(); ++server)
+    for (server_it = server_blocks.begin(); server_it != server_blocks.end(); ++server_it)
     {
-        if (server->port == -1 || server->host == ft_inet("255.255.255.255") || server->max_client_body == 0)
+        if (server_it->port == -1 || server_it->host == ft_inet("255.255.255.255") || server_it->max_client_body == 0)
             throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
-        if (host_port_combo.find(server->port) != host_port_combo.end())
+        if (host_port_combo.find(server_it->port) != host_port_combo.end())
         {
-            if (host_port_combo[server->port] == server->host)
+            if (host_port_combo[server_it->port] == server_it->host)
             {
                 Log::log("same host-port combination, removing server block...");
-                server = server_blocks.erase(server); // remove server block from blocks
-                server--; // adjust iterator
+                server_it = server_blocks.erase(server_it); // remove server block from blocks
+                server_it--; // adjust iterator
             }
         }
         else 
-            host_port_combo[server->port] = server->host;
-        if (server->locations.empty())
+            host_port_combo[server_it->port] = server_it->host;
+        if (server_it->locations.empty())
             continue ;
-        //optional: throw std::runtime_error("missing location block inside server block");
-        std::vector<Location>::iterator location;
-        for (location = server->locations.begin(); location != server->locations.end(); ++location)
+        // optional: throw std::runtime_error("missing location block inside server block");
+        std::sort(server_it->locations.begin(), server_it->locations.end(), compare_prefix); // sort by prefix: longest -> shortest
+        std::vector<Location>::iterator location_it, tmp;
+        for (location_it = server_it->locations.begin(); location_it != server_it->locations.end(); ++location_it)
         {
-            continue ;
-            // go through location blocks
+            if ((location_it + 1) != server_it->locations.end() && same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
+                throw std::runtime_error("locations with same prefix cannot override each other");
+
             // optional: check if root / exists
             // optional: check if location is empty?
-            // sort by prefix: longest -> shortest
-            // error for same prefixes
-            
         }
     }
 }
@@ -97,7 +97,6 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
  */
 void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
-    Log::log("inside parse server block");
     while (getline(content, line))
     {
         line = trim(line); // remove abundant whitespaces and comments
@@ -118,6 +117,9 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
     }
 }
 
+/**
+ * @brief Parses the directives inside a server block e.g. listen, error_page
+ */
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
     std::string         directive, value;
@@ -134,10 +136,10 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
             parse_client_body(block, value);
         else if (directive == "location")
         {
+            Log::log("new location inside server block");
             Location location;
             parse_location(value, location, content);
             block.locations.push_back(location);
-            Log::log("New location inside server block added");
         }
         else
             throw std::runtime_error("in sever block: unknown directive: " + directive);
@@ -146,6 +148,9 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
         throw std::runtime_error("in sever block: unexpected line: " + line);
 }
 
+/**
+ * @brief Parses the location block inside a server block
+ */
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
     block.location = check_location_prefix(block, line);
@@ -172,6 +177,9 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
     }
 }
 
+/**
+ * @brief Parses the directives inside a location block e.g. root, index
+ */
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
     std::string         directive, value;

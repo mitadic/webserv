@@ -46,13 +46,14 @@ namespace Config {
         void parse_root(Location & block, std::string & value);
         void parse_index(Location & block, std::string & value);
         std::string check_location_prefix(Location & block, std::string & value);
+        bool same_prefix(const Location & a, const Location & b);
+        bool compare_prefix(const Location & a, const Location & b);
 
         // Server block utils
         void parse_client_body(ServerBlock & block, std::string & value);
         void parse_error_page(ServerBlock & block, std::string & value);
         void parse_host(ServerBlock & block, std::string & value);
-        void parse_port(ServerBlock & block, std::string & value);
-        
+        void parse_port(ServerBlock & block, std::string & value);   
 };
 
 #endif

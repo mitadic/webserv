@@ -106,3 +106,13 @@ std::string    Config::check_location_prefix(Location & block, std::string & val
     check_valid_path(name, LOCATION);
     return (name);
 }
+
+bool Config::compare_prefix(const Location & a, const Location & b)
+{
+    return (a.location.size() > b.location.size());
+}
+
+bool Config::same_prefix(const Location & a, const Location & b)
+{
+    return (a.location == b.location);
+}

@@ -41,7 +41,6 @@ std::string Config::ft_inet_ntoa(in_addr_t ip)
  */
 void Config::check_valid_path(std::string & path, t_path type)
 {
-    Log::log(path);
     if (path[0] != '/')
         throw std::runtime_error("Invalid path: absolute path has to start with '/'");
     if (type == ROOT && path[path.size() - 1] == '/')

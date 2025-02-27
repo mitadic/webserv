@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
             Config::parse_config(argv[1], server_blocks);
         else
             throw std::runtime_error("usage: ./webserv [config_file]");
-        Log::log("Server blocks are ready:");
+        Log::log("\nServer blocks are ready:");
         Log::log(server_blocks);
         //engine.run();
     }
