@@ -1,0 +1,152 @@
+#include "../incl/HttpHeaders.hpp"
+
+const char *http_header_names[HTTP_HEADERS_N] =
+{
+	"Accept",
+	"Accept-Charset",
+	"Accept-Encoding",
+	"Accept-Language",
+	"Accept-Ranges",
+	"Age",					// age-value WHERE age-value = delta-seconds
+	"Allow",				// #Method 
+	"Authorization",
+	"Cache-Control",
+	"Connection",
+	"Content-Encoding",
+	"Content-Language",
+	"Content-Length",
+	"Content-Location",
+	"Content-MD5",
+	"Content-Range",
+	"Content-Type",
+	"Date",
+	"ETag",
+	"Expect",
+	"Expires",
+	"From",
+	"Host",
+	"If-Match",
+	"If-Modified-Since",
+	"If-None-Match",
+	"If-Range",
+	"If-Unmodified-Since",
+	"Last-Modified",
+	"Location",
+	"Max-Forwards",
+	"Pragma",
+	"Proxy-Authenticate",
+	"Proxy-Authorization",
+	"Range",
+	"Referer",
+	"Retry-After",
+	"Server",
+	"TE",
+	"Trailer",
+	"Transfer-Encoding",
+	"Upgrade",
+	"User-Agent",
+	"Vary",
+	"Via",
+	"Warning",
+	"WWW-Authenticate"
+};
+
+const char *http_repeatable_headers[26] =
+{
+	// general
+	"Cache-Control",
+	"Connection",
+	"Pragma",
+	"Trailer",
+	"Transfer-Encoding",
+	"Upgrade",
+	"Via",
+	"Warning",
+
+	// request
+	"Accept",
+	"Accept-Charset",
+	"Accept-Encoding",
+	"Accept-Language",
+	"Expect",
+	"If-Match",
+	"If-None-Match",
+	"Range",
+	"TE",
+	"User-Agent", // rarely
+	
+	// response
+	"Accept-Ranges",
+	"Proxy-Authenticate",
+	"Server",  // rarely
+	"Vary",
+	"WWW-Authenticate",
+
+	// entity
+	"Allow",
+	"Content-Encoding",
+	"Content-Language"
+};
+
+const char *http_general_headers[HTTP_GENERAL_HEADERS_N] =
+{
+	"Cache-Control",		// 1#( cache-directive )
+	"Connection",			// 1#( token )
+	"Date",
+	"Pragma",
+	"Trailer",
+	"Transfer-Encoding",
+	"Upgrade",
+	"Via",
+	"Warning"
+};
+
+const char *http_request_headers[HTTP_REQUEST_HEADERS_N] =
+{
+	"Accept",				// #( media-range [ accept-params ] )
+	"Accept-Charset",		// 1#( ( charset | "*" )[ ";" "q" "=" qvalue ] )
+	"Accept-Encoding",		// 1#( content-coding [ ";" "q" "=" qvalue ] )
+	"Accept-Language",		// 1#( language-range [ ";" "q" "=" qvalue ] )
+	"Authorization",
+	"Expect",
+	"From",
+	"Host",
+	"If-Match",
+	"If-Modified-Since",
+	"If-None-Match",
+	"If-Range",
+	"If-Unmodified-Since",
+	"Max-Forwards",
+	"Proxy-Authorization",
+	"Range",
+	"Referer",
+	"TE",
+	"User-Agent"
+};
+
+const char *http_response_headers[HTTP_RESPONSE_HEADERS_N] =
+{
+	"Accept-Ranges",		// 1#( range-unit | "none" )
+	"Age",
+	"ETag",
+	"Location",
+	"Proxy-Authenticate",
+	"Retry-After",
+	"Server",
+	"Vary",
+	"WWW-Authenticate"
+};
+
+const char *http_entity_headers[HTTP_ENTITY_HEADERS_N] =
+{
+	"Allow",
+	"Content-Encoding",
+	"Content-Language",
+	"Content-Length",
+	"Content-Location",
+	"Content-MD5",
+	"Content-Range",
+	"Content-Type",
+	"Expires",
+	"Last-Modified"
+};

@@ -19,12 +19,12 @@
 #include "Types.hpp"
 #include "Request.hpp"
 #include "CgiHandler.hpp"
+#include "Exceptions.hpp"
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define BUF_SZ 2
-#define OK 0
 
 
 extern volatile std::sig_atomic_t g_signal;  // declaration, 'extern' avoids multiple defs. Init in main.cpp

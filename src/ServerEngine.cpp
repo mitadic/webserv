@@ -113,7 +113,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 	{
 		reqs[idx].cgi.handle_cgi(pfds, pfd_info_map, idx);
 		reqs[idx].cgi_status = READ_PIPE;
-		reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+		reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }";
 	}
 
 	// else if request contains job_id and the job was finished
@@ -124,7 +124,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 	}
 	else if (reqs[idx].request.find("about.html") != reqs[idx].request.npos)
 	{
-		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8\n\n";
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8";
 
 		std::ifstream	fSrc;
 		fSrc.open("./www/three-socketeers/about.html", std::ios::in);
@@ -144,7 +144,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 	}
 	else if (reqs[idx].request.find("styles.css") != reqs[idx].request.npos)
 	{
-		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8\n\n";
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8";
 
 		std::ifstream	fSrc;
 		fSrc.open("./www/three-socketeers/css/styles.css", std::ios::in);
@@ -163,8 +163,9 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 			std::cerr << "File not closed despite statements" << std::endl;
 	}
 	else  // ready to be sending basic HTML back
-	 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
+	 	reqs[idx].response = "Hi. Default non-CGI response.$";
 	
+		 reqs[idx].response += "\r\n\r\n";
 	reqs[idx].request.clear();
 	pfds_it->events = POLLOUT;
 }
@@ -172,6 +173,7 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 void ServerEngine::set_basic_response(std::vector<pollfd>::iterator& pfds_it, int idx, std::string response)
 {
 	reqs[idx].response = response;
+	reqs[idx].response += "\r\n\r\n";
 	reqs[idx].request.clear();
 	pfds_it->events = POLLOUT;
 }
@@ -269,7 +271,13 @@ void ServerEngine::run()
 					reqs[idx].request.append(buf);
 					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if proper HTTP ending
 					{
-						reqs[idx].parse();
+						try {
+							reqs[idx].parse();
+						}
+						catch (std::exception& e) {
+							std::cerr << "Error: " << e.what() << std::endl;
+							reqs[idx].response_status = std::atoi(e.what());
+						}
 						set_response(pfds_it, idx);
 						break;
 					}
@@ -337,9 +345,9 @@ void ServerEngine::run()
 			else if (fd_meta.type == CLIENT_CONNECTION_SOCKET)  // no flag, so CONNECTION_TIMEOUT 
 			{
 				if (!reqs[idx].request.empty())
-					set_basic_response(pfds_it, idx, "HTTP/1.1 400 Bad Request\n");
+					set_basic_response(pfds_it, idx, "HTTP/1.1 400 Bad Request");
 				else  // request is empty, we can close client connection
-					set_basic_response(pfds_it, idx, "HTTP/1.1 408 Request Timeout\n");  // this would need more time
+					set_basic_response(pfds_it, idx, "HTTP/1.1 408 Request Timeout");  // this would need more time
 				reqs[idx].timed_out = true;
 				break;
 			}
