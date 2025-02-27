@@ -15,7 +15,7 @@ std::stringstream Config::load_file(const std::string & filename)
         throw std::runtime_error("couldn't open config file");
     content << file.rdbuf();
     file.close();
-    Log::log("loaded config file: " + filename);
+    Log::log("loaded config file: " + filename, INFO);
     return (content);
 }
 
@@ -35,7 +35,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
             continue ;
         if (line == "server {")
         {
-            Log::log("new server block");
+            Log::log("new server block", DEBUG);
             ServerBlock server_block;
             parse_server_block(server_block, content, line);
             server_blocks.push_back(server_block);
@@ -53,7 +53,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
  */
 void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
-    Log::log("Before validation:");
+    Log::log("Before validation:", DEBUG);
     Log::log(server_blocks);
     
     if (server_blocks.empty())
@@ -69,7 +69,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
         {
             if (host_port_combo[server_it->port] == server_it->host)
             {
-                Log::log("same host-port combination, removing server block...");
+                Log::log("same host-port combination, removing server block...", WARNING);
                 server_it = server_blocks.erase(server_it); // remove server block from blocks
                 server_it--; // adjust iterator
             }
@@ -136,7 +136,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
             parse_client_body(block, value);
         else if (directive == "location")
         {
-            Log::log("new location inside server block");
+            Log::log("new location inside server block", DEBUG);
             Location location;
             parse_location(value, location, content);
             block.locations.push_back(location);
