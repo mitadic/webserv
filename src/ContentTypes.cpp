@@ -1,4 +1,4 @@
-#include "../incl/Types.hpp"
+#include "../incl/ContentTypes.hpp"
 
 const char *content_types[CONTENT_TYPES_N] =
 {

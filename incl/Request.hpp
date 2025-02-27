@@ -6,10 +6,11 @@
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
 #include "StatusCodes.hpp"
+#include "ContentTypes.hpp"
+#include "RequestUtils.hpp"
 
 #define SP " "
 #define LWS_CHARS " \t"
-#define UNRECOGNIZED_HEADER -1
 #define UNINITIALIZED -1
 #define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
 
@@ -29,17 +30,19 @@ public:
 	void	dispatch_header_parser(const int legal_header_idx, std::string& header_val);
 
 
-	std::string host;			// Host: example.com
-	std::string mime_type;		// Content-Type: application/json (refers to own payload)
+	std::string host;
 	std::string request;
+	std::string	request_body;
     std::string response;
 	int			response_status;
 	int			total_sent;
-	long long   content_length;	// Content-Length: 27
+	int			content_length;  // refers to body
+	bool		chunked;
 	int			content_type_idx;
 	int         client_fd;
 	bool		timed_out;
 	bool		await_reconnection;
+	std::vector<std::string> accepted_types;
 
 	char		method;			// GET POST DELETE
 	int			major_http_v;

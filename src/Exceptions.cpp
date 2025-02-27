@@ -1,16 +1,16 @@
 #include "../incl/Exceptions.hpp"
 
 
-BadSyntaxException::BadSyntaxException(int code) : error_code(code) {}
+RequestException::RequestException(int code) : error_code(code) {}
 
 
-const int BadSyntaxException::code() const throw()
+const int RequestException::code() const throw()
 {
 	return error_code;
 }
 
 
-const char* BadSyntaxException::what() const throw()
+const char* RequestException::what() const throw()
 {
 	return status_messages[error_code];
 }

@@ -9,9 +9,9 @@
 #include <cstdlib>		
 #include <cstdio>		// perror()
 
-#define CONTENT_TYPES_N 11
-
-#define OK 0
+#ifndef OK
+# define OK 0
+#endif
 
 #define GET 101
 #define POST 102
@@ -33,5 +33,3 @@ struct pfd_info {
 	int reqs_idx;			// needed only by CONNECTION, PIPE
 	sockaddr_in sockaddr;	// needed only by LISTENER
 };
-
-extern const char *content_types[CONTENT_TYPES_N];

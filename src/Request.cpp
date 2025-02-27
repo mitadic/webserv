@@ -8,6 +8,8 @@ Request::Request() :
 		method(0),
 		client_fd(UNINITIALIZED),
 		content_type_idx(UNINITIALIZED),
+		content_length(UNINITIALIZED),
+		chunked(false),
 		timed_out(false),
 		await_reconnection(false),
 		keep_alive(true),
@@ -55,7 +57,7 @@ void Request::_parse_header_cache_control(std::string& header_val)
 
 void Request::_parse_header_connection(std::string& header_val)
 {
-	std::vector<std::string> values = split(header_val, " \t,");
+	std::vector<std::string> values = split(header_val, " ,\t");
 
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
@@ -78,7 +80,20 @@ void Request::_parse_header_trailer(std::string& header_val)
 {}
 
 void Request::_parse_header_transfer_encoding(std::string& header_val)
-{}
+{
+	std::vector<std::string> values = split(header_val, " ,\t");
+	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
+	{
+		if (this->chunked == true)
+			throw RequestException(CODE_400);  // no transfer-encodings allowed once "chunked" has been set
+		if (*it == "chunked")
+			this->chunked = true;
+		else
+		{
+			;  // placeholder
+		}
+	}
+}
 
 void Request::_parse_header_upgrade(std::string& header_val)
 {}
@@ -90,7 +105,50 @@ void Request::_parse_header_warning(std::string& header_val)
 {}
 
 void Request::_parse_header_accept(std::string& header_val)
-{}
+{
+	std::vector<std::string> values = split(header_val, " ,\t");
+	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
+	{
+		std::vector<std::string> specs = split(*it, ";");  // or use HTTP_SEPARATORS?
+		// here: trim specs[0] for LWS?
+		for (int i = 0; i < CONTENT_TYPES_N; i++)
+		{
+			if (specs[0] == content_types[i])
+			{
+				this->accepted_types.push_back(*it);
+				break;
+			}
+			if (specs[0] == "text/*" || specs[0] == "application/*" || specs[0] == "image/*" || specs[0] == "*/*" )
+			{
+				this->accepted_types.push_back(specs[0]);
+				break;
+			}
+		}
+	}
+
+	// 	A more elaborate example is
+
+	//        Accept: text/plain; q=0.5, text/html,
+	//                text/x-dvi; q=0.8, text/x-c
+
+	//    Verbally, this would be interpreted as "text/html and text/x-c are
+	//    the preferred media types, but if they do not exist, then send the
+	//    text/x-dvi entity, and if that does not exist, send the text/plain
+	//    entity."
+
+	//    Media ranges can be overridden by more specific media ranges or
+	//    specific media types. If more than one media range applies to a given
+	//    type, the most specific reference has precedence. For example,
+
+	//        Accept: text/*, text/html, text/html;level=1, */*
+
+	//    have the following precedence:
+
+	//        1) text/html;level=1
+	//        2) text/html
+	//        3) text/*
+	//        4) */*
+}
 
 void Request::_parse_header_accept_charset(std::string& header_val)
 {}
@@ -118,7 +176,9 @@ void Request::_parse_header_host(std::string& header_val)
 
 	std::string trimmed_s = header_val.substr(start, end - start);
 	if (trimmed_s == "127.0.0.1" || trimmed_s == "0.0.0.0" || trimmed_s == "localhost")
-		host == trimmed_s;
+		this->host == trimmed_s;
+	else
+		throw RequestException(CODE_501);  // since we're not implementing server_names?
 	// port?
 }
 
@@ -165,7 +225,12 @@ void Request::_parse_header_content_language(std::string& header_val)
 {}
 
 void Request::_parse_header_content_length(std::string& header_val)
-{}
+{
+	if (this->content_length != UNINITIALIZED)  // already initialized
+		throw RequestException(CODE_400);
+	if (webserv_atoi_set(header_val, this->content_length) != OK)
+		throw RequestException(CODE_400);
+}
 
 void Request::_parse_header_content_location(std::string& header_val)
 {}
@@ -186,7 +251,7 @@ void Request::_parse_header_content_type(std::string& header_val)
 			return;
 		}
 	}
-	throw BadSyntaxException(CODE_415);
+	throw RequestException(CODE_415);
 }
 
 void Request::_parse_header_expires(std::string& header_val)
@@ -208,7 +273,16 @@ void Request::dispatch_header_parser(const int header_idx, std::string& header_v
 		return;
 	}
 
-	void    (Request::*header_parsers[HTTP_REQUEST_LEGAL_HEADERS_N])(std::string&) = {
+	// gotta do this, some headers only allow 1*DIGIT
+	if (is_empty_crlf(header_val))
+		return;
+	size_t start = header_val.find_first_not_of(LWS_CHARS);
+	size_t end = header_val.size();
+	if (header_val.back() == '\r')
+		end--;
+	std::string trimmed_val = header_val.substr(start, end - start);
+
+	void (Request::*header_parsers[HTTP_REQUEST_LEGAL_HEADERS_N])(std::string&) = {
 		&Request::_parse_header_cache_control,
 		&Request::_parse_header_connection,
 		&Request::_parse_header_date,
@@ -248,31 +322,9 @@ void Request::dispatch_header_parser(const int header_idx, std::string& header_v
 		&Request::_parse_header_expires,
 		&Request::_parse_header_last_modified
     };
-	(this->*header_parsers[header_idx])(header_val);
+	(this->*header_parsers[header_idx])(trimmed_val);
 }
 
-/* Split at first of delimiters. If \r at the end of final token, pop it off */
-std::vector<std::string> split(const std::string& s, const std::string& delimiters)
-{
-	std::vector<std::string> tokens;
-	size_t start = 0;
-	size_t end = 0;
-
-	while (start < s.size())
-	{
-		start = s.find_first_not_of(delimiters, end);	// start looking at 'end'
-		if (start == std::string::npos)
-			break;
-
-		end = s.find_first_of(delimiters, start);		// start looking at 'start'
-		tokens.push_back(s.substr(start, end - start));
-	}
-
-	if (!tokens.empty() && tokens.back().back() == '\r')
-		tokens.back().pop_back();
-
-	return tokens;
-}
 
 // "GET /about.html HTTP/1.1
 // Host: localhost:9991
@@ -304,55 +356,6 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
 //                         of token, separators, and quoted-string>
 // Note: LWS == linear white space
 
-int set_http_v(std::string& num, int& http_v)
-{
-	if (num.empty())
-		return 1;
-	
-	long long res = 0;
-	std::string::iterator it = num.begin();
-	for (; it != num.end() && *it == '0'; it++)  // RFC allows leading 0
-		;
-	if (it == num.end())
-	{
-		http_v = 0;
-		return OK;
-	}
-
-	for (; it != num.end(); it++)
-	{
-		if (!std::isdigit(*it))  // RFC disallows +-, as well as any nondigits
-			return 1;
-		res = res * 10 + (*it - '0');
-		if (res > INT_MAX)
-			return 1;
-	}
-	http_v = res;
-	return OK;
-}
-
-bool is_empty_crlf(std::string& line)
-{
-	// getline() trimmed the '\n'
-	if (line.size() == 0 || (line.size() == 1 && line.back() == '\r'))
-		return true;
-	return false;
-}
-
-bool is_lws(const char c)
-{
-	if (c == 32 || c == 9)
-		return true;
-	return false;
-}
-
-void check_stream(std::istringstream& stream)
-{
-	if (stream.fail() || stream.bad())
-		throw BadSyntaxException(500);
-	if (stream.eof())
-		throw BadSyntaxException(400);
-}
 
 int Request::parse_request_line(std::string& line)
 {
@@ -361,15 +364,15 @@ int Request::parse_request_line(std::string& line)
 		return 1;
 	
 	if (tokens[0] == "GET")
-		method = 0b00000001;
+		this->method = 0b00000001;
 	else if (tokens[0] == "POST")
-		method = 0b00000010;
+		this->method = 0b00000010;
 	else if (tokens[0] == "DELETE")
-		method = 0b00000100;
+		this->method = 0b00000100;
 	else
 		return 1;
 
-	request_location = tokens[1];
+	this->request_location = tokens[1];
 
 	size_t dot = 0;
 	if (tokens[2].substr(0, 5) != "HTTP/")
@@ -378,30 +381,20 @@ int Request::parse_request_line(std::string& line)
 	if (dot == std::string::npos || dot == 5)  // no '.' or begins with '.'
 		return 1;
 	std::string num = tokens[2].substr(5, dot - 5);
-	if (set_http_v(num, major_http_v) != OK)
+	if (set_http_v(num, this->major_http_v) != OK)
 		return 1;
 	num = tokens[2].substr(dot + 1);
-	if (set_http_v(num, minor_http_v) != OK)
+	if (set_http_v(num, this->minor_http_v) != OK)
 		return 1;
 	
 	return OK;
-}
-
-int get_http_header_idx(const std::string& s)
-{
-	for (int i = 0; i < HTTP_HEADERS_N; i++)
-	{
-		if (s == http_header_names[i])
-			return i;
-	}
-	return UNRECOGNIZED_HEADER;
 }
 
 void Request::parse_header_line(std::istringstream& stream, std::string& line)
 {
 	size_t colon_pos = line.find_first_of(":");
 	if (colon_pos == 0 || colon_pos == line.size() || line.find_first_of(HTTP_SEPARATORS) < colon_pos)
-		throw BadSyntaxException(400);
+		throw RequestException(400);
 	const std::string header_key = line.substr(0, colon_pos);
 	std::string header_value = line.substr(colon_pos + 1);
 

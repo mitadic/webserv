@@ -1,6 +1,8 @@
 #include <vector>
 #include <string>
 
+#define UNRECOGNIZED_HEADER -1
+
 #define HTTP_GENERAL_HEADERS_N 9
 #define HTTP_REQUEST_HEADERS_N 19
 #define HTTP_RESPONSE_HEADERS_N 9

@@ -3,14 +3,14 @@
 #include <exception>
 #include "StatusCodes.hpp"
 
-class BadSyntaxException : public std::exception {
+class RequestException : public std::exception {
 
     private:
-        BadSyntaxException();
+        RequestException();
         int error_code;
     
     public:
-        BadSyntaxException(int code);
+        RequestException(int code);
     
         const int code() const throw();
         const char* what() const throw();

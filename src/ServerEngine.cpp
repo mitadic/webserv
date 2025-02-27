@@ -274,9 +274,9 @@ void ServerEngine::run()
 						try {
 							reqs[idx].parse();
 						}
-						catch (std::exception& e) {
+						catch (RequestException& e) {
 							std::cerr << "Error: " << e.what() << std::endl;
-							reqs[idx].response_status = std::atoi(e.what());
+							reqs[idx].response_status = e.code();
 						}
 						set_response(pfds_it, idx);
 						break;
