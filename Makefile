@@ -5,9 +5,12 @@ SRC		=	main.cpp \
 			ServerEngine.cpp \
 			CgiHandler.cpp \
 			Config.cpp \
+			ConfigUtils.cpp \
+			ConfigServerUtils.cpp \
+			ConfigLocationUtils.cpp \
 			Log.cpp \
 			Location.cpp \
-			ServerBlock.cpp
+			ServerBlock.cpp 
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

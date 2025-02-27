@@ -1,5 +1,6 @@
 
 # include "Log.hpp"
+# include "Config.hpp"
 
 void Log::log(const std::string & message)
 {
@@ -27,7 +28,7 @@ void Log::log(std::vector<ServerBlock> & server_blocks)
         std::clog << std::endl;
         std::clog << PURPLE << "ServerBlock: " << std::endl;
         std::clog << "  port: " << it->port << std::endl;
-        std::clog << "  host: " << inet_ntoa(*(in_addr *)&it->host) << std::endl;
+        std::clog << "  host: " << Config::ft_inet_ntoa(*(in_addr_t *)&it->host) << std::endl;
         std::clog << "  max_client_body: " << it->max_client_body << std::endl;
         std::clog << "  error_pages: " << std::endl;
         for (std::map<int, std::string>::const_iterator it2 = it->error_pages.begin(); it2 != it->error_pages.end(); ++it2)

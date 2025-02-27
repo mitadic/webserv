@@ -34,6 +34,8 @@ namespace Config {
         std::string trim(const std::string & str);
         int has_only_digits(char *str);
         void check_valid_path(std::string & path, t_path type);
+        in_addr_t ft_inet(std::string host);
+        std::string ft_inet_ntoa(in_addr_t ip);
 
         // Location block utils
         void parse_allowed_methods(Location & block, std::string & value);
@@ -43,7 +45,7 @@ namespace Config {
         void parse_autoindex(Location & block, std::string & value);
         void parse_root(Location & block, std::string & value);
         void parse_index(Location & block, std::string & value);
-        std::string check_location(Location & block, std::string & value);
+        std::string check_location_prefix(Location & block, std::string & value);
 
         // Server block utils
         void parse_client_body(ServerBlock & block, std::string & value);

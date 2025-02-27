@@ -2,46 +2,6 @@
 #include "Config.hpp"
 
 /**
- * @brief Removes trailing and leading spaces from a string, as well as trailing comments;
- * replaces consecutive spaces with a single space.
- */
-std::string Config::trim(const std::string & str)
-{
-    std::string result = str;
-
-    // replace tabs with spaces
-    std::replace(result.begin(), result.end(), '\t', ' ');
-
-    // remove trailing comment
-    size_t comment = result.find("#");
-    if (comment != std::string::npos)
-        result = result.substr(0, comment);
-
-    // remove spaces
-    size_t first = result.find_first_not_of(" ");
-    if (first == std::string::npos)
-        return ""; // string is all whitespace
-    size_t last = result.find_last_not_of(" ");
-    result = result.substr(first, (last - first + 1));
-
-    // replace consecutive spaces with single space
-    std::string cleaned;
-    bool consecutive_spaces = false;
-    for (size_t i = 0; i < result.size(); ++i) {
-        if (result[i] == ' ') {
-            if (!consecutive_spaces) {
-                cleaned += ' ';
-                consecutive_spaces = true;
-            }
-        } else {
-            cleaned += result[i];
-            consecutive_spaces = false;
-        }
-    }
-    return (cleaned);
-}
-
-/**
  * @brief Loads (the config) file into a stringstream
  */
 std::stringstream Config::load_file(const std::string & filename)
@@ -102,7 +62,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
     std::map<int, in_addr_t> host_port_combo;
     for (server = server_blocks.begin(); server != server_blocks.end(); ++server)
     {
-        if (server->port == -1 || server->host == inet_addr("255.255.255.255") || server->max_client_body == 0)
+        if (server->port == -1 || server->host == ft_inet("255.255.255.255") || server->max_client_body == 0)
             throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
         if (host_port_combo.find(server->port) != host_port_combo.end())
         {
@@ -127,6 +87,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
             // optional: check if location is empty?
             // sort by prefix: longest -> shortest
             // error for same prefixes
+            
         }
     }
 }
@@ -155,16 +116,6 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
             throw std::runtime_error("in server block: missing semicolon: " + line);
         parse_server_block_directives(line, block, content);
     }
-}
-
-int Config::has_only_digits(char *str)
-{
-    while (str && *str)
-    {
-        if (!std::isdigit(*str++))
-            return (0);
-    }
-    return (1);
 }
 
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
@@ -197,7 +148,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
-    block.location = check_location(block, line);
+    block.location = check_location_prefix(block, line);
     int directive_count = 0;
     while (getline(content, line))
     {
@@ -248,167 +199,13 @@ void Config::parse_location_block_directives(std::string & line, Location & bloc
         throw std::runtime_error("in location block: unexpected line: " + line);
 }
 
-void    Config::parse_allowed_methods(Location & block, std::string & value)
-{
-    if (block.get == true || block.post == true || block.del == true)
-        throw std::runtime_error("double occurrence of 'allowed_methods'");
-
-    char str[value.size() + 1];
-    std::strcpy(str, value.c_str());
-    char *token = std::strtok(str, " ");
-    while (token)
-    {
-        if (std::strcmp(token, "GET") == 0 && block.get == false)
-            block.get = true;
-        else if (std::strcmp(token, "POST") == 0 && block.post == false)
-            block.post = true;
-        else if (std::strcmp(token, "DELETE") == 0 && block.del == false)
-            block.del = true;
-        else
-            throw std::runtime_error("Unknown or duplicate method in location block");
-        token = std::strtok(nullptr, " ");
-    }
-}
-
-void    Config::parse_cgi_extension(Location & block, std::string & value)
-{
-    if (block.cgi_extensions.empty() == false)
-        throw std::runtime_error("double declaration of 'cgi_extension'");
-        
-    char str[value.size() + 1];
-    std::strcpy(str, value.c_str());
-    char *token = std::strtok(str, " ");
-    while (token)
-    {
-        // optional: implement checks if extension is accepted
-        std::string extension = token;
-            block.cgi_extensions.push_back(extension);
-        token = std::strtok(nullptr, " ");
-    }
-}
-
-std::string    Config::check_location(Location & block, std::string & value)
-{ 
-    std::string name;
-
-    char str[value.size() + 1];
-    std::strcpy(str, value.c_str());
-    char *token = std::strtok(str, " ");
-    name = token;
-    if (!token)
-        throw std::runtime_error("Location: missing location name");
-    token = std::strtok(nullptr, " ");
-    if (token)
-        throw std::runtime_error("Location: too many arguments");
-    check_valid_path(name, LOCATION);
-    return (name);
-}
-
-void    Config::parse_redirect(Location & block, std::string & value)
-{
-    if (block.redirect.second.empty() == false)
-        throw std::runtime_error("double declaration of 'return'");
-    std::string code, url;
-    std::stringstream ss(value);
-    if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
-        throw std::runtime_error("in location block: return directive requires 2 arguments");
-    if (block.location == url)
-        throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
-    block.redirect = std::make_pair(std::atoi(code.c_str()), url);
-}
-
-void    Config::parse_autoindex(Location & block, std::string & value)
-{
-    if (block.autoindex == true)
-        throw std::runtime_error("double declaration of 'autoindex'");
-    if (value == "on")
-        block.autoindex = true;
-    else if (value != "off")
-        throw std::runtime_error("in location block: autoindex requires value 'on' or 'off'");
-}
-
-void    Config::parse_index(Location & block, std::string & value)
-{
-    if (block.index.empty() == false)
-        throw std::runtime_error("double occurrence of 'index'");
-    if (value != "index.html")
-        throw std::runtime_error("expected 'index.html'");
-    // optional: allow index.htm besides index.html
-    block.index = value;
-}
 
 
-void    Config::parse_root(Location & block, std::string & value)
-{
-    check_valid_path(value, ROOT);
-    if (block.root.empty() == false)
-        throw std::runtime_error("double occurrence of 'root'");
-    block.root = value;
-}
 
-void    Config::parse_upload(Location & block, std::string & value)
-{
-    if (block.upload_location.empty() == false)
-        throw std::runtime_error("double occurrence of 'upload'");
-    check_valid_path(value, ROOT);
-    block.upload_allowed = true;
-    block.upload_location = value;
-}
 
-void    Config::parse_client_body(ServerBlock & block, std::string & value)
-{
-    if (block.max_client_body != 0 || !has_only_digits(const_cast<char *>(value.c_str()))
-        || (std::strtod(value.c_str(), NULL) > UINT32_MAX))
-        throw std::runtime_error("max body size already declared or invalid size");
-    block.max_client_body = std::atol(value.c_str());
-    // optional: change type or size
-}
-void Config::parse_error_page(ServerBlock & block, std::string & value)
-{
-    std::string code, path;
-    std::stringstream ss(value);
-    if (!getline(ss, code, ' ') || !getline(ss, path))
-        throw std::runtime_error("in server block: error_page directive requires 2 arguments");
-    if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
-        throw std::runtime_error("invalid error code " + code);
-    check_valid_path(path, ROOT);
-    // optional: check if the path really does exist with stat()
-    if (block.error_pages.find(std::atoi(code.c_str())) != block.error_pages.end())
-        throw std::runtime_error("error page already exists for " + code);
-    block.error_pages[std::atoi(code.c_str())] = path;
-}
 
-void Config::parse_host(ServerBlock & block, std::string & value)
-{
-    if (block.host != inet_addr("255.255.255.255"))
-        throw std::runtime_error("host already declared");
-    block.host = inet_addr(value.c_str());
-    // optional: add more checks for valid ip addresses
-    if (block.host == inet_addr("255.255.255.255"))
-        throw std::runtime_error("invalid IP address");
-}
-void Config::parse_port(ServerBlock & block, std::string & value)
-{
-    if (block.port != -1)
-        throw std::runtime_error("server cannot have multiple ports");
-    if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
-        throw std::runtime_error("invalid port number" + value);
-    block.port = std::atoi(value.c_str());
-    if (block.port > 65535 || block.port < 0)
-        throw std::runtime_error("invalid port number range");
-    // optional: add more checks for valid ports
-}
 
-/**
- * @brief Checks if root or location name have a valid syntax
- */
-void Config::check_valid_path(std::string & path, t_path type)
-{
-    Log::log(path);
-    if (path[0] != '/')
-        throw std::runtime_error("Invalid path: absolute path has to start with '/'");
-    if (type == ROOT && path[path.size() - 1] == '/')
-        throw std::runtime_error("Invalid path: root should not end with '/'");
-    if (path.find("//") != std::string::npos || path.find_first_of("*?$\\% ") != std::string::npos)
-        throw std::runtime_error("Invalid path: contains '//' or one of the characters ' *?$\\%'");
-}
+
+
+
+
