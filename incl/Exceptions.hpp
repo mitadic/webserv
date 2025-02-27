@@ -1,6 +1,7 @@
 #pragma once
 
 #include <exception>
+#include "StatusCodes.hpp"
 
 class BadSyntaxException : public std::exception {
 
@@ -12,8 +13,5 @@ class BadSyntaxException : public std::exception {
         BadSyntaxException(int code);
     
         const int code() const throw();
-    
-        // const char* what() const throw() {
-        //     return "Bad syntax";
-        // }
+        const char* what() const throw();
     };

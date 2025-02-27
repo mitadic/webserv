@@ -6,7 +6,8 @@ Request::Request() :
 		response_status(200),
 		total_sent(0),
 		method(0),
-		client_fd(-1),
+		client_fd(UNINITIALIZED),
+		content_type_idx(UNINITIALIZED),
 		timed_out(false),
 		await_reconnection(false),
 		keep_alive(true),
@@ -42,6 +43,212 @@ void Request::reset_client()
 	total_sent = 0;
 	cgi_status = NOT_CGI;
 	cgi_output.clear();
+}
+
+
+
+
+// ###############################################
+
+void Request::_parse_header_cache_control(std::string& header_val)
+{}
+
+void Request::_parse_header_connection(std::string& header_val)
+{
+	std::vector<std::string> values = split(header_val, " \t,");
+
+	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
+	{
+		if (*it == "keep-alive")
+			keep_alive = true;
+		else if (*it == "close")
+			keep_alive = false;
+		else if (*it == "Upgrade")
+			;
+	}
+}
+
+void Request::_parse_header_date(std::string& header_val)
+{}
+
+void Request::_parse_header_pragma(std::string& header_val)
+{}
+
+void Request::_parse_header_trailer(std::string& header_val)
+{}
+
+void Request::_parse_header_transfer_encoding(std::string& header_val)
+{}
+
+void Request::_parse_header_upgrade(std::string& header_val)
+{}
+
+void Request::_parse_header_via(std::string& header_val)
+{}
+
+void Request::_parse_header_warning(std::string& header_val)
+{}
+
+void Request::_parse_header_accept(std::string& header_val)
+{}
+
+void Request::_parse_header_accept_charset(std::string& header_val)
+{}
+
+void Request::_parse_header_accept_encoding(std::string& header_val)
+{}
+
+void Request::_parse_header_accept_language(std::string& header_val)
+{}
+
+void Request::_parse_header_authorization(std::string& header_val)
+{}
+
+void Request::_parse_header_expect(std::string& header_val)
+{}
+
+void Request::_parse_header_from(std::string& header_val)
+{}
+
+void Request::_parse_header_host(std::string& header_val)
+{
+	size_t start, end;
+	start = header_val.find_first_not_of(LWS_CHARS);
+	end = header_val.find_first_of(":");
+
+	std::string trimmed_s = header_val.substr(start, end - start);
+	if (trimmed_s == "127.0.0.1" || trimmed_s == "0.0.0.0" || trimmed_s == "localhost")
+		host == trimmed_s;
+	// port?
+}
+
+void Request::_parse_header_if_match(std::string& header_val)
+{}
+
+void Request::_parse_header_if_modified_since(std::string& header_val)
+{}
+
+void Request::_parse_header_if_none_match(std::string& header_val)
+{}
+
+void Request::_parse_header_if_range(std::string& header_val)
+{}
+
+void Request::_parse_header_unmodified_since(std::string& header_val)
+{}
+
+void Request::_parse_header_max_forwards(std::string& header_val)
+{}
+
+void Request::_parse_header_proxy_authorization(std::string& header_val)
+{}
+
+void Request::_parse_header_range(std::string& header_val)
+{}
+
+void Request::_parse_header_referer(std::string& header_val)
+{}
+
+void Request::_parse_header_te(std::string& header_val)
+{}
+
+void Request::_parse_header_user_agent(std::string& header_val)
+{}
+
+void Request::_parse_header_allow(std::string& header_val)
+{}
+
+void Request::_parse_header_content_encoding(std::string& header_val)
+{}
+
+void Request::_parse_header_content_language(std::string& header_val)
+{}
+
+void Request::_parse_header_content_length(std::string& header_val)
+{}
+
+void Request::_parse_header_content_location(std::string& header_val)
+{}
+
+void Request::_parse_header_content_md5(std::string& header_val)
+{}
+
+void Request::_parse_header_content_range(std::string& header_val)
+{}
+
+void Request::_parse_header_content_type(std::string& header_val)
+{
+	for (int i = 0; i < CONTENT_TYPES_N; i++)
+	{
+		if (content_types[i] == header_val)
+		{
+			content_type_idx = i;
+			return;
+		}
+	}
+	throw BadSyntaxException(CODE_415);
+}
+
+void Request::_parse_header_expires(std::string& header_val)
+{}
+
+void Request::_parse_header_last_modified(std::string& header_val)
+{}
+
+// ###############################################
+
+
+
+
+void Request::dispatch_header_parser(const int header_idx, std::string& header_val)
+{
+	if (header_idx == UNRECOGNIZED_HEADER)
+	{
+		// log?
+		return;
+	}
+
+	void    (Request::*header_parsers[HTTP_REQUEST_LEGAL_HEADERS_N])(std::string&) = {
+		&Request::_parse_header_cache_control,
+		&Request::_parse_header_connection,
+		&Request::_parse_header_date,
+		&Request::_parse_header_pragma,
+		&Request::_parse_header_trailer,
+		&Request::_parse_header_transfer_encoding,
+		&Request::_parse_header_upgrade,
+		&Request::_parse_header_via,
+		&Request::_parse_header_warning,
+		&Request::_parse_header_accept,
+		&Request::_parse_header_accept_charset,
+		&Request::_parse_header_accept_encoding,
+		&Request::_parse_header_accept_language,
+		&Request::_parse_header_authorization,
+		&Request::_parse_header_expect,
+		&Request::_parse_header_from,
+		&Request::_parse_header_host,
+		&Request::_parse_header_if_match,
+		&Request::_parse_header_if_modified_since,
+		&Request::_parse_header_if_none_match,
+		&Request::_parse_header_if_range,
+		&Request::_parse_header_unmodified_since,
+		&Request::_parse_header_max_forwards,
+		&Request::_parse_header_proxy_authorization,
+		&Request::_parse_header_range,
+		&Request::_parse_header_referer,
+		&Request::_parse_header_te,
+		&Request::_parse_header_user_agent,
+		&Request::_parse_header_allow,
+		&Request::_parse_header_content_encoding,
+		&Request::_parse_header_content_language,
+		&Request::_parse_header_content_length,
+		&Request::_parse_header_content_location,
+		&Request::_parse_header_content_md5,
+		&Request::_parse_header_content_range,
+		&Request::_parse_header_content_type,
+		&Request::_parse_header_expires,
+		&Request::_parse_header_last_modified
+    };
+	(this->*header_parsers[header_idx])(header_val);
 }
 
 /* Split at first of delimiters. If \r at the end of final token, pop it off */
@@ -187,24 +394,23 @@ int get_http_header_idx(const std::string& s)
 		if (s == http_header_names[i])
 			return i;
 	}
-	return -1;
+	return UNRECOGNIZED_HEADER;
 }
 
 void Request::parse_header_line(std::istringstream& stream, std::string& line)
 {
 	size_t colon_pos = line.find_first_of(":");
-	if (colon_pos == 0 || colon_pos == line.size())
+	if (colon_pos == 0 || colon_pos == line.size() || line.find_first_of(HTTP_SEPARATORS) < colon_pos)
 		throw BadSyntaxException(400);
-	std::string header = line.substr(0, colon_pos);
+	const std::string header_key = line.substr(0, colon_pos);
+	std::string header_value = line.substr(colon_pos + 1);
 
-	int idx = get_http_header_idx(header);
-		;  // call function to deal with specific header line...? and also in the follow-up loop?
+	int header_idx = get_http_header_idx(header_key);
+	dispatch_header_parser(header_idx, header_value);
 
-	// while folded continuation
+	// while folded continuation, whether recognized header or no
 	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line.front()))
-	{
-
-	}
+		dispatch_header_parser(header_idx, line);
 	check_stream(stream);
 }
 
@@ -237,9 +443,9 @@ int Request::parse()
 	if (std::getline(stream, line) && method & 0b00000001)
 		return 400;  // nope, actually no
 
-	while (std::getline(stream, line))
+	// read body (if any) until another CRLF, then we're done
+	while (std::getline(stream, line) && !is_empty_crlf(line))
 	{
-		if (is_empty_crlf(line))
-			return 400;  // we're in the body, no empty CRLF permitted
+		;
 	}
 }

@@ -5,6 +5,7 @@
 #define HTTP_REQUEST_HEADERS_N 19
 #define HTTP_RESPONSE_HEADERS_N 9
 #define HTTP_ENTITY_HEADERS_N 10
+#define HTTP_REQUEST_LEGAL_HEADERS_N 38
 
 enum e_http_header {
 	HEADER_ACCEPT = 0,
@@ -62,4 +63,7 @@ extern const char *http_general_headers[HTTP_GENERAL_HEADERS_N];
 extern const char *http_request_headers[HTTP_REQUEST_HEADERS_N];
 extern const char *http_response_headers[HTTP_RESPONSE_HEADERS_N];
 extern const char *http_entity_headers[HTTP_ENTITY_HEADERS_N];
+
+extern const char *http_request_legal_headers[HTTP_REQUEST_LEGAL_HEADERS_N];
+
 // extern const std::vector<std::string> 
