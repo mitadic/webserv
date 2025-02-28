@@ -36,8 +36,6 @@ std::string Config::ft_inet_ntoa(in_addr_t ip)
     return (host);
 }
 
-
-
 int Config::has_only_digits(char *str)
 {
     while (str && *str)

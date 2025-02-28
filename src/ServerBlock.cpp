@@ -100,11 +100,11 @@ std::ostream &operator<<(std::ostream &os, const ServerBlock &server_block)
 
 void ServerBlock::validate_locations()
 {
-    std::sort(_locations.begin(), _locations.end(), Config::compare_prefix); // sort by prefix: longest -> shortest
+    std::sort(_locations.begin(), _locations.end(), Location::compare_prefix); // sort by prefix: longest -> shortest
     std::vector<Location>::iterator location_it, tmp;
     for (location_it = _locations.begin(); location_it != _locations.end(); ++location_it)
     {
-        if ((location_it + 1) != _locations.end() && Config::same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
+        if ((location_it + 1) != _locations.end() && Location::same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
             throw std::runtime_error("locations with same prefix cannot override each other");
 
         // optional: check if root / exists

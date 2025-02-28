@@ -9,6 +9,7 @@
 # include "Location.hpp"
 
 /**
+ * @brief Class respresenting a server block in the config file
  * @var _port the port the server listens on (0 - 65535)
  * @var _host the host the server listens on (0.0.0.0 - 255.255.255.254)
  * @var _error_pages a map of error codes and their corresponding paths
