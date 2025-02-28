@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 17:43:47 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/28 19:06:19 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,13 +14,44 @@
 
 // ------- Helper functions ------------
 
-std::string sendContent(const std::string& file, const std::string& mime_type)
+std::string defineMime(const std::string& file)
+{
+	size_t pos = file.find_last_of('.');
+	if (pos == std::string::npos || pos == file.length() - 1)
+		return "application/octet-stream";
+
+	std::string extension = file.substr(file.find_last_of('.') + 1);
+	if (extension == "html")
+		return "text/html";
+	else if (extension == "css")
+		return "text/css";
+	else if (extension == "jpg" || extension == "jpeg")
+		return "image/jpeg";
+	else if (extension == "png")
+		return "image/png";
+	else if (extension == "gif")
+		return "image/gif";
+	else if (extension == "json")
+		return "application/json";
+	else if (extension == "pdf")
+		return "application/pdf";
+	else if (extension == "xml")
+		return "application/xml";
+	else if (extension == "xhtml")
+		return "application/xhtml+xml";
+	else if (extension == "txt")
+		return "text/plain";
+	else
+		return "application/octet-stream";
+}
+
+std::string sendContent(const std::string& file)
 {
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				<< "Content-Type: " << mime_type << "\r\n"
+				<< "Content-Type: " << defineMime(file) << "\r\n"
 				<< "Content-Length: " << body.size() << "\r\n"
 				<< "\r\n"
 				<< body;
@@ -49,7 +80,7 @@ const ServerBlock* getServerBlock(const Request& req, const std::vector<ServerBl
 
 	for (size_t i = 0; i < server_blocks.size(); ++i)
 	{
-		if (server_blocks[i].port == req.port && server_blocks[i].host == req.host)
+		if (server_blocks[i].get_port() == req.get_port() && server_blocks[i].get_host() == req.get_host())
 		{
 			matchingServer = &server_blocks[i];
 			break;
@@ -68,13 +99,14 @@ const Location* getLocation(const Request& req, const ServerBlock* server)
 {
 	const Location* matchingLocation = NULL;
 	std::string longestMatch = "";
+	const std::vector<Location>& locations = server->get_locations();
 
-	for (size_t i = 0; i < server->locations.size(); ++i)
+	for (size_t i = 0; i < server->get_locations().size(); ++i)
 	{
-		if (req.get_request_uri().find(server->locations[i].location) == 0 && server->locations[i].location.size() > longestMatch.size())
+		if (req.get_request_uri().find(locations[i].get_path()) == 0 && locations[i].get_path().size() > longestMatch.size())
 		{
-			longestMatch = server->locations[i].location;
-			matchingLocation = &server->locations[i];
+			longestMatch = locations[i].get_path();
+			matchingLocation = &locations[i];
 		}
 	}
 
@@ -118,38 +150,36 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 	const ServerBlock* matchingServer = getServerBlock(req, server_blocks);
 	const Location* matchingLocation = getLocation(req, matchingServer);
 
-	if (!matchingLocation->get)
+	if (!matchingLocation->is_get())
 	{
 		std::string errorPage;
-		auto it = matchingServer->error_pages.find(405);
-		if (it != matchingServer->error_pages.end())
+		auto it = matchingServer->get_error_pages().find(405);
+		if (it != matchingServer->get_error_pages().end())
 			errorPage = it->second;
 		else
 			errorPage = "www/405.html"; // TODO:Default 405 page
 		return sendErrorPage(errorPage);
 	}
 
-	std::string filePath = matchingLocation->root + req.get_request_uri();
+	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
 
 	if (Utils::fileExists(filePath))
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			if (Utils::fileExists(filePath + matchingLocation->index))
-			{
-				return sendContent(filePath + matchingLocation->index, req.mime_type); // Return the index file
-			}
+			if (Utils::fileExists(filePath + matchingLocation->get_index()))
+				return sendContent(filePath + matchingLocation->get_index()); // Return the index file
 			else
 			{
-				if (matchingLocation->autoindex)
+				if (matchingLocation->is_autoindex())
 				{
 					//TODO return directory listing -- is this something we want / need to implement?
 				}
 				else
 				{
 					std::string errorPage;
-					auto it = matchingServer->error_pages.find(403);
-					if (it != matchingServer->error_pages.end())
+					auto it = matchingServer->get_error_pages().find(403);
+					if (it != matchingServer->get_error_pages().end())
 						errorPage = it->second;
 					else
 						errorPage = "www/403.html"; // TODO:Default 403 page
@@ -157,13 +187,13 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 				}
 			}
 		}
-		return sendContent(filePath, req.mime_type); // Return the file content
+		return sendContent(filePath); // Return the file content
 	}
 	else
 	{
 		std::string errorPage;
-		auto it = matchingServer->error_pages.find(404);
-		if (it != matchingServer->error_pages.end())
+		auto it = matchingServer->get_error_pages().find(404);
+		if (it != matchingServer->get_error_pages().end())
 			errorPage = it->second;
 		else
 			errorPage = "www/404.html"; // TODO:Default 404 page
@@ -185,7 +215,7 @@ std::string RequestProcessor::processDelete(const Request& req, const std::vecto
 	const ServerBlock* matchingServer = getServerBlock(req, server_blocks);
 	const Location* matchingLocation = getLocation(req, matchingServer);
 
-	std::string filePath = matchingLocation->root + req.get_request_uri();
+	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
 }
 
 
