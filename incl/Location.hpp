@@ -7,6 +7,21 @@
 # include <map>
 # include <iostream>
 
+/**
+ * @brief Class representing a location block in the config file
+ * @var _path the location prefix (e.g. /images/)
+ * @var _root the root directory of the prefix (e.g. /var/www/html)
+ * @var _index file to serve if no file is specified in the request (index.html)
+ * @var _upload_location the directory where uploaded files are stored 
+ * @var _upload_allowed whether uploads are allowed 
+ * @var _get whether GET requests are allowed 
+ * @var _post whether POST requests are allowed
+ * @var _del whether DELETE requests are allowed
+ * @var _autoindex whether autoindex is enabled 
+ * @var _cgi_extensions a vector of CGI extensions (e.g. .py)
+ * @var _redirect a pair of an HTTP status code and a URL to redirect to 
+ * 
+ */
 class Location {
     public:
         Location();

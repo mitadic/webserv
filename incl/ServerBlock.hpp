@@ -8,6 +8,13 @@
 
 # include "Location.hpp"
 
+/**
+ * @var _port the port the server listens on (0 - 65535)
+ * @var _host the host the server listens on (0.0.0.0 - 255.255.255.254)
+ * @var _error_pages a map of error codes and their corresponding paths
+ * @var _max_client_body the maximum size of the client body (> 0)
+ * @var _locations a vector of location blocks
+ */
 class ServerBlock {
     public:
         ServerBlock();

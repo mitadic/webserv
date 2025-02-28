@@ -132,4 +132,4 @@ std::ostream &operator<<(std::ostream &os, const Location &location_block)
     os << std::endl;
     os << "  redirect: " << location_block.get_redirect().first << " " << location_block.get_redirect().second << std::endl;
     return (os);
-}
+};

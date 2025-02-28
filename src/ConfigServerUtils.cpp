@@ -11,6 +11,7 @@ void Config::parse_host(ServerBlock & block, std::string & value)
     if (block.get_host() == ft_inet("255.255.255.255"))
         throw std::runtime_error("invalid IP address");
 }
+
 void Config::parse_port(ServerBlock & block, std::string & value)
 {
     Log::log("inside parse port", DEBUG);

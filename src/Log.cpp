@@ -47,7 +47,7 @@ void Log::log(const std::string & message, t_log_level level)
     std::clog << message 
     << WHITE << std::endl;
     std::clog.flush();
-}
+};
 
 void Log::log(std::vector<ServerBlock> & server_blocks)
 {
@@ -60,4 +60,4 @@ void Log::log(std::vector<ServerBlock> & server_blocks)
         std::clog << *it;
         std::clog << WHITE;
     }
-}
+};

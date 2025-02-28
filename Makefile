@@ -1,6 +1,8 @@
 CXX		=	c++
 # FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-FLAGS	=	-g -std=c++98
+FLAGS	=	-g -std=c++98 
+# FLAGS	+=	-Wall -Wextra -Werror
+FLAGS	+= -fsanitize=address
 SRC		=	main.cpp \
 			ServerEngine.cpp \
 			CgiHandler.cpp \
@@ -21,7 +23,7 @@ NAME	=	a.out
 all: $(NAME)
 
 $(NAME): $(addprefix $(OBJ_DIR),$(OBJ))
-	$(CXX) $(addprefix $(OBJ_DIR),$(OBJ)) -o $(NAME)
+	$(CXX) $(FLAGS) $(addprefix $(OBJ_DIR),$(OBJ)) -o $(NAME)
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
 	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
