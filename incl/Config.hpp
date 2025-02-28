@@ -15,11 +15,6 @@
 
 # define DEFAULT_CONF "conf/default.conf"
 
-typedef enum e_path {
-        LOCATION,
-        ROOT,
-} t_path;
-
 namespace Config {
         // Parsing
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
@@ -33,18 +28,10 @@ namespace Config {
         // Utils
         std::string trim(const std::string & str);
         int has_only_digits(char *str);
-        void check_valid_path(std::string & path, t_path type);
         in_addr_t ft_inet(std::string host);
         std::string ft_inet_ntoa(in_addr_t ip);
 
         // Location block utils
-        void parse_allowed_methods(Location & block, std::string & value);
-        void parse_cgi_extension(Location & block, std::string & value);
-        void parse_redirect(Location & block, std::string & value);
-        void parse_upload(Location & block, std::string & value);
-        void parse_autoindex(Location & block, std::string & value);
-        void parse_root(Location & block, std::string & value);
-        void parse_index(Location & block, std::string & value);
         std::string check_location_prefix(Location & block, std::string & value);
         bool same_prefix(const Location & a, const Location & b);
         bool compare_prefix(const Location & a, const Location & b);

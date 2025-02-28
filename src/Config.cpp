@@ -175,25 +175,24 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
  */
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
-    Log::log("inside parse location block directives", DEBUG);
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
         if (directive == "root")
-            parse_root(block, value); 
+            block.set_root(value);
         else if (directive == "index")
-            parse_index(block, value);
+            block.set_index(value);
         else if (directive == "upload")
-            parse_upload(block, value);
+            block.set_upload(value);
         else if (directive == "allowed_methods")
-            parse_allowed_methods(block, value);
+            block.set_allowed_methods(value);
         else if (directive == "autoindex")
-            parse_autoindex(block, value);
+            block.set_autoindex(value);
         else if (directive == "cgi_extension")
-            parse_cgi_extension(block, value);
+            block.set_cgi_extensions(value);
         else if (directive == "return")
-            parse_redirect(block, value);
+            block.set_redirect(value);
         else
             throw std::runtime_error("in location block: unknown directive: " + directive);
     }

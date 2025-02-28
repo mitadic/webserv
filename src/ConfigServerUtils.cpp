@@ -34,7 +34,7 @@ void Config::parse_error_page(ServerBlock & block, std::string & value)
         throw std::runtime_error("in server block: error_page directive requires 2 arguments");
     if (code.size() != 3 || !has_only_digits(const_cast<char *>(code.c_str())))
         throw std::runtime_error("invalid error code " + code);
-    check_valid_path(path, ROOT);
+    Location::check_valid_path(path, ROOT);
     // optional: check if the path really does exist with stat()
     if (block.get_error_pages().find(std::atoi(code.c_str())) != block.get_error_pages().end())
         throw std::runtime_error("error page already exists for " + code);
