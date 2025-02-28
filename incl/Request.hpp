@@ -26,23 +26,23 @@ public:
 	void	reset_client();
 	int		parse();
 
-	std::string get_host() { return _host; };
-	std::string get_request() { return _request; };
-	std::string	get_request_body() { return _request_body; };
-	std::string get_response() { return _response; };
-	int			get_response_status() { return _response_status; };
-	int			get_total_sent() { return _total_sent; };
-	int			get_content_length() { return _content_length; };
-	int			get_content_type_idx() { return _content_type_idx; };
-	int			get_client_fd() { return _client_fd; };
-	int			get_method() { return _method; };
-	int			get_major_http_v() { return _major_http_v; };
-	int			get_minor_http_v() { return _minor_http_v; };
-	std::string get_request_location() { return _request_location; };
-	int			get_cgi_status() { return _cgi_status; };
-	std::string get_cgi_job_id() { return _cgi_job_id; };
-	std::string get_cgi_output() { return _cgi_output; };
-	std::vector<std::string> get_accepted_types() { return _accepted_types; };
+	const std::string get_host() const { return _host; };
+	const std::string get_request() const { return _request; };
+	const std::string get_request_body() const { return _request_body; };
+	const std::string get_response() const { return _response; };
+	const std::string get_request_uri() const { return _request_uri; };
+	const std::string get_cgi_job_id() const { return _cgi_job_id; };
+	const std::string get_cgi_output() const { return _cgi_output; };
+	const int get_response_status() const { return _response_status; };
+	const int get_total_sent() const { return _total_sent; };
+	const int get_content_length() const { return _content_length; };
+	const int get_content_type_idx() const { return _content_type_idx; };
+	const int get_client_fd() const { return _client_fd; };
+	const int get_method() const { return _method; };
+	const int get_major_http_v() const { return _major_http_v; };
+	const int get_minor_http_v() const { return _minor_http_v; };
+	const int get_cgi_status() const { return _cgi_status; };
+	const std::vector<std::string> get_accepted_types() const { return _accepted_types; };
 
 	bool		is_flagged_as_chunked() { return _flagged_as_chunked; };
 
@@ -69,7 +69,7 @@ private:
 	int			_method;			// if GET POST DELETE
 	int			_major_http_v;
 	int			_minor_http_v;
-	std::string _request_location;
+	std::string _request_uri;
 
 	bool		_keep_alive;		// default: true
 

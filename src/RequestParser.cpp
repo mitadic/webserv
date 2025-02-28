@@ -332,7 +332,7 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	else
 		throw RequestException(CODE_400);
 
-    req._request_location = tokens[1];
+    req._request_uri = tokens[1];
 
 	size_t dot = 0;
 	if (tokens[2].substr(0, 5) != "HTTP/")
