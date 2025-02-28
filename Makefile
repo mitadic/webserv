@@ -8,8 +8,6 @@ SRC		=	main.cpp \
 			CgiHandler.cpp \
 			Config.cpp \
 			ConfigUtils.cpp \
-			ConfigServerUtils.cpp \
-			ConfigLocationUtils.cpp \
 			Log.cpp \
 			Location.cpp \
 			ServerBlock.cpp 

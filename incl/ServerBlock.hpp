@@ -27,10 +27,10 @@ class ServerBlock {
         const std::vector<Location>&        get_locations() const;
 
         // setters
-        void                        set_port(int port);
-        void                        set_host(in_addr_t host);
-        void                        add_error_page(int code, std::string path);
-        void                        set_max_client_body(unsigned int size);
+        void                        set_port(std::string port);
+        void                        set_host(std::string host);
+        void                        add_error_page(std::string page);
+        void                        set_max_client_body(std::string size);
         void                        add_location(Location & location);
 
         // methods
