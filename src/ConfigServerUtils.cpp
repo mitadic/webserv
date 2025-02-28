@@ -3,6 +3,7 @@
 
 void Config::parse_host(ServerBlock & block, std::string & value)
 {
+    Log::log("inside parse host", DEBUG);
     if (block.get_host() != ft_inet("255.255.255.255"))
         throw std::runtime_error("host already declared");
     block.set_host(ft_inet(value.c_str()));
@@ -12,6 +13,7 @@ void Config::parse_host(ServerBlock & block, std::string & value)
 }
 void Config::parse_port(ServerBlock & block, std::string & value)
 {
+    Log::log("inside parse port", DEBUG);
     if (block.get_port() != -1)
         throw std::runtime_error("server cannot have multiple ports");
     if (value.size() > 5 || !has_only_digits(const_cast<char *>(value.c_str())))
@@ -24,6 +26,7 @@ void Config::parse_port(ServerBlock & block, std::string & value)
 
 void Config::parse_error_page(ServerBlock & block, std::string & value)
 {
+    Log::log("inside parse error page", DEBUG);
     std::string code, path;
     std::stringstream ss(value);
     if (!getline(ss, code, ' ') || !getline(ss, path))
@@ -39,6 +42,7 @@ void Config::parse_error_page(ServerBlock & block, std::string & value)
 
 void    Config::parse_client_body(ServerBlock & block, std::string & value)
 {
+    Log::log("inside parse cient body", DEBUG);
     if (block.get_max_client_body() != 0 || !has_only_digits(const_cast<char *>(value.c_str()))
         || (std::strtod(value.c_str(), NULL) > UINT32_MAX))
         throw std::runtime_error("max body size already declared or invalid size");
