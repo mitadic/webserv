@@ -41,13 +41,6 @@ public:
 	std::string cgi_job_id;
 	std::string cgi_output;
 
-	// for request handling
-
-	std::string handleMethod();
-	std::string processGet();
-	std::string processPost();
-	std::string processDelete();
-
 private:
 
 };

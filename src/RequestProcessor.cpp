@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
+/*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/24 19:48:11 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/28 12:43:54 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Request.hpp"
+#include "RequestProcessor.hpp"
 
 // ------- Helper functions ------------
 
@@ -44,16 +44,16 @@ std::string sendErrorPage(const std::string& file)
 
 // ------- METHODS --------------
 
-std::string Request::handleMethod()
+std::string RequestProcessor::handleMethod(const Request& req)
 {
-	switch (method)
+	switch (req.method)
 	{
 	case GET:
-		return processGet();
+		return processGet(req);
 	case POST:
-		return processPost();
+		return processPost(req);
 	case DELETE:
-		return processDelete();
+		return processDelete(req);
 	default:
 		throw std::runtime_error("Unsupported HTTP method");
 	}
@@ -63,9 +63,9 @@ std::string Request::handleMethod()
 // if it does, return the file
 // if it doesn't, return 404
 // if it's a directory, show default file
-std::string Request::processGet()
+std::string RequestProcessor::processGet(const Request& req)
 {
-	std::string filePath = "www" + uri;
+	std::string filePath = "www" + req.uri;
 
 	if (Utils::fileExists(filePath))
 	{
@@ -73,7 +73,7 @@ std::string Request::processGet()
 		{
 			// TODO: was there something in the config about default files for dir or anything else to consider here?
 		}
-		return sendContent(filePath, mime_type); // Return the file content
+		return sendContent(filePath, req.mime_type); // Return the file content
 	}
 	else {
 		return sendErrorPage("www/404.html"); // Return 404 page
@@ -82,14 +82,14 @@ std::string Request::processGet()
 
 // write the post data to a file and return the file path to the user (?)
 // error page if the file can't be created
-std::string Request::processPost()
+std::string RequestProcessor::processPost(const Request& req)
 {
 	//TDO
 }
 
 // delete the file if it exists and deletions are allowed
 // error page if the file can't be deleted
-std::string Request::processDelete()
+std::string RequestProcessor::processDelete(const Request& req)
 {
 	//TODO
 }
