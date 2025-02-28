@@ -48,6 +48,64 @@ void Request::reset_client()
 }
 
 
+const std::string Request::get_request() const { return _request; };
+const std::string Request::get_request_body() const { return _request_body; };
+const std::string Request::get_response() const { return _response; };
+const std::string Request::get_request_uri() const { return _request_uri; };
+const std::string Request::get_cgi_job_id() const { return _cgi_job_id; };
+const std::string Request::get_cgi_output() const { return _cgi_output; };
+const int Request::get_response_status() const { return _response_status; };
+const int Request::get_total_sent() const { return _total_sent; };
+const int Request::get_content_length() const { return _content_length; };
+const int Request::get_content_type_idx() const { return _content_type_idx; }
+const int Request::get_client_fd() const { return _client_fd; }
+const int Request::get_method() const { return _method; }
+const int Request::get_major_http_v() const { return _major_http_v; }
+const int Request::get_minor_http_v() const { return _minor_http_v; }
+const int Request::get_cgi_status() const { return _cgi_status; }
+
+/* Get the port specified in the request */
+const short Request::get_port() { return _port; }
+
+/* Get the host specified in the request */
+const in_addr_t Request::get_host() { return _host; }
+
+
+const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
+
+
+bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
+
+
+bool Request::timed_out() { return _timed_out; }
+
+
+bool Request::should_await_reconnection() { return _await_reconnection; }
+
+
+bool Request::should_keep_alive() { return _keep_alive; }
+
+
+/* Clear any existing _response before setting it to be the argument string */
+void Request::set_response(std::string& s)
+{
+	_response.clear();
+	_response = s;
+}
+
+/* Append string to the _response */
+void Request::append_to_response(std::string& s)
+{
+	_response += s;
+}
+
+/* Overwrite the default 200 */
+void Request::set_response_status(int code)
+{
+	_response_status = code;
+}
+
+
 int Request::parse()
 {
 	std::istringstream stream(_request);

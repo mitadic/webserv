@@ -17,7 +17,7 @@ void RequestParser::_parse_header_cache_control(Request& req, std::string& heade
 
 void RequestParser::_parse_header_connection(Request& req, std::string& header_val)
 {
-	std::vector<std::string> values = split(header_val, " ,\t");
+	std::vector<std::string> values = split(header_val, ",");
 
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
@@ -41,7 +41,7 @@ void RequestParser::_parse_header_trailer(Request& req, std::string& header_val)
 
 void RequestParser::_parse_header_transfer_encoding(Request& req, std::string& header_val)
 {
-	std::vector<std::string> values = split(header_val, " ,\t");
+	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
 		if (req._flagged_as_chunked == true)
@@ -66,7 +66,7 @@ void RequestParser::_parse_header_warning(Request& req, std::string& header_val)
 
 void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 {
-	std::vector<std::string> values = split(header_val, " ,\t");
+	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
 		std::vector<std::string> specs = split(*it, ";");  // or use HTTP_SEPARATORS?
@@ -330,7 +330,7 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	else if (tokens[0] == "DELETE")
         req._method = DELETE;
 	else
-		throw RequestException(CODE_400);
+		throw RequestException(CODE_405);
 
     req._request_uri = tokens[1];
 
