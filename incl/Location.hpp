@@ -10,17 +10,16 @@ class Location{
     public:
         Location();
 
-        std::string         location;
-        std::string         root;
-        std::string         index;
-        std::string         upload_location;
-        bool                upload_allowed;
-        bool                get, post, del;
-        bool                autoindex;
-        std::vector<std::string>    cgi_extensions;       
-        std::pair<int, std::string>  redirect;
-
     private:
-};
+        std::string                 _location;
+        std::string                 _root;
+        std::string                 _index;
+        std::string                 _upload_location;
+        bool                        _upload_allowed;
+        bool                        _get, post, del;
+        bool                        _autoindex;
+        std::vector<std::string>    _cgi_extensions;       
+        std::pair<int, std::string> _redirect;
+    };
 
 #endif
