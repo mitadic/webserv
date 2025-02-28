@@ -1,4 +1,4 @@
-#include "../../incl/webserv.hpp"
+#include "webserv.hpp"
 
 #define PORT 9999
 #define MAX_EVENTS 10
