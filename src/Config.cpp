@@ -63,11 +63,11 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
     std::map<int, in_addr_t> host_port_combo;
     for (server_it = server_blocks.begin(); server_it != server_blocks.end(); ++server_it)
     {
-        if (server_it->port == -1 || server_it->host == ft_inet("255.255.255.255") || server_it->max_client_body == 0)
+        if (server_it->get_port() == -1 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
             throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
-        if (host_port_combo.find(server_it->port) != host_port_combo.end())
+        if (host_port_combo.find(server_it->get_port()) != host_port_combo.end())
         {
-            if (host_port_combo[server_it->port] == server_it->host)
+            if (host_port_combo[server_it->get_port()] == server_it->get_host())
             {
                 Log::log("same host-port combination, removing server block...", WARNING);
                 server_it = server_blocks.erase(server_it); // remove server block from blocks
@@ -75,20 +75,10 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
             }
         }
         else 
-            host_port_combo[server_it->port] = server_it->host;
-        if (server_it->locations.empty())
+            host_port_combo[server_it->get_port()] = server_it->get_host();
+        if (server_it->get_locations().empty())
             continue ;
-        // optional: throw std::runtime_error("missing location block inside server block");
-        std::sort(server_it->locations.begin(), server_it->locations.end(), compare_prefix); // sort by prefix: longest -> shortest
-        std::vector<Location>::iterator location_it, tmp;
-        for (location_it = server_it->locations.begin(); location_it != server_it->locations.end(); ++location_it)
-        {
-            if ((location_it + 1) != server_it->locations.end() && same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
-                throw std::runtime_error("locations with same prefix cannot override each other");
-
-            // optional: check if root / exists
-            // optional: check if location is empty?
-        }
+        server_it->validate_locations();
     }
 }
 
@@ -97,6 +87,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
  */
 void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
+    Log::log("inside parse server block", DEBUG);
     while (getline(content, line))
     {
         line = trim(line); // remove abundant whitespaces and comments
@@ -122,6 +113,7 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
  */
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
+    Log::log("inside parse server block directives", DEBUG);
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
@@ -139,7 +131,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
             Log::log("new location inside server block", DEBUG);
             Location location;
             parse_location(value, location, content);
-            block.locations.push_back(location);
+            block.add_location(location);
         }
         else
             throw std::runtime_error("in sever block: unknown directive: " + directive);
@@ -153,7 +145,8 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
  */
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
-    block.location = check_location_prefix(block, line);
+    Log::log("inside parse location", DEBUG);
+    block.set_path(check_location_prefix(block, line));
     int directive_count = 0;
     while (getline(content, line))
     {
@@ -182,6 +175,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
  */
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
+    Log::log("inside parse location block directives", DEBUG);
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
