@@ -13,10 +13,6 @@
 # define OK 0
 #endif
 
-#define GET 101
-#define POST 102
-#define DELETE 103
-
 #define CLIENT_CONNECTION_SOCKET 100  // the only one that we directly map to a request
 #define LISTENER_SOCKET 101
 #define CGI_PIPE 102  // indirectly mapped to a request through Cgi, which itself is part of a Request

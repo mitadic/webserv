@@ -55,6 +55,14 @@ int set_http_v(const std::string& num, int& http_v)
 	return webserv_atoi_set(num, http_v);
 }
 
+/* RFC 2616 permits leading newlines, so while \r\n and nothing else; EOF not permissible! */
+void spin_through_leading_crlf(std::istringstream& stream, std::string& line)
+{
+	while (std::getline(stream, line) && is_empty_crlf(line))
+		;
+	check_stream(stream);
+}
+
 bool is_empty_crlf(std::string& line)
 {
 	// getline() trimmed the '\n'
@@ -73,9 +81,9 @@ bool is_lws(const char c)
 void check_stream(std::istringstream& stream)
 {
 	if (stream.fail() || stream.bad())
-		throw BadSyntaxException(500);
+		throw RequestException(CODE_500);
 	if (stream.eof())
-		throw BadSyntaxException(400);
+		throw RequestException(CODE_400);
 }
 
 int get_http_header_idx(const std::string& s)

@@ -9,6 +9,12 @@
 #define HTTP_ENTITY_HEADERS_N 10
 #define HTTP_REQUEST_LEGAL_HEADERS_N 38
 
+enum e_method {
+	GET = 100,
+	POST,
+	DELETE
+};
+
 enum e_http_header {
 	HEADER_ACCEPT = 0,
 	HEADER_ACCEPT_CHARSET,

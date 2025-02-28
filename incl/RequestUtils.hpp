@@ -16,6 +16,7 @@ int		webserv_atoi_set(const std::string& s, int& num);
 int		set_http_v(const std::string& num, int& http_v);
 bool	is_empty_crlf(std::string& line);
 bool	is_lws(const char c);
+void    spin_through_leading_crlf(std::istringstream& stream, std::string& line);
 void	check_stream(std::istringstream& stream);
 int		get_http_header_idx(const std::string& s);
 

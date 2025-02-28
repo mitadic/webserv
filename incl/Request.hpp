@@ -8,14 +8,15 @@
 #include "StatusCodes.hpp"
 #include "ContentTypes.hpp"
 #include "RequestUtils.hpp"
+#include "RequestParser.hpp"
 
-#define SP " "
-#define LWS_CHARS " \t"
-#define UNINITIALIZED -1
-#define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
+class RequestParser;  // forward declaration
 
 
 class Request {
+
+	friend class RequestParser;
+
 public:
     Request();
     ~Request();
@@ -23,83 +24,58 @@ public:
 
 	void	reset();
 	void	reset_client();
-
 	int		parse();
-	int		parse_request_line(std::string& line);
-	void	parse_header_line(std::istringstream& stream, std::string& line);
-	void	dispatch_header_parser(const int legal_header_idx, std::string& header_val);
 
+	std::string get_host() { return _host; };
+	std::string get_request() { return _request; };
+	std::string	get_request_body() { return _request_body; };
+	std::string get_response() { return _response; };
+	int			get_response_status() { return _response_status; };
+	int			get_total_sent() { return _total_sent; };
+	int			get_content_length() { return _content_length; };
+	int			get_content_type_idx() { return _content_type_idx; };
+	int			get_client_fd() { return _client_fd; };
+	int			get_method() { return _method; };
+	int			get_major_http_v() { return _major_http_v; };
+	int			get_minor_http_v() { return _minor_http_v; };
+	std::string get_request_location() { return _request_location; };
+	int			get_cgi_status() { return _cgi_status; };
+	std::string get_cgi_job_id() { return _cgi_job_id; };
+	std::string get_cgi_output() { return _cgi_output; };
+	std::vector<std::string> get_accepted_types() { return _accepted_types; };
 
-	std::string host;
-	std::string request;
-	std::string	request_body;
-    std::string response;
-	int			response_status;
-	int			total_sent;
-	int			content_length;  // refers to body
-	bool		chunked;
-	int			content_type_idx;
-	int         client_fd;
-	bool		timed_out;
-	bool		await_reconnection;
-	std::vector<std::string> accepted_types;
+	bool		is_flagged_as_chunked() { return _flagged_as_chunked; };
 
-	char		method;			// GET POST DELETE
-	int			major_http_v;
-	int			minor_http_v;
-	std::string request_location;
-
-	bool		keep_alive;		// default: true
-
-	int			cgi_status;
-	CgiHandler  cgi;
-	std::string cgi_job_id;
-	std::string cgi_output;
+	// execution relevant
+	bool		timed_out() { return _timed_out; };
+	bool		should_await_reconnection() { return _await_reconnection; };
+	bool		should_keep_alive() { return _keep_alive; };
 
 private:
+	std::string _host;
+	std::string _request;
+	std::string	_request_body;
+	std::string _response;
+	int			_response_status;
+	int			_total_sent;
+	int			_content_length;  // refers to body
+	bool		_flagged_as_chunked;
+	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
+	int			_client_fd;
+	bool		_timed_out;
+	bool		_await_reconnection;
+	std::vector<std::string> _accepted_types;
 
-	void	_parse_header_cache_control(std::string&);
-	void	_parse_header_connection(std::string&);
-	void	_parse_header_date(std::string&);
-	void	_parse_header_pragma(std::string&);
-	void	_parse_header_trailer(std::string&);
-	void	_parse_header_transfer_encoding(std::string&);
-	void	_parse_header_upgrade(std::string&);
-	void	_parse_header_via(std::string&);
-	void	_parse_header_warning(std::string&);
+	int			_method;			// if GET POST DELETE
+	int			_major_http_v;
+	int			_minor_http_v;
+	std::string _request_location;
 
-	void	_parse_header_accept(std::string&);
-	void	_parse_header_accept_charset(std::string&);
-	void	_parse_header_accept_encoding(std::string&);
-	void	_parse_header_accept_language(std::string&);
-	void	_parse_header_authorization(std::string&);
-	void	_parse_header_expect(std::string&);
-	void	_parse_header_from(std::string&);
-	void	_parse_header_host(std::string&);
-	void	_parse_header_if_match(std::string&);
-	void	_parse_header_if_modified_since(std::string&);
-	void	_parse_header_if_none_match(std::string&);
-	void	_parse_header_if_range(std::string&);
-	void	_parse_header_unmodified_since(std::string&);
-	void	_parse_header_max_forwards(std::string&);
-	void	_parse_header_proxy_authorization(std::string&);
-	void	_parse_header_range(std::string&);
-	void	_parse_header_referer(std::string&);
-	void	_parse_header_te(std::string&);
-	void	_parse_header_user_agent(std::string&);
+	bool		_keep_alive;		// default: true
 
-	void	_parse_header_allow(std::string&);
-	void	_parse_header_content_encoding(std::string&);
-	void	_parse_header_content_language(std::string&);
-	void	_parse_header_content_length(std::string&);
-	void	_parse_header_content_location(std::string&);
-	void	_parse_header_content_md5(std::string&);
-	void	_parse_header_content_range(std::string&);
-	void	_parse_header_content_type(std::string&);
-	void	_parse_header_expires(std::string&);
-	void	_parse_header_last_modified(std::string&);
-
-	// void	_parse_header_cookie(std::string&);
-	// void	_parse_header_auth_scheme(std::string&);
+	int			_cgi_status;
+	CgiHandler  _cgi;
+	std::string _cgi_job_id;
+	std::string _cgi_output;
 
 };
