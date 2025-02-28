@@ -10,7 +10,7 @@
 #include "RequestUtils.hpp"
 #include "RequestParser.hpp"
 
-class RequestParser;  // forward declaration
+class RequestParser;
 
 
 class Request {
@@ -26,36 +26,42 @@ public:
 	void	reset_client();
 	int		parse();
 
-	const std::string get_host() const { return _host; };
-	const std::string get_request() const { return _request; };
-	const std::string get_request_body() const { return _request_body; };
-	const std::string get_response() const { return _response; };
-	const std::string get_request_uri() const { return _request_uri; };
-	const std::string get_cgi_job_id() const { return _cgi_job_id; };
-	const std::string get_cgi_output() const { return _cgi_output; };
-	const int get_response_status() const { return _response_status; };
-	const int get_total_sent() const { return _total_sent; };
-	const int get_content_length() const { return _content_length; };
-	const int get_content_type_idx() const { return _content_type_idx; };
-	const int get_client_fd() const { return _client_fd; };
-	const int get_method() const { return _method; };
-	const int get_major_http_v() const { return _major_http_v; };
-	const int get_minor_http_v() const { return _minor_http_v; };
-	const int get_cgi_status() const { return _cgi_status; };
-	const std::vector<std::string> get_accepted_types() const { return _accepted_types; };
+	const std::string get_request() const;
+	const std::string get_request_body() const;
+	const std::string get_response() const;
+	const std::string get_request_uri() const;
+	const std::string get_cgi_job_id() const;
+	const std::string get_cgi_output() const;
+	const int get_response_status() const;
+	const int get_total_sent() const;
+	const int get_content_length() const;
+	const int get_content_type_idx() const;
+	const int get_client_fd() const;
+	const int get_method() const;
+	const int get_major_http_v() const;
+	const int get_minor_http_v() const;
+	const int get_cgi_status() const;
+	const short get_port();
+	const in_addr_t get_host();
+	const std::vector<std::string> get_accepted_types() const;
 
-	bool		is_flagged_as_chunked() { return _flagged_as_chunked; };
+	bool is_flagged_as_chunked();
 
-	// execution relevant
-	bool		timed_out() { return _timed_out; };
-	bool		should_await_reconnection() { return _await_reconnection; };
-	bool		should_keep_alive() { return _keep_alive; };
+	bool timed_out();
+	bool should_await_reconnection();
+	bool should_keep_alive();
+
+	void set_response(std::string&);
+	void append_to_response(std::string&);
+	void set_response_status(int code);
+
 
 private:
-	std::string _host;
 	std::string _request;
 	std::string	_request_body;
 	std::string _response;
+	short		_port;
+	in_addr_t	_host;
 	int			_response_status;
 	int			_total_sent;
 	int			_content_length;  // refers to body
