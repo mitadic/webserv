@@ -66,6 +66,10 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 		fd.fd = pipe_fds[0]; // read end (bc we read)
 		fd.events = POLLIN;
 		pfds.push_back(fd);
-		pfd_info_map[pipe_fds[0]] = (pfd_info){ .type = CGI_PIPE, .reqs_idx = reqs_idx };
+
+		pfd_info info = {};
+		info.type = CGI_PIPE;
+		info.reqs_idx = reqs_idx;
+		pfd_info_map[pipe_fds[0]] = info;
 	}
 }

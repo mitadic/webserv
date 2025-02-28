@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 17:14:55 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/28 17:43:47 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ const Location* getLocation(const Request& req, const ServerBlock* server)
 
 	for (size_t i = 0; i < server->locations.size(); ++i)
 	{
-		if (req.uri.find(server->locations[i].location) == 0 && server->locations[i].location.size() > longestMatch.size())
+		if (req.get_request_uri().find(server->locations[i].location) == 0 && server->locations[i].location.size() > longestMatch.size())
 		{
 			longestMatch = server->locations[i].location;
 			matchingLocation = &server->locations[i];
@@ -90,7 +90,7 @@ const Location* getLocation(const Request& req, const ServerBlock* server)
 
 std::string RequestProcessor::handleMethod(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
-	switch (req.method)
+	switch (req.get_method())
 	{
 	case GET:
 		return processGet(req, server_blocks);
@@ -129,7 +129,7 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 		return sendErrorPage(errorPage);
 	}
 
-	std::string filePath = matchingLocation->root + req.uri;
+	std::string filePath = matchingLocation->root + req.get_request_uri();
 
 	if (Utils::fileExists(filePath))
 	{
@@ -185,7 +185,7 @@ std::string RequestProcessor::processDelete(const Request& req, const std::vecto
 	const ServerBlock* matchingServer = getServerBlock(req, server_blocks);
 	const Location* matchingLocation = getLocation(req, matchingServer);
 
-	std::string filePath = matchingLocation->root + req.uri;
+	std::string filePath = matchingLocation->root + req.get_request_uri();
 }
 
 
