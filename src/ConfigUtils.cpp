@@ -36,19 +36,6 @@ std::string Config::ft_inet_ntoa(in_addr_t ip)
     return (host);
 }
 
-/**
- * @brief Checks if root or location name have a valid syntax
- */
-void Config::check_valid_path(std::string & path, t_path type)
-{
-    if (path[0] != '/')
-        throw std::runtime_error("Invalid path: absolute path has to start with '/'");
-    if (type == ROOT && path[path.size() - 1] == '/')
-        throw std::runtime_error("Invalid path: root should not end with '/'");
-    if (path.find("//") != std::string::npos || path.find_first_of("*?$\\% ") != std::string::npos)
-        throw std::runtime_error("Invalid path: contains '//' or one of the characters ' *?$\\%'");
-}
-
 int Config::has_only_digits(char *str)
 {
     while (str && *str)

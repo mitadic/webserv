@@ -113,19 +113,18 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
  */
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
-    Log::log("inside parse server block directives", DEBUG);
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
         if (directive == "listen")
-            parse_port(block, value);
+            block.set_port(value);
         else if (directive == "host")
-            parse_host(block, value);
+            block.set_host(value);
         else if (directive == "error_page")
-            parse_error_page(block, value);
+            block.add_error_page(value);
         else if (directive == "client_max_body_size")
-            parse_client_body(block, value);
+           block.set_max_client_body(value);
         else if (directive == "location")
         {
             Log::log("new location inside server block", DEBUG);
@@ -146,7 +145,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 void Config::parse_location(std::string & line, Location & block, std::stringstream & content)
 {
     Log::log("inside parse location", DEBUG);
-    block.set_path(check_location_prefix(block, line));
+    block.set_path(line);
     int directive_count = 0;
     while (getline(content, line))
     {
@@ -175,36 +174,30 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
  */
 void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
 {
-    Log::log("inside parse location block directives", DEBUG);
     std::string         directive, value;
     std::stringstream   ss(line);
     if (getline(ss, directive, ' ') && getline(ss, value))
     {
         if (directive == "root")
-            parse_root(block, value); 
+            block.set_root(value);
         else if (directive == "index")
-            parse_index(block, value);
+            block.set_index(value);
         else if (directive == "upload")
-            parse_upload(block, value);
+            block.set_upload(value);
         else if (directive == "allowed_methods")
-            parse_allowed_methods(block, value);
+            block.set_allowed_methods(value);
         else if (directive == "autoindex")
-            parse_autoindex(block, value);
+            block.set_autoindex(value);
         else if (directive == "cgi_extension")
-            parse_cgi_extension(block, value);
+            block.set_cgi_extensions(value);
         else if (directive == "return")
-            parse_redirect(block, value);
+            block.set_redirect(value);
         else
             throw std::runtime_error("in location block: unknown directive: " + directive);
     }
     else
         throw std::runtime_error("in location block: unexpected line: " + line);
 }
-
-
-
-
-
 
 
 

@@ -32,24 +32,50 @@ const std::vector<Location>&   ServerBlock::get_locations() const
     return (_locations);
 }
 
-void    ServerBlock::set_port(int port)
+void    ServerBlock::set_port(std::string port)
 {
-    _port = port;
+    if (_port != -1)
+        throw std::runtime_error("server cannot have multiple ports");
+    if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
+        throw std::runtime_error("invalid port number" + port);
+    _port = std::atoi(port.c_str());
+    if (_port > 65535 || _port < 0)
+        throw std::runtime_error("invalid port number range");
+    // optional: add more checks for valid ports
 };
 
-void    ServerBlock::set_host(in_addr_t host)
+void    ServerBlock::set_host(std::string host)
 {
-    _host = host;
+    if (_host != Config::ft_inet("255.255.255.255"))
+        throw std::runtime_error("host already declared");
+    _host = Config::ft_inet(host.c_str());
+    // optional: add more checks for valid ip addresses
+    if (_host == Config::ft_inet("255.255.255.255"))
+        throw std::runtime_error("invalid IP address");
 };
 
-void    ServerBlock::add_error_page(int code, std::string path)
+void    ServerBlock::add_error_page(std::string page)
 {
-    _error_pages[code] = path;
+    std::string code, path;
+    std::stringstream ss(page);
+    if (!getline(ss, code, ' ') || !getline(ss, path))
+        throw std::runtime_error("in server block: error_page directive requires 2 arguments");
+    if (code.size() != 3 || !Config::has_only_digits(const_cast<char *>(code.c_str())))
+        throw std::runtime_error("invalid error code " + code);
+    Location::check_valid_path(path, ROOT);
+    // optional: check if the path really does exist with stat()
+    if (_error_pages.find(std::atoi(code.c_str())) != _error_pages.end())
+        throw std::runtime_error("error page already exists for " + code);
+    _error_pages[std::atoi(code.c_str())] = path;
 };
 
-void    ServerBlock::set_max_client_body(unsigned int size)
+void    ServerBlock::set_max_client_body(std::string size)
 {
-    _max_client_body = size;
+    if (_max_client_body != 0 || !Config::has_only_digits(const_cast<char *>(size.c_str()))
+        || (std::strtod(size.c_str(), NULL) > UINT32_MAX))
+        throw std::runtime_error("max body size already declared or invalid size");
+    // optional: change type or size
+    _max_client_body = std::atol(size.c_str());
 };
 
 void    ServerBlock::add_location(Location & location)
@@ -74,11 +100,11 @@ std::ostream &operator<<(std::ostream &os, const ServerBlock &server_block)
 
 void ServerBlock::validate_locations()
 {
-    std::sort(_locations.begin(), _locations.end(), Config::compare_prefix); // sort by prefix: longest -> shortest
+    std::sort(_locations.begin(), _locations.end(), Location::compare_prefix); // sort by prefix: longest -> shortest
     std::vector<Location>::iterator location_it, tmp;
     for (location_it = _locations.begin(); location_it != _locations.end(); ++location_it)
     {
-        if ((location_it + 1) != _locations.end() && Config::same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
+        if ((location_it + 1) != _locations.end() && Location::same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
             throw std::runtime_error("locations with same prefix cannot override each other");
 
         // optional: check if root / exists

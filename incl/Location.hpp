@@ -6,6 +6,13 @@
 # include <vector>
 # include <map>
 # include <iostream>
+# include <sstream>
+# include <stdexcept>
+
+typedef enum e_path {
+    LOCATION,
+    ROOT,
+} t_path;
 
 /**
  * @brief Class representing a location block in the config file
@@ -43,14 +50,16 @@ class Location {
         void set_path(std::string path);
         void set_root(std::string root);
         void set_index(std::string index);
-        void set_upload_location(std::string upload_location);
-        void set_upload_allowed(bool upload_allowed);
-        void set_get(bool get);
-        void set_post(bool post);
-        void set_del(bool del);
-        void set_autoindex(bool autoindex);
-        void add_cgi_extension(std::string extension);
-        void set_redirect(int code, std::string url);
+        void set_upload(std::string upload_location);
+        void set_allowed_methods(std::string input);
+        void set_autoindex(std::string autoindex);
+        void set_cgi_extensions(std::string extension);
+        void set_redirect(std::string redirection);
+
+        // methods
+        static void check_valid_path(std::string & path, t_path type);
+        static bool compare_prefix(const Location & a, const Location & b);
+        static bool same_prefix(const Location & a, const Location & b);
 
     private:
         std::string                 _path;

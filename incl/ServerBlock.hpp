@@ -9,6 +9,7 @@
 # include "Location.hpp"
 
 /**
+ * @brief Class respresenting a server block in the config file
  * @var _port the port the server listens on (0 - 65535)
  * @var _host the host the server listens on (0.0.0.0 - 255.255.255.254)
  * @var _error_pages a map of error codes and their corresponding paths
@@ -27,10 +28,10 @@ class ServerBlock {
         const std::vector<Location>&        get_locations() const;
 
         // setters
-        void                        set_port(int port);
-        void                        set_host(in_addr_t host);
-        void                        add_error_page(int code, std::string path);
-        void                        set_max_client_body(unsigned int size);
+        void                        set_port(std::string port);
+        void                        set_host(std::string host);
+        void                        add_error_page(std::string page);
+        void                        set_max_client_body(std::string size);
         void                        add_location(Location & location);
 
         // methods
