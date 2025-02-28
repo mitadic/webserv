@@ -41,8 +41,8 @@ public:
 	const int get_major_http_v() const;
 	const int get_minor_http_v() const;
 	const int get_cgi_status() const;
-	const short get_port();
-	const in_addr_t get_host();
+	const short get_port() const;
+	const in_addr_t get_host() const;
 	const std::vector<std::string> get_accepted_types() const;
 
 	bool is_flagged_as_chunked();

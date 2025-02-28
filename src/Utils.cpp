@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 12:38:31 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/02/28 20:29:12 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,4 +37,49 @@ std::string Utils::readFile(const std::string& file)
 	buffer << read_file.rdbuf();
 	read_file.close();
 	return buffer.str();
+}
+
+// Find the server block that corresponds to the request based on port and host
+// TODO: If no server block is found, return an error ?
+const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<ServerBlock>& server_blocks)
+{
+	const ServerBlock* matchingServer = NULL;
+
+	for (size_t i = 0; i < server_blocks.size(); ++i)
+	{
+		if (server_blocks[i].get_port() == req.get_port() && server_blocks[i].get_host() == req.get_host())
+		{
+			matchingServer = &server_blocks[i];
+			break;
+		}
+	}
+	if (!matchingServer)
+	{
+		throw std::runtime_error("No server block found for the request");
+	}
+	return matchingServer;
+}
+
+// Find the corresponding location in the server block based on the uri
+// iterate though locations and return the longest matching location
+const Location* Utils::getLocation(const Request& req, const ServerBlock* server)
+{
+	const Location* matchingLocation = NULL;
+	std::string longestMatch = "";
+	const std::vector<Location>& locations = server->get_locations();
+
+	for (size_t i = 0; i < server->get_locations().size(); ++i)
+	{
+		if (req.get_request_uri().find(locations[i].get_path()) == 0 && locations[i].get_path().size() > longestMatch.size())
+		{
+			longestMatch = locations[i].get_path();
+			matchingLocation = &locations[i];
+		}
+	}
+
+	if (!matchingLocation)
+	{
+		throw std::runtime_error("No matching location found for the request");
+	}
+	return matchingLocation;
 }
