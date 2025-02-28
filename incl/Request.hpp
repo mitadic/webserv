@@ -26,11 +26,12 @@ public:
 		cgi_output.clear();
 	}
 
-	std::string host;            // Host: example.com
 	std::string mime_type;       // Content-Type: application/json (refers to own payload)
 	std::string request;
     std::string response;
 	std::string uri;             // /index.html
+	int         port;
+	in_addr_t   host;
 	int			total_sent;
 	long long   content_length;  // Content-Length: 27
 	short       method;          // GET POST DELETE
