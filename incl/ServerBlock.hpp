@@ -21,8 +21,8 @@ class ServerBlock {
         ServerBlock();
 
         // getters
-        int                                 get_port() const;
-        in_addr_t                           get_host() const;
+        short                         		get_port() const;
+        in_addr_t                     		get_host() const;
         const std::map<int, std::string>&   get_error_pages() const;
         unsigned int                        get_max_client_body() const;
         const std::vector<Location>&        get_locations() const;
@@ -39,7 +39,7 @@ class ServerBlock {
 
     private:
         //int         socket_fd; // or do we store it only in pfds?
-        int                         _port;
+        short                         _port;
         in_addr_t                   _host;
         std::map<int, std::string>  _error_pages;
         unsigned int                _max_client_body;
@@ -47,5 +47,5 @@ class ServerBlock {
 };
 
 std::ostream &operator<<(std::ostream &os, const ServerBlock &server_block);
-    
+
 #endif

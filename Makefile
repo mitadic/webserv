@@ -1,6 +1,6 @@
 CXX		=	c++
 # FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-FLAGS	=	-g -std=c++98 
+FLAGS	=	-g -std=c++98
 # FLAGS	+=	-Wall -Wextra -Werror
 # FLAGS	+= -fsanitize=address
 SRC		=	main.cpp \
@@ -10,7 +10,10 @@ SRC		=	main.cpp \
 			ConfigUtils.cpp \
 			Log.cpp \
 			Location.cpp \
-			ServerBlock.cpp 
+			ServerBlock.cpp
+			Request.cpp \
+			RequestParser.cpp \
+			RequestProcessor.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

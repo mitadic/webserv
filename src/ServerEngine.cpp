@@ -51,12 +51,15 @@ void ServerEngine::setup_listening_socket(int port)
 		return;
 	}
 
-	pfd_info_map[sockfd] = (pfd_info){ .type = LISTENER_SOCKET, .sockaddr = socket_addr };  // map insertion
+	pfd_info info = {};
+	info.type = LISTENER_SOCKET;
+	info.sockaddr = socket_addr;
+	pfd_info_map[sockfd] = info;
 
 	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << port << std::endl;
 }
 
-void ServerEngine::init_pfds()
+void ServerEngine::init_listener_pfds()
 {
 	for (std::map<int, pfd_info>::iterator it = pfd_info_map.begin(); it != pfd_info_map.end(); it++)
 	{
@@ -94,21 +97,23 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	// Full engine procedure of adding and mapping a new client 
 	pfds.push_back(fd);
 	reqs.push_back(Request());
-	pfd_info_map[client] = (pfd_info){ .type = CLIENT_CONNECTION_SOCKET, .reqs_idx = reqs.size() - 1 };
+	pfd_info info = {};
+	info.type = CLIENT_CONNECTION_SOCKET;
+	info.reqs_idx = reqs.size() - 1;
+	pfd_info_map[client] = info;
 
 	std::cout << "New client accepted on FD " << client << std::endl;
 }
 
-void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
+void ServerEngine::set_response(std::vector<pollfd>::iterator& pfds_it, int idx)
 {
-	// parse request
 
 	std::cout << "Finished reading the request: " << std::endl << "\"" << reqs[idx].request << "\"" << std::endl;
 	if (reqs[idx].request.find(".py") != reqs[idx].request.npos) // if cgi request
 	{
 		reqs[idx].cgi.handle_cgi(pfds, pfd_info_map, idx);
 		reqs[idx].cgi_status = READ_PIPE;
-		reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }\n";
+		reqs[idx].response = "HTTP/1.1 202 Accepted\nContent-Type: application/json\n\n{ \"job_id\": \"abc123\" }";
 	}
 
 	// else if request contains job_id and the job was finished
@@ -119,10 +124,10 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 	}
 	else if (reqs[idx].request.find("about.html") != reqs[idx].request.npos)
 	{
-		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8\n\n";
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/html; charset=utf-8";
 
 		std::ifstream	fSrc;
-		fSrc.open("./www/html/about.html", std::ios::in);
+		fSrc.open("./www/three-socketeers/about.html", std::ios::in);
 		if (!fSrc.is_open()) {
 			std::cerr << "Error opening file <" << "about.html" << ">" << std::endl;
 			return;
@@ -135,14 +140,14 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		}
 		fSrc.close();
 		if (fSrc.is_open())
-			std::cerr << "Files not closed despite statements" << std::endl;
+			std::cerr << "File not closed despite statements" << std::endl;
 	}
 	else if (reqs[idx].request.find("styles.css") != reqs[idx].request.npos)
 	{
-		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8\n\n";
+		reqs[idx].response = "HTTP/1.1 200\nContent-Type: text/css; charset=utf-8";
 
 		std::ifstream	fSrc;
-		fSrc.open("./www/html/css/styles.css", std::ios::in);
+		fSrc.open("./www/three-socketeers/css/styles.css", std::ios::in);
 		if (!fSrc.is_open()) {
 			std::cerr << "Error opening file <" << "styles.css" << ">" << std::endl;
 			return;
@@ -155,29 +160,46 @@ void ServerEngine::set_response(std::vector<pollfd>::iterator pfds_it, int idx)
 		}
 		fSrc.close();
 		if (fSrc.is_open())
-			std::cerr << "Files not closed despite statements" << std::endl;
+			std::cerr << "File not closed despite statements" << std::endl;
 	}
 	else  // ready to be sending basic HTML back
-	 	reqs[idx].response = "Hi. Default non-CGI response.$\n";
+	 	reqs[idx].response = "Hi. Default non-CGI response.$";
 	
+		 reqs[idx].response += "\r\n\r\n";
+	reqs[idx].request.clear();
 	pfds_it->events = POLLOUT;
+}
+
+void ServerEngine::set_basic_response(std::vector<pollfd>::iterator& pfds_it, int idx, std::string response)
+{
+	reqs[idx].response = response;
+	reqs[idx].response += "\r\n\r\n";
+	reqs[idx].request.clear();
+	pfds_it->events = POLLOUT;
+}
+
+void ServerEngine::print_pfds()
+{
+	std::vector<pollfd>::iterator it = pfds.begin();
+	while (it != pfds.end())
+	{
+		std::cout << "fd: " << it->fd << ", type: " << pfd_info_map[it->fd].type << std::endl;
+		it++;
+	}
 }
 
 void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 
-	// Setup listening sockets for each port:
 	for (size_t i = 0; i < ports.size(); i++)
 		setup_listening_socket(ports[i]);
 
-	// Initialize poll structure with the listener_pfds, later adds client_pfds
-	init_pfds();
+	init_listener_pfds();
 
 	while (!g_signal)
 	{
-		int timeout = CONNECTION_TIMEOUT;
-		int events_count = poll(&pfds[0], pfds.size(), timeout);
+		int events_count = poll(&pfds[0], pfds.size(), CONNECTION_TIMEOUT);
 		if (events_count == -1)
 		{
 			//if SIGINT (Ctrl+C) is received, exit gracefully
@@ -188,7 +210,6 @@ void ServerEngine::run()
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
 			continue;
 		}
-		// std::cout << "pfds.size(): " << pfds.size() << std::endl;
 
 
 
@@ -234,21 +255,29 @@ void ServerEngine::run()
 				else  // is client, request reading to be done
 				{
 					nbytes = recv(fd, buf, BUF_SZ, MSG_DONTWAIT);
-					if (nbytes <= 0)  // error or hangup
+					if (nbytes <= 0)  // hangup or error
 					{
 						if (nbytes == 0)
-							std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
+							std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
 						else
 							std::perror("recv");
-						close(fd);
+						if (close(fd) == -1)
+							perror("close");
 						pfds.erase(pfds_it);
-						pfd_info_map.erase(meta_it);
+						reqs.erase(reqs.begin() + idx);
+						set_basic_response(pfds_it, idx, "HTTP/1.1 503 recv() fail");
 						break;  // will reset to pfds.begin()
 					}
 					reqs[idx].request.append(buf);
-					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if (pretend) proper HTTP ending
+					if (reqs[idx].request.find("\r\n\r\n") != reqs[idx].request.npos) // if proper HTTP ending
 					{
-						std::cout << "Caught (pretend) proper HTTP ending" << std::endl;
+						try {
+							reqs[idx].parse();
+						}
+						catch (RequestException& e) {
+							std::cerr << "Error: " << e.what() << std::endl;
+							reqs[idx].response_status = e.code();
+						}
 						set_response(pfds_it, idx);
 						break;
 					}
@@ -262,17 +291,29 @@ void ServerEngine::run()
 
 				if (sz_to_send)
 				{
-					send(fd, reqs[idx].response.substr(reqs[idx].total_sent).c_str(), sz_to_send, MSG_DONTWAIT);
+					if (send(fd, reqs[idx].response.substr(reqs[idx].total_sent).c_str(), sz_to_send, MSG_DONTWAIT) == -1)
+						perror("send");
 					reqs[idx].total_sent += sz_to_send;
 				}
-				else
+				else  // sz_to_send == 0
 				{
-					reqs[idx].reset();
-					close(fd);
-					reqs.erase(reqs.begin() + idx);  // the only place where we erase a Request?
-					pfds.erase(pfds_it);
-					pfd_info_map.erase(meta_it);
-					break;  // will reset to pfds.begin()
+					if (reqs[idx].timed_out)
+					{
+						std::cout << "timeout: client on socket " << pfds_it->fd << ", closing connection\n";
+						close(fd);
+						pfds.erase(pfds_it);
+						if (!reqs[idx].await_reconnection)
+						{
+							reqs.erase(reqs.begin() + idx);
+							pfd_info_map.erase(meta_it);
+						}
+					}
+					else
+					{
+						reqs[idx].reset();
+						pfds_it->events = POLLIN;
+					}
+					break;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
 				}
 			}
 			else if (pfds_it->revents & POLLHUP)
@@ -287,11 +328,13 @@ void ServerEngine::run()
 					reqs[idx].cgi_status = AWAIT_CLIENT_RECONNECT;
 					break;  // will reset to pfds.begin()
 				}
-				else // is client or listener
+				else
 				{
-					std::cout << "poll: socket " << pfds_it->fd << " hung up\n";
-					close(fd);
+					std::cout << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown\n";
+					if (close(fd) == -1)
+						perror("close");
 					pfds.erase(pfds_it);
+					reqs.erase(reqs.begin() + idx);
 					break;  // will reset to pfds.begin()
 				}
 			}
@@ -299,11 +342,15 @@ void ServerEngine::run()
 			{
 				std::cout << "POLLERR | POLLNVAL" << std::endl;
 			}
-			// else if (fd_meta.type == CLIENT_CONNECTION_SOCKET && !reqs[idx].request.empty())  // when recv() finishes, there's no flag
-			// {
-			// 	set_response(pfds_it, idx);  // setting response in invalid HTTP req, CONNECTION_TIMEOUT scenario
-			// 	break;
-			// }
+			else if (fd_meta.type == CLIENT_CONNECTION_SOCKET)  // no flag, so CONNECTION_TIMEOUT 
+			{
+				if (!reqs[idx].request.empty())
+					set_basic_response(pfds_it, idx, "HTTP/1.1 400 Bad Request");
+				else  // request is empty, we can close client connection
+					set_basic_response(pfds_it, idx, "HTTP/1.1 408 Request Timeout");  // this would need more time
+				reqs[idx].timed_out = true;
+				break;
+			}
 			pfds_it++;
 		}
 	}

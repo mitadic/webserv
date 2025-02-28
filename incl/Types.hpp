@@ -9,9 +9,9 @@
 #include <cstdlib>		
 #include <cstdio>		// perror()
 
-#define GET 101
-#define POST 102
-#define DELETE 103
+#ifndef OK
+# define OK 0
+#endif
 
 #define CLIENT_CONNECTION_SOCKET 100  // the only one that we directly map to a request
 #define LISTENER_SOCKET 101

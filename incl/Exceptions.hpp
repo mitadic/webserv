@@ -1,0 +1,17 @@
+#pragma once
+
+#include <exception>
+#include "StatusCodes.hpp"
+
+class RequestException : public std::exception {
+
+    private:
+        RequestException();
+        int error_code;
+    
+    public:
+        RequestException(int code);
+    
+        const int code() const throw();
+        const char* what() const throw();
+    };

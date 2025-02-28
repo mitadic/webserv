@@ -7,7 +7,7 @@ ServerBlock::ServerBlock() : _port(-1), _max_client_body(0)
     _host = Config::ft_inet("255.255.255.255");
 };
 
-int ServerBlock::get_port() const
+short ServerBlock::get_port() const
 {
     return (_port);
 };
@@ -28,7 +28,7 @@ unsigned int    ServerBlock::get_max_client_body() const
 };
 
 const std::vector<Location>&   ServerBlock::get_locations() const
-{   
+{
     return (_locations);
 }
 
