@@ -20,6 +20,9 @@ public:
 	RequestParser(const RequestParser&);
 
 	void	parse_request_line(Request& req, std::istringstream& stream, std::string& line);
+	void	parse_headers(Request& req, std::istringstream& stream, std::string& line);
+	void	parse_body(Request& req, std::istringstream& stream, std::string& line);
+
 	void	parse_header_line(Request& req, std::istringstream& stream, std::string& line);
 	void	dispatch_header_parser(Request& req, const int legal_header_idx, std::string& header_val);
 

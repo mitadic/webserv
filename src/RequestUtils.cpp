@@ -107,7 +107,7 @@ void spin_through_leading_crlf(std::istringstream& stream, std::string& line)
 {
 	while (std::getline(stream, line) && is_empty_crlf(line))
 		;
-	check_stream(stream);
+	check_stream_for_errors_or_eof(stream);
 }
 
 /* Check whether line is empty CRLF (or LF, as specified in the RFC) */
@@ -151,12 +151,18 @@ bool is_valid_ip_str(const std::string& s)
 	}
 }
 
-void check_stream(std::istringstream& stream)
+void check_stream_for_errors_or_eof(std::istringstream& stream)
 {
 	if (stream.fail() || stream.bad())
 		throw RequestException(CODE_500);
 	if (stream.eof())
 		throw RequestException(CODE_400);
+}
+
+void check_stream_for_errors(std::istringstream& stream)
+{
+	if (stream.fail() || stream.bad())
+		throw RequestException(CODE_500);
 }
 
 int get_http_header_idx(const std::string& s)

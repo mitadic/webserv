@@ -22,7 +22,8 @@ bool	is_empty_crlf(std::string& line);
 bool	is_lws(const char c);
 bool    is_valid_ip_str(const std::string& s);
 void    spin_through_leading_crlf(std::istringstream& stream, std::string& line);
-void	check_stream(std::istringstream& stream);
+void	check_stream_for_errors_or_eof(std::istringstream& stream);
+void	check_stream_for_errors(std::istringstream& stream);
 int		get_http_header_idx(const std::string& s);
 
 

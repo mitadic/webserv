@@ -25,7 +25,8 @@ public:
 
 	void	reset();
 	void	reset_client();
-	int		parse();
+	void	parse();
+	void	validate_self();
 
 	const std::string get_request() const;
 	const std::string get_request_body() const;
@@ -37,6 +38,7 @@ public:
 	const int get_total_sent() const;
 	const int get_content_length() const;
 	const int get_content_type_idx() const;
+	const char *get_content_type() const;
 	const int get_client_fd() const;
 	const int get_method() const;
 	const int get_major_http_v() const;
@@ -55,6 +57,8 @@ public:
 	void set_response(std::string&);
 	void append_to_response(std::string&);
 	void set_response_status(int code);
+	void set_total_sent(int num);
+	void increment_total_sent_by(int num);
 
 
 private:

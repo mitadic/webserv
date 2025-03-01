@@ -238,6 +238,8 @@ void RequestParser::_parse_header_content_length(Request& req, std::string& head
 		throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
+	if (req._content_length > 10485760)
+		throw RequestException(CODE_400);
 }
 
 void RequestParser::_parse_header_content_location(Request& req, std::string& header_val)
@@ -380,6 +382,17 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	else
 		throw RequestException(CODE_405);
 
+	if (tokens[1][0] != '/')
+		throw RequestException(CODE_400);
+	if (tokens[1].size() > 4096)  // NGINX default
+		throw RequestException(CODE_414);
+	char prev = '\0';
+	for (int i = 0; i < tokens[1].size(); i++)
+	{
+		if (prev == '/' && tokens[1][i] == '/')
+			throw RequestException(CODE_400);
+		prev = tokens[1][i];
+	}
 	req._request_uri = tokens[1];
 
 	size_t dot = 0;
@@ -394,10 +407,16 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	num = tokens[2].substr(dot + 1);
 	if (set_http_v(num, req._minor_http_v) != OK)
 		throw RequestException(CODE_400);
+}
 
-	// get new line to get the headers logic in motion
+/* Continues reading through everything (robustly) until CRLF or EOF */
+void RequestParser::parse_headers(Request& req, std::istringstream& stream, std::string& line)
+{
 	if (!std::getline(stream, line))
-		check_stream(stream);
+		check_stream_for_errors_or_eof(stream);
+
+	while (!is_empty_crlf(line) && !stream.eof())
+		parse_header_line(req, stream, line);
 }
 
 void RequestParser::parse_header_line(Request& req, std::istringstream& stream, std::string& line)
@@ -415,6 +434,21 @@ void RequestParser::parse_header_line(Request& req, std::istringstream& stream, 
 	// while folded continuation, whether recognized header or no
 	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line.front()))
 		dispatch_header_parser(req, header_idx, line);
-	if (stream.fail() || stream.bad())
-		throw RequestException(CODE_500);
+	check_stream_for_errors(stream);
+}
+
+/* If not EOF, continues reading until req._content_length */
+void RequestParser::parse_body(Request& req, std::istringstream& stream, std::string& line)
+{
+	if (stream.eof())  // there is no body
+		return;
+
+	while (std::getline(stream, line))
+	{
+		if (req._request_body.size() > req._content_length)
+			throw RequestException(CODE_400);
+		req._request_body += line;
+		req._request_body += '\n';
+	}
+	check_stream_for_errors(stream);
 }
