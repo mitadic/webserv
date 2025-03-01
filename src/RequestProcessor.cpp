@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 20:40:52 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/01 12:07:03 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,12 +80,14 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // get the server block that corresponds to the request
 // get the location that corresponds to the request
 // check if the method is allowed in the location
+// - if not, throw 405 error page
 // check if the file exists
+// if it's a file, return the file content
+// if it doesn't exist, return 404 error page
 // if it's a directory, show default index file
 // - if index file doesn't exist, show directory content if autoindex is on
 // - if autoindex is off, return 403 error page
-// if it's a file, return the file content
-// if it doesn't exist, return 404 error page
+
 std::string RequestProcessor::processGet(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
@@ -128,7 +130,7 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 }
 
 // delete the file if it exists and deletions are allowed
-// error page if the file can't be deleted
+// throw error code if the file can't be deleted
 std::string RequestProcessor::processDelete(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
