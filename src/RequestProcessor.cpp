@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/01 12:07:03 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/01 13:44:40 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,22 +122,52 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 	}
 }
 
-// write the post data to a file and return the file path to the user (?)
-// error page if the file can't be created
+// POST method
+// get the server block that corresponds to the request
+// get the location that corresponds to the request
+// check if the method is allowed in the location
+// - if not, throw 405 error page
+// 
 std::string RequestProcessor::processPost(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	//TDO
 }
 
-// delete the file if it exists and deletions are allowed
-// throw error code if the file can't be deleted
+// DELETE method
+// get the server block that corresponds to the request
+// get the location that corresponds to the request
+// check if the method is allowed in the location
+// - if not, throw 405 error page
+// check if the file exists
+// if it's a file, try to delete
+// if it doesn't exist, return 404 error page
+// if it's a directory, return 403 error page
+// if deletion is successful, return 204 No Content
 std::string RequestProcessor::processDelete(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
+	if (!matchingLocation->is_del())
+		throw RequestException(CODE_405);
+
 	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
+
+	if (!Utils::fileExists(filePath))
+		throw RequestException(CODE_404);
+
+	if (Utils::isDirectory(filePath))
+		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
+
+	else if (std::remove(filePath.c_str()) != 0)
+			throw RequestException(CODE_500);  // CHECK: "Internal Server Error" best choice here?
+
+	std::ostringstream response;
+	response << "HTTP/1.1 204 No Content\r\n"
+				<< "\r\n";
+	return response.str();
 }
+
 
 
 
