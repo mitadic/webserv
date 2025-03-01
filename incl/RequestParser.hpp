@@ -11,6 +11,7 @@
 #define LWS_CHARS " \t"
 #define UNINITIALIZED -1
 #define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
+#define LOOPBACK_NUMERIC 2130706533
 
 class RequestParser {
 public:

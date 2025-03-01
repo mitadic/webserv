@@ -21,6 +21,7 @@ void RequestParser::_parse_header_connection(Request& req, std::string& header_v
 
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
+		trim_lws(*it);
 		if (*it == "keep-alive")
 			req._keep_alive = true;
 		else if (*it == "close")
@@ -44,6 +45,7 @@ void RequestParser::_parse_header_transfer_encoding(Request& req, std::string& h
 	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
+		trim_lws(*it);
 		if (req._flagged_as_chunked == true)
 			throw RequestException(CODE_400);  // no transfer-encodings allowed once "chunked" has been set
 		if (*it == "chunked")
@@ -70,20 +72,45 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
 		std::vector<std::string> specs = split(*it, ";");  // or use HTTP_SEPARATORS?
-		// here: trim specs[0] for LWS?
-		for (int i = 0; i < CONTENT_TYPES_N; i++)
+		trim_lws(specs[0]);
+		if (specs[0].find_first_of("/") == std::string::npos ||
+			specs[0].find_first_of("/") != specs[0].find_last_of("/") ||
+			specs[0].find_first_of(HTTP_SEPARATORS) != std::string::npos)
+			throw RequestException(CODE_400);
+
+		for (std::vector<std::string>::iterator it_j = specs.begin(); it_j != specs.end(); it_j++)
 		{
-			if (specs[0] == content_types[i])
-			{
-				req._accepted_types.push_back(*it);
-				break;
-			}
-			if (specs[0] == "text/*" || specs[0] == "application/*" || specs[0] == "image/*" || specs[0] == "*/*" )
-			{
-				req._accepted_types.push_back(specs[0]);
-				break;
-			}
+			trim_lws(*it_j);
+			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=')  // Flag: make it case-insensitive
+				continue;
+			std::string q_value_string = (*it_j).substr(2);
+			if (!std::all_of(q_value_string.begin(), q_value_string.end(), [](char c){ return std::isdigit(static_cast<unsigned char>(c)); }))
+				throw RequestException(CODE_400);
+
+			char *endptr;
+			float quality_factor = std::strtof((*it_j).substr(2).c_str(), &endptr);
+			if (endptr == q_value_string.c_str() || *endptr != '\0' ||
+				 quality_factor < 0.0f || quality_factor > 1.0f)
+				throw RequestException(CODE_400);
+
+			req._accepted_types_m.insert({ quality_factor, specs[0] });
 		}
+
+		// actually, let's leave the validation for later, shall we?
+
+		// for (int i = 0; i < CONTENT_TYPES_N; i++)
+		// {
+		// 	if (specs[0] == content_types[i])
+		// 	{
+		// 		req._accepted_types.push_back(*it);
+		// 		break;
+		// 	}
+		// 	if (specs[0] == "text/*" || specs[0] == "application/*" || specs[0] == "image/*" || specs[0] == "*/*" )
+		// 	{
+		// 		req._accepted_types.push_back(specs[0]);
+		// 		break;
+		// 	}
+		// }
 	}
 
 	// 	A more elaborate example is
@@ -128,18 +155,39 @@ void RequestParser::_parse_header_expect(Request& req, std::string& header_val)
 void RequestParser::_parse_header_from(Request& req, std::string& header_val)
 {}
 
+/* Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions */
 void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 {
+	if (req._host)  // has already been set to something for this request. Not client, this request
+		throw RequestException(CODE_400);
+
 	size_t start, end;
 	start = header_val.find_first_not_of(LWS_CHARS);
+	if (start == std::string::npos)
+		throw RequestException(CODE_400);
 	end = header_val.find_first_of(":");
-
-	std::string trimmed_s = header_val.substr(start, end - start);
-	if (trimmed_s == "127.0.0.1" || trimmed_s == "0.0.0.0" || trimmed_s == "localhost")
-		req._host == trimmed_s;
+	if (end == std::string::npos) // if ':' not found
+		end = header_val.size();
 	else
-		throw RequestException(CODE_501);  // since we're not implementing server_names?
-	// port?
+	{
+		std::string port_value_as_str = header_val.substr(end + 1);
+		if (webserv_atouint16_set(port_value_as_str, req._port) != OK)
+			throw RequestException(CODE_400);
+	}
+
+	std::string host_value_as_str = header_val.substr(start, end - start);
+	if (host_value_as_str == "localhost")
+	{
+		req._host = LOOPBACK_NUMERIC;
+		return;
+	}
+	if (!is_valid_ip_str(host_value_as_str))
+		throw RequestException(CODE_400);
+	std::vector<std::string> nums = split(host_value_as_str, ".");
+	for (int i = 0; i < 4; i++)
+		req._host |= (static_cast<unsigned int>(std::atoi(nums[i].c_str())) << (8 * (3 - i)));
+	
+	// validate whether "valid host IP" (non-private) later
 }
 
 void RequestParser::_parse_header_if_match(Request& req, std::string& header_val)
@@ -281,7 +329,7 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 		&RequestParser::_parse_header_content_type,
 		&RequestParser::_parse_header_expires,
 		&RequestParser::_parse_header_last_modified
-    };
+	};
 	(this->*header_parsers[header_idx])(req, trimmed_val);
 }
 
@@ -326,13 +374,13 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	if (tokens[0] == "GET")
 		req._method = GET;
 	else if (tokens[0] == "POST")
-        req._method = POST;
+		req._method = POST;
 	else if (tokens[0] == "DELETE")
-        req._method = DELETE;
+		req._method = DELETE;
 	else
 		throw RequestException(CODE_405);
 
-    req._request_uri = tokens[1];
+	req._request_uri = tokens[1];
 
 	size_t dot = 0;
 	if (tokens[2].substr(0, 5) != "HTTP/")

@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <climits>
+#include <map>
 #include "CgiHandler.hpp"
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
@@ -41,7 +42,7 @@ public:
 	const int get_major_http_v() const;
 	const int get_minor_http_v() const;
 	const int get_cgi_status() const;
-	const short get_port();
+	const uint16_t get_port();
 	const in_addr_t get_host();
 	const std::vector<std::string> get_accepted_types() const;
 
@@ -60,7 +61,7 @@ private:
 	std::string _request;
 	std::string	_request_body;
 	std::string _response;
-	short		_port;
+	uint16_t	_port;
 	in_addr_t	_host;
 	int			_response_status;
 	int			_total_sent;
@@ -71,6 +72,7 @@ private:
 	bool		_timed_out;
 	bool		_await_reconnection;
 	std::vector<std::string> _accepted_types;
+	std::map<float, std::string> _accepted_types_m;
 
 	int			_method;			// if GET POST DELETE
 	int			_major_http_v;

@@ -13,6 +13,8 @@ Request::Request() :
 		_timed_out(false),
 		_await_reconnection(false),
 		_keep_alive(true),
+		_port(80),  // default for when unspecified
+		_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
 		_cgi_status(NOT_CGI)
 	{}
 
@@ -64,25 +66,25 @@ const int Request::get_major_http_v() const { return _major_http_v; }
 const int Request::get_minor_http_v() const { return _minor_http_v; }
 const int Request::get_cgi_status() const { return _cgi_status; }
 
-/* Get the port specified in the request */
-const short Request::get_port() { return _port; }
+/* Get the port_no specified in the request; it has been validated to fit the legal range for ports */
+const uint16_t Request::get_port() { return _port; }
 
-/* Get the host specified in the request */
+/* Get the host specified in the request; it has been confirmed to fit between 0.0.0.0 and 255.255.255.254 */
 const in_addr_t Request::get_host() { return _host; }
 
-
+/* Get the Accept specified types, sorted by priority */
 const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
 
-
+/* See if the request has specified Content-Type to be "chunked" in the headers */
 bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
 
-
+/* If a request has timed out, then ServerEngine can handle it accordingly */
 bool Request::timed_out() { return _timed_out; }
 
-
+/* If a request should ditch the client and wait for a new connection to be established */
 bool Request::should_await_reconnection() { return _await_reconnection; }
 
-
+/* If "Connection: keep alive" (default), as opposed to "Connection: close" */
 bool Request::should_keep_alive() { return _keep_alive; }
 
 
@@ -94,16 +96,10 @@ void Request::set_response(std::string& s)
 }
 
 /* Append string to the _response */
-void Request::append_to_response(std::string& s)
-{
-	_response += s;
-}
+void Request::append_to_response(std::string& s) { _response += s; }
 
 /* Overwrite the default 200 */
-void Request::set_response_status(int code)
-{
-	_response_status = code;
-}
+void Request::set_response_status(int code) { _response_status = code; }
 
 
 int Request::parse()
@@ -116,7 +112,6 @@ int Request::parse()
 
 	parser.parse_request_line(*this, stream, line);
 
-	// Parse the headers
 	while (!is_empty_crlf(line) && !stream.eof())
 		parser.parse_header_line(*this, stream, line);
 
