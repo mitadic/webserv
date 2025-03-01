@@ -78,7 +78,9 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 			specs[0].find_first_of(HTTP_SEPARATORS) != std::string::npos)
 			throw RequestException(CODE_400);
 
-		for (std::vector<std::string>::iterator it_j = specs.begin(); it_j != specs.end(); it_j++)
+		float quality_factor = 1.0f;
+		
+		for (std::vector<std::string>::iterator it_j = specs.begin() + 1; it_j != specs.end(); it_j++)
 		{
 			trim_lws(*it_j);
 			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=')  // Flag: make it case-insensitive
@@ -88,13 +90,13 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 				throw RequestException(CODE_400);
 
 			char *endptr;
-			float quality_factor = std::strtof((*it_j).substr(2).c_str(), &endptr);
+			quality_factor = std::strtof((*it_j).substr(2).c_str(), &endptr);
 			if (endptr == q_value_string.c_str() || *endptr != '\0' ||
 				 quality_factor < 0.0f || quality_factor > 1.0f)
 				throw RequestException(CODE_400);
-
-			req._accepted_types_m.insert({ quality_factor, specs[0] });
 		}
+
+		req._accepted_types_m.insert({ quality_factor, specs[0] });
 
 		// actually, let's leave the validation for later, shall we?
 
@@ -111,6 +113,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 		// 		break;
 		// 	}
 		// }
+		
 	}
 
 	// 	A more elaborate example is
