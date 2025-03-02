@@ -113,7 +113,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 		// 		break;
 		// 	}
 		// }
-		
+
 	}
 
 	// 	A more elaborate example is
@@ -241,7 +241,7 @@ void RequestParser::_parse_header_content_length(Request& req, std::string& head
 		throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
-	if (req._content_length > 10485760)
+	if (req._content_length > MAX_CONTENT_LENGTH)
 		throw RequestException(CODE_400);
 }
 
@@ -277,7 +277,7 @@ void RequestParser::_parse_header_last_modified(Request& req, std::string& heade
 
 
 
-
+/* Early exit if UNRECOGNIZED_HEADER. Else substr() the value trimmed away from leading LWS or trailing '\r' */
 void RequestParser::dispatch_header_parser(Request& req, const int header_idx, std::string& header_val)
 {
 	if (header_idx == UNRECOGNIZED_HEADER)
@@ -286,11 +286,11 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 		return;
 	}
 
-	// gotta do this, some headers only allow 1*DIGIT
+	// gotta do this, some headers only allow 1*DIGIT and no folded BS
 	if (is_empty_crlf(header_val))
 		return;
 	size_t start = header_val.find_first_not_of(LWS_CHARS);
-	size_t end = header_val.size();
+	size_t end = header_val.size();  // not the index, we actually need the size for the substr math
 	if (header_val.back() == '\r')
 		end--;
 	std::string trimmed_val = header_val.substr(start, end - start);
@@ -387,7 +387,7 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 
 	if (tokens[1][0] != '/')
 		throw RequestException(CODE_400);
-	if (tokens[1].size() > 4096)  // NGINX default
+	if (tokens[1].size() > MAX_URI_LENGTH)
 		throw RequestException(CODE_414);
 	char prev = '\0';
 	for (int i = 0; i < tokens[1].size(); i++)

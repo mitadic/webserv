@@ -69,7 +69,7 @@ private:
 	in_addr_t	_host;
 	int			_response_status;
 	int			_total_sent;
-	int			_content_length;  // refers to body
+	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
 	int			_client_fd;

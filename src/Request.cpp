@@ -113,6 +113,10 @@ void Request::validate_self()
 		throw RequestException(CODE_400);
 	if (_method == POST && _content_length == UNINITIALIZED)
 		throw RequestException(CODE_411);
+	if (_major_http_v > 1 || _major_http_v < 0
+			|| (_major_http_v == 1 && _minor_http_v > 1)
+			|| (_major_http_v == 0 && _minor_http_v < 9))
+		throw RequestException(CODE_505);
 
 	for (std::map<float, std::string>::reverse_iterator it = _accepted_types_m.rbegin(); it != _accepted_types_m.rend(); it++)
 		_accepted_types.push_back(it->second);

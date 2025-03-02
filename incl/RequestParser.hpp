@@ -12,6 +12,8 @@
 #define UNINITIALIZED -1
 #define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
 #define LOOPBACK_NUMERIC 2130706533
+#define MAX_URI_LENGTH 4096  // NGINX default
+#define MAX_CONTENT_LENGTH 10485760  
 
 class RequestParser {
 public:
