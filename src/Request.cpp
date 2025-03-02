@@ -3,7 +3,7 @@
 Request::Request() :
 		_request(""),
 		_response(""),
-		_response_status(200),
+		_response_status(CODE_200),
 		_total_sent(0),
 		_method(UNINITIALIZED),
 		_client_fd(UNINITIALIZED),
@@ -13,6 +13,8 @@ Request::Request() :
 		_timed_out(false),
 		_await_reconnection(false),
 		_keep_alive(true),
+		_port(80),  // default for when unspecified
+		_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
 		_cgi_status(NOT_CGI)
 	{}
 
@@ -28,7 +30,7 @@ void Request::reset()
 {
 	_request.clear();
 	_response.clear();
-	_response_status = 200;
+	_response_status = CODE_200;
 	_total_sent = 0;
 	_method = UNINITIALIZED;
 	_cgi_status = NOT_CGI;
@@ -37,14 +39,8 @@ void Request::reset()
 
 void Request::reset_client()
 {
-	_request.clear();
-	_response.clear();
-	_response_status = 200;
-	_method = UNINITIALIZED;
-	_client_fd = -1;
-	_total_sent = 0;
-	_cgi_status = NOT_CGI;
-	_cgi_output.clear();
+	reset();
+	_client_fd = UNINITIALIZED;
 }
 
 
@@ -58,31 +54,32 @@ const int Request::get_response_status() const { return _response_status; };
 const int Request::get_total_sent() const { return _total_sent; };
 const int Request::get_content_length() const { return _content_length; };
 const int Request::get_content_type_idx() const { return _content_type_idx; }
+const char *Request::get_content_type() const { return content_types[_content_type_idx]; }
 const int Request::get_client_fd() const { return _client_fd; }
 const int Request::get_method() const { return _method; }
 const int Request::get_major_http_v() const { return _major_http_v; }
 const int Request::get_minor_http_v() const { return _minor_http_v; }
 const int Request::get_cgi_status() const { return _cgi_status; }
 
-/* Get the port specified in the request */
-const short Request::get_port() { return _port; }
+/* Get the port_no specified in the request; it has been validated to fit the legal range for ports */
+const uint16_t Request::get_port() { return _port; }
 
-/* Get the host specified in the request */
+/* Get the host specified in the request; it has been confirmed to fit between 0.0.0.0 and 255.255.255.254 */
 const in_addr_t Request::get_host() { return _host; }
 
-
+/* Get the Accept specified types, sorted by priority */
 const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
 
-
+/* See if the request has specified Content-Type to be "chunked" in the headers */
 bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
 
-
+/* If a request has timed out, then ServerEngine can handle it accordingly */
 bool Request::timed_out() { return _timed_out; }
 
-
+/* If a request should ditch the client and wait for a new connection to be established */
 bool Request::should_await_reconnection() { return _await_reconnection; }
 
-
+/* If "Connection: keep alive" (default), as opposed to "Connection: close" */
 bool Request::should_keep_alive() { return _keep_alive; }
 
 
@@ -94,19 +91,39 @@ void Request::set_response(std::string& s)
 }
 
 /* Append string to the _response */
-void Request::append_to_response(std::string& s)
-{
-	_response += s;
-}
+void Request::append_to_response(std::string& s) { _response += s; }
 
 /* Overwrite the default 200 */
-void Request::set_response_status(int code)
+void Request::set_response_status(int code) { _response_status = code; }
+
+/* Set _total_sent */
+void Request::set_total_sent(int num) { _total_sent = num; }
+
+/* Increment _total_sent value by num */
+void Request::increment_total_sent_by(int num) { _total_sent += num; }
+
+
+/*
+Verify existence of: (1) host, (2) content_length if method is POST 
+Go through map of q:accepted_type, which is always sorted, and push_back just the types in reverse
+*/
+void Request::validate_self()
 {
-	_response_status = code;
+	if (_host == 0x00000000)
+		throw RequestException(CODE_400);
+	if (_method == POST && _content_length == UNINITIALIZED)
+		throw RequestException(CODE_411);
+	if (_major_http_v > 1 || _major_http_v < 0
+			|| (_major_http_v == 1 && _minor_http_v > 1)
+			|| (_major_http_v == 0 && _minor_http_v < 9))
+		throw RequestException(CODE_505);
+
+	for (std::map<float, std::string>::reverse_iterator it = _accepted_types_m.rbegin(); it != _accepted_types_m.rend(); it++)
+		_accepted_types.push_back(it->second);
 }
 
-
-int Request::parse()
+/* Includes request validation before parsing the body */
+void Request::parse()
 {
 	std::istringstream stream(_request);
 	std::string line;
@@ -115,18 +132,8 @@ int Request::parse()
 	spin_through_leading_crlf(stream, line);
 
 	parser.parse_request_line(*this, stream, line);
+	parser.parse_headers(*this, stream, line);
+	validate_self();
+	parser.parse_body(*this, stream, line);
 
-	// Parse the headers
-	while (!is_empty_crlf(line) && !stream.eof())
-		parser.parse_header_line(*this, stream, line);
-
-	// intermittent validation to prevent reading an endless body of content_type not defined or 'host' unspecified?
-
-	// read body (if any) until another CRLF, then we're done
-	while (std::getline(stream, line) && !is_empty_crlf(line))
-		_request_body += line;
-
-	// validate: here or in processing?
-
-	return OK;
 }
