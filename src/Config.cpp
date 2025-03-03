@@ -6,7 +6,7 @@
  */
 std::stringstream Config::load_file(const std::string & filename)
 {
-    std::ifstream       file(filename);
+    std::ifstream       file(filename.c_str());
     std::stringstream   content;
     
     if (filename.substr(filename.find_last_of(".") + 1) != "conf")

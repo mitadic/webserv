@@ -11,13 +11,13 @@
 /* ************************************************************************** */
 
 #pragma once
+
 #include <string>
 #include <fstream>
 #include "Utils.hpp"
 
 
-class ErrorPageGenerator
+namespace ErrorPageGenerator
 {
-	public:
-		static std::string createErrorPage(const Request& req, const std::vector<ServerBlock>& server_blocks);
+	static std::string createErrorPage(const Request& req, const std::vector<ServerBlock>& server_blocks);
 };

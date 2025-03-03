@@ -7,12 +7,8 @@
 volatile std::sig_atomic_t g_signal = 0;  // declared in ServerEngine.hpp
 
 
-int main(int argc, char **argv) {
-
-    (void)argv;
-    (void)argc;
-
-    ServerEngine engine;
+int main(int argc, char **argv)
+{
     std::vector<ServerBlock> server_blocks;
 
     try
@@ -25,7 +21,6 @@ int main(int argc, char **argv) {
             throw std::runtime_error("usage: ./webserv [config_file]");
         Log::log("Server blocks are ready:", INFO);
         Log::log(server_blocks);
-        //engine.run();
     }
     catch (std::exception & e)
     {
@@ -33,6 +28,6 @@ int main(int argc, char **argv) {
         return (1);
     }
 
-
+    ServerEngine engine(server_blocks);
     engine.run();
 }

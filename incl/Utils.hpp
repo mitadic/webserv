@@ -18,8 +18,9 @@
 #include <sys/stat.h>
 #include <vector>
 #include "ServerBlock.hpp"
-#include "Request.hpp"
+// #include "Request.hpp"
 
+class Request;
 
 namespace Utils
 {

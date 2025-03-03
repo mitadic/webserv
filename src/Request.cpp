@@ -1,7 +1,7 @@
-#include "../incl/Request.hpp"
+#include "Request.hpp"
 
 Request::Request() :
-		_request(""),
+		_request_str(""),
 		_response(""),
 		_response_status(CODE_200),
 		_total_sent(0),
@@ -15,12 +15,13 @@ Request::Request() :
 		_keep_alive(true),
 		_port(80),  // default for when unspecified
 		_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
-		_cgi_status(NOT_CGI)
+		_cgi_status(NOT_CGI),
+		cgi()
 	{}
 
 Request::~Request() {};
 
-Request::Request(const Request& oth) : _cgi()
+Request::Request(const Request& oth) : cgi()
 {
 	(void)oth;
 }
@@ -28,7 +29,7 @@ Request::Request(const Request& oth) : _cgi()
 
 void Request::reset()
 {
-	_request.clear();
+	_request_str.clear();
 	_response.clear();
 	_response_status = CODE_200;
 	_total_sent = 0;
@@ -44,7 +45,7 @@ void Request::reset_client()
 }
 
 
-const std::string Request::get_request() const { return _request; };
+const std::string Request::get_request_str() const { return _request_str; };
 const std::string Request::get_request_body() const { return _request_body; };
 const std::string Request::get_response() const { return _response; };
 const std::string Request::get_request_uri() const { return _request_uri; };
@@ -62,10 +63,10 @@ const int Request::get_minor_http_v() const { return _minor_http_v; }
 const int Request::get_cgi_status() const { return _cgi_status; }
 
 /* Get the port_no specified in the request; it has been validated to fit the legal range for ports */
-const uint16_t Request::get_port() { return _port; }
+const uint16_t Request::get_port() const { return _port; }
 
 /* Get the host specified in the request; it has been confirmed to fit between 0.0.0.0 and 255.255.255.254 */
-const in_addr_t Request::get_host() { return _host; }
+const in_addr_t Request::get_host() const { return _host; }
 
 /* Get the Accept specified types, sorted by priority */
 const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
@@ -83,29 +84,46 @@ bool Request::should_await_reconnection() { return _await_reconnection; }
 bool Request::should_keep_alive() { return _keep_alive; }
 
 
+/** @brief Append string to _request_str
+ * @param s The string to append
+ */
+void Request::append_to_request_str(const std::string& s)
+{
+	_request_str += s;
+}
+
 /* Clear any existing _response before setting it to be the argument string */
-void Request::set_response(std::string& s)
+void Request::set_response(const std::string& s)
 {
 	_response.clear();
 	_response = s;
 }
 
 /* Append string to the _response */
-void Request::append_to_response(std::string& s) { _response += s; }
+void Request::append_to_response(const std::string& s) { _response += s; }
 
 /* Overwrite the default 200 */
-void Request::set_response_status(int code) { _response_status = code; }
+void Request::set_response_status(const int& code) { _response_status = code; }
 
 /* Set _total_sent */
-void Request::set_total_sent(int num) { _total_sent = num; }
+void Request::set_total_sent(const int& num) { _total_sent = num; }
+
+/* Set _cgi_status */
+void Request::set_cgi_status(const int& status) { _cgi_status = status; }
+
+/* Append string to _cgi_output */
+void Request::append_to_cgi_output(const std::string& s) { _cgi_output += s; }
 
 /* Increment _total_sent value by num */
-void Request::increment_total_sent_by(int num) { _total_sent += num; }
+void Request::increment_total_sent_by(const int& num) { _total_sent += num; }
+
+/* Set _timed_out to 'true' */
+void Request::flag_the_timeout() { _timed_out = true; }
 
 
 /*
-Verify existence of: (1) host, (2) content_length if method is POST 
-Go through map of q:accepted_type, which is always sorted, and push_back just the types in reverse
+Verify existence of: (1) host, (2) content_length if method is POST.
+Go through map of q:accepted_type, which is always sorted, and push_back just the types in reverse.
 */
 void Request::validate_self()
 {
@@ -125,7 +143,7 @@ void Request::validate_self()
 /* Includes request validation before parsing the body */
 void Request::parse()
 {
-	std::istringstream stream(_request);
+	std::istringstream stream(_request_str);
 	std::string line;
 	RequestParser parser;
 
@@ -135,5 +153,4 @@ void Request::parse()
 	parser.parse_headers(*this, stream, line);
 	validate_self();
 	parser.parse_body(*this, stream, line);
-
 }

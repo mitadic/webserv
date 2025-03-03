@@ -2,10 +2,35 @@
 #include "ServerBlock.hpp"
 #include "Config.hpp"
 
-ServerBlock::ServerBlock() : _port(-1), _max_client_body(0)
+ServerBlock::ServerBlock() :
+    _port(-1),
+    _max_client_body(0),
+    _host(Config::ft_inet("255.255.255.255"))
+{}
+
+ServerBlock::~ServerBlock()
+{}
+
+ServerBlock::ServerBlock(const ServerBlock& oth) :
+    _port(oth._port),
+    _max_client_body(oth._max_client_body),
+    _host(oth._host),
+    _locations(oth._locations),
+    _error_pages(oth._error_pages)
+{}
+
+ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
 {
-    _host = Config::ft_inet("255.255.255.255");
-};
+    if (this != &oth)
+    {
+        _port = oth._port;
+        _max_client_body = oth._max_client_body;
+        _host = oth._host;
+        _locations = oth._locations;
+        _error_pages = oth._error_pages;
+    }
+    return *this;
+}
 
 short ServerBlock::get_port() const
 {

@@ -8,12 +8,19 @@ SRC		=	main.cpp \
 			CgiHandler.cpp \
 			Config.cpp \
 			ConfigUtils.cpp \
-			Log.cpp \
+			ContentTypes.cpp \
+			ErrorPageGenerator.cpp \
+			Exceptions.cpp \
+			HttpHeaders.cpp \
 			Location.cpp \
-			ServerBlock.cpp
+			Log.cpp \
 			Request.cpp \
 			RequestParser.cpp \
-			RequestProcessor.cpp
+			RequestProcessor.cpp \
+			RequestUtils.cpp \
+			ServerBlock.cpp \
+			StatusCodes.cpp \
+			Utils.cpp
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

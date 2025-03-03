@@ -1,11 +1,11 @@
 #pragma once
 
+#include "Request.hpp"
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
 #include "StatusCodes.hpp"
 #include "ContentTypes.hpp"
 #include "RequestUtils.hpp"
-#include "Request.hpp"
 
 #define SP " "
 #define LWS_CHARS " \t"

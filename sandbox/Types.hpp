@@ -1,5 +1,7 @@
 #pragma once
 
+#include <netinet/in.h> // For sockaddr_in
+
 #define GET 101
 #define POST 102
 #define DELETE 103

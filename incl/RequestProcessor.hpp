@@ -13,10 +13,12 @@
 #pragma once
 
 #include "Utils.hpp"
-#include "Request.hpp"
+// #include "Request.hpp"
 #include "Exceptions.hpp"
 #include "ServerBlock.hpp"
 #include <stdexcept>
+
+class Request;
 
 class RequestProcessor
 {

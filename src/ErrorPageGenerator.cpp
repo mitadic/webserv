@@ -33,6 +33,11 @@ std::string generateErrorPage(int status)
 	return oss.str();
 }
 
+/** 
+ * @brief Create error page
+ * @param req Reference to a request that the ServerEngine is processing
+ * @param server_blocks Reference to the vector of ServerBlocks that the ServerEngine is using
+ */
 std::string ErrorPageGenerator::createErrorPage(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
