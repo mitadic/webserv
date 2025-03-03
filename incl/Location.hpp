@@ -2,12 +2,13 @@
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
-# include <cstring>
 # include <vector>
 # include <map>
 # include <iostream>
 # include <sstream>
 # include <stdexcept>
+# include <cstring>
+# include <cstdlib>  // std::atoi()
 
 typedef enum e_path {
     LOCATION,

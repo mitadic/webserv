@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "RequestProcessor.hpp"
+#include "Request.hpp"  // safe in .cpp, won't cause circular imports
 
 // ------- Helper functions ------------
 
@@ -131,6 +132,7 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 std::string RequestProcessor::processPost(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	//TDO
+	return "HTTP/1.1 201 Placeholder_OK\r\n\r\n";
 }
 
 // DELETE method

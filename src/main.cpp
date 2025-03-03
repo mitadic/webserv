@@ -1,10 +1,9 @@
 #include "ServerEngine.hpp"
-#include "../incl/ServerBlock.hpp"
-#include "../incl/Config.hpp"
-#include "../incl/Log.hpp"
+#include "Config.hpp"
+#include "Log.hpp"
 
 
-volatile std::sig_atomic_t g_signal = 0;  // declared in ServerEngine.hpp
+volatile sig_atomic_t g_signal = 0;  // forward declared in SignalHandling.hpp
 
 
 int main(int argc, char **argv)

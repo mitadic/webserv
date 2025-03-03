@@ -86,7 +86,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=')  // Flag: make it case-insensitive
 				continue;
 			std::string q_value_string = (*it_j).substr(2);
-			if (!std::all_of(q_value_string.begin(), q_value_string.end(), [](char c){ return std::isdigit(static_cast<unsigned char>(c)); }))
+			if (contains_non_digits(q_value_string))
 				throw RequestException(CODE_400);
 
 			char *endptr;
@@ -96,7 +96,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 				throw RequestException(CODE_400);
 		}
 
-		req._accepted_types_m.insert({ quality_factor, specs[0] });
+		req._accepted_types_m.insert(std::pair<float, std::string>(quality_factor, specs[0]));
 
 		// actually, let's leave the validation for later, shall we?
 
@@ -291,7 +291,7 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 		return;
 	size_t start = header_val.find_first_not_of(LWS_CHARS);
 	size_t end = header_val.size();  // not the index, we actually need the size for the substr math
-	if (header_val.back() == '\r')
+	if (*(header_val.rbegin()) == '\r')
 		end--;
 	std::string trimmed_val = header_val.substr(start, end - start);
 
@@ -435,7 +435,7 @@ void RequestParser::parse_header_line(Request& req, std::istringstream& stream, 
 	dispatch_header_parser(req, header_idx, header_value);
 
 	// while folded continuation, whether recognized header or no
-	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line.front()))
+	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line[0]))
 		dispatch_header_parser(req, header_idx, line);
 	check_stream_for_errors(stream);
 }

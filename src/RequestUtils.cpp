@@ -1,4 +1,4 @@
-#include "../incl/RequestUtils.hpp"
+#include "RequestUtils.hpp"
 
 /* Split at first of delimiters. If \r at the end of final token, pop it off */
 std::vector<std::string> split(const std::string& s, const std::string& delimiters)
@@ -17,8 +17,8 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
 		tokens.push_back(s.substr(start, end - start));
 	}
 
-	if (!tokens.empty() && tokens.back().back() == '\r')
-		tokens.back().pop_back();
+	if (!tokens.empty() && *(tokens.back().rbegin()) == '\r')
+		tokens.back() = tokens.back().substr(0, tokens.back().size() - 1);  // string::pop_back() in 98
 
 	return tokens;
 }
@@ -114,7 +114,7 @@ void spin_through_leading_crlf(std::istringstream& stream, std::string& line)
 bool is_empty_crlf(std::string& line)
 {
 	// getline() trimmed the '\n'
-	if (line.size() == 0 || (line.size() == 1 && line.back() == '\r'))
+	if (line.size() == 0 || (line.size() == 1 && *line.rbegin() == '\r'))
 		return true;
 	return false;
 }
@@ -136,7 +136,7 @@ bool is_digit_or_dot(char c)
 
 bool is_valid_ip_str(const std::string& s)
 {
-	if (!std::all_of(s.begin(), s.end(), is_digit_or_dot))
+	if (s.find_first_not_of(DOTS_OR_DIGITS) != std::string::npos)
 		return false;
 
 	std::vector<std::string> nums = split(s, ".");
@@ -149,6 +149,7 @@ bool is_valid_ip_str(const std::string& s)
 		if (webserv_atoi_set(nums[i], num) != OK || num > 255)
 			return false;
 	}
+	return true;
 }
 
 void check_stream_for_errors_or_eof(std::istringstream& stream)
@@ -173,4 +174,14 @@ int get_http_header_idx(const std::string& s)
 			return i;
 	}
 	return UNRECOGNIZED_HEADER;
+}
+
+bool contains_non_digits(const std::string& s)
+{
+	for (std::string::const_iterator it = s.begin(); it != s.end(); it++)
+	{
+		if (!std::isdigit(*it))
+			return true;
+	}
+	return false;
 }

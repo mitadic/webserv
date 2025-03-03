@@ -1,12 +1,13 @@
 #ifndef LOG_HPP
 # define LOG_HPP
 
-# include "ServerBlock.hpp"
 # include <iostream>
-# include <ctime>
 # include <string>
 # include <vector>
+# include <ctime>
 # include <arpa/inet.h>
+# include "ServerBlock.hpp"
+
 # define GREEN "\033[32m"
 # define WHITE "\033[0m"
 # define PURPLE "\033[35m"

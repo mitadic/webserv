@@ -2,16 +2,17 @@
 
 #include <map>
 #include <vector>
-#include <poll.h>
-#include <netinet/in.h> // For sockaddr_in
-#include <unistd.h>		// close()
 #include <cerrno> 		// For errno
 #include <cstdlib>		
 #include <cstdio>		// perror()
+#include <poll.h>
+#include <netinet/in.h> // For sockaddr_in
+#include <unistd.h>		// close()
 
-#ifndef OK
-# define OK 0
-#endif
+enum e_retval {
+	OK = 0,
+	NOT_OK
+};
 
 #define CLIENT_CONNECTION_SOCKET 100  // the only one that we directly map to a request
 #define LISTENER_SOCKET 101

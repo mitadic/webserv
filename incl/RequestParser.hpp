@@ -1,19 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include "Request.hpp"
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
 #include "StatusCodes.hpp"
 #include "ContentTypes.hpp"
 #include "RequestUtils.hpp"
-
-#define SP " "
-#define LWS_CHARS " \t"
-#define UNINITIALIZED -1
-#define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
-#define LOOPBACK_NUMERIC 2130706533
-#define MAX_URI_LENGTH 4096  // NGINX default
-#define MAX_CONTENT_LENGTH 10485760  
 
 class RequestParser {
 public:

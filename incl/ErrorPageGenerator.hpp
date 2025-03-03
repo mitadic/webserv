@@ -15,9 +15,10 @@
 #include <string>
 #include <fstream>
 #include "Utils.hpp"
-
+#include "StatusCodes.hpp"
+#include "Request.hpp"
 
 namespace ErrorPageGenerator
 {
-	static std::string createErrorPage(const Request& req, const std::vector<ServerBlock>& server_blocks);
+	std::string createErrorPage(const Request& req, const std::vector<ServerBlock>& server_blocks);
 };

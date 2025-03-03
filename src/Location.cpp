@@ -68,7 +68,7 @@ void Location::set_path(std::string path)
     name = token;
     if (!token)
         throw std::runtime_error("Location: missing location name");
-    token = std::strtok(nullptr, " ");
+    token = std::strtok(NULL, " ");
     if (token)
         throw std::runtime_error("Location: too many arguments");
     check_valid_path(name, LOCATION);
@@ -120,7 +120,7 @@ void Location::set_allowed_methods(std::string methods)
             _del = true;
         else
             throw std::runtime_error("Unknown or duplicate method in location block");
-        token = std::strtok(nullptr, " ");
+        token = std::strtok(NULL, " ");
     }
 };
 
@@ -147,7 +147,7 @@ void Location::set_cgi_extensions(std::string extensions)
         // optional: implement checks if extension is accepted
         std::string extension = token;
             _cgi_extensions.push_back(extension);
-        token = std::strtok(nullptr, " ");
+        token = std::strtok(NULL, " ");
     }
 };
 

@@ -1,22 +1,25 @@
 #pragma once
 
-#include <sys/socket.h> // For socket functions
-#include <netinet/in.h> // For sockaddr_in
-#include <unistd.h>		// close()
 #include <iostream>
-#include <cstdlib>
-#include <cstdio>
 #include <vector>
 #include <map>
-#include <poll.h>
 #include <algorithm>
-#include <csignal> // For signal handling
-#include <cerrno> // For errno
-#include <fcntl.h> // For fcntl
-#include <cstring>
 #include <fstream>
 
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno> // For errno
+#include <cstring>
+
+#include <unistd.h>		// close()
+#include <fcntl.h> // For fcntl
+#include <poll.h>
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
+
 #include "Types.hpp"
+#include "ServerBlock.hpp"
+#include "SignalHandling.hpp"
 #include "Request.hpp"
 #include "CgiHandler.hpp"
 #include "Exceptions.hpp"
@@ -27,9 +30,6 @@
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define BUF_SZ 2
-
-
-extern volatile std::sig_atomic_t g_signal;  // declaration, 'extern' avoids multiple defs. Init in main.cpp
 
 
 class ServerEngine {

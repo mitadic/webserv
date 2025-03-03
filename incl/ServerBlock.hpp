@@ -5,6 +5,8 @@
 # include <vector>
 # include <map>
 # include <algorithm>
+# include <cstdlib>  // std::atoi
+# include <stdint.h> // UINT32_MAX
 # include <arpa/inet.h>
 
 # include "Location.hpp"

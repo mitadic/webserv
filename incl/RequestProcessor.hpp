@@ -12,11 +12,11 @@
 
 #pragma once
 
+#include <stdexcept>
 #include "Utils.hpp"
 // #include "Request.hpp"
 #include "Exceptions.hpp"
 #include "ServerBlock.hpp"
-#include <stdexcept>
 
 class Request;
 

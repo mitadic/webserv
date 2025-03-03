@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Utils.hpp"
+#include "Request.hpp"  // here in .cpp safe combo with fwd declaration in .hpp, include unsafe in .hpp 
 
 bool Utils::fileExists (const std::string& file)
 {

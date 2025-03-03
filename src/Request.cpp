@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "RequestParser.hpp"  // it's ok we're not including this in Request.hpp and it works due to fwd decl
 
 Request::Request() :
 		_request_str(""),

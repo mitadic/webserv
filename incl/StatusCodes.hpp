@@ -46,4 +46,4 @@ enum e_status_codes {
     CODE_505
 };
 
-const char *status_messages[STATUS_CODES_N];
+extern const char *status_messages[STATUS_CODES_N];
