@@ -6,11 +6,23 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 20:29:12 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 12:36:39 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
+
+std::vector<std::string> Utils::split(const std::string& str, char delim)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(str);
+	while (std::getline(tokenStream, token, delim))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
 
 bool Utils::fileExists (const std::string& file)
 {

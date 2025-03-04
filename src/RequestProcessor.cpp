@@ -6,13 +6,15 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 11:19:39 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:15:17 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestProcessor.hpp"
 
 // ------- Helper functions ------------
+
+// ------- GET METHOD FUNCTIONS ------------
 
 std::string defineMime(const std::string& file)
 {
@@ -59,6 +61,78 @@ std::string createContentString(const std::string& file, const std::string& mime
 	return response.str();
 }
 
+// -----------POST METHOD FUNCTIONS ------------
+
+// Parse the form data and return a map of key-value pairs
+std::map<std::string, std::string> parseForm(const std::string& form)
+{
+	std::map<std::string, std::string> formData;
+	std::vector<std::string> pairs = Utils::split(form, '&');
+
+	for (std::vector<std::string>::const_iterator it = pairs.begin(); it != pairs.end(); ++it)
+	{
+		std::vector<std::string> pair = Utils::split(*it, '=');
+		if (pair.size() == 2)
+			formData[pair[0]] = pair[1];
+	}
+
+	return formData;
+}
+
+// For file uploads:
+// - split the request body into parts per boundary
+// - for each part, extract the filename and the file content
+// - sanitize the filename to prevent directory traversal attacks
+// - save the files to the server in the upload directory
+// -- if the file can't be saved, throw 500 error page
+void parseMultipartFormData(const Request& req, const ServerBlock* server, const Location* location)
+{
+	std::string boundary = "--" + req.get_boundary();
+	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
+
+	std::string uploadDir = location->get_upload_location();
+
+	for (std::vector<std::string>::const_iterator it = parts.begin(); it != parts.end(); ++it)
+	{
+		std::string part = *it;
+		if (part.empty() || part == "--\r\n")
+			continue;
+		size_t dispositionStart = part.find("Content-Disposition: form-data;");
+		if (dispositionStart != std::string::npos)
+		{
+			size_t filenameStart = part.find("filename=\"", dispositionStart);
+			if (filenameStart != std::string::npos)
+			{
+				filenameStart += 10;
+				size_t filenameEnd = part.find("\"", filenameStart);
+				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
+
+				filename = Utils::sanitize_filename(filename);
+
+				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
+				if (contentStart != std::string::npos)
+				{
+					contentStart += 4;
+					size_t contentEnd = part.rfind("\r\n");
+					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
+
+					std::string filePath = uploadDir + "/" + filename;
+					std::ofstream file(filePath.c_str(), std::ios::binary);
+					if (file.is_open())
+					{
+						file << fileContent;
+						file.close();
+					}
+					else
+					{
+						throw RequestException(CODE_500); // Internal Server Error
+					}
+				}
+			}
+		}
+	}
+}
+
 // ------- METHODS --------------
 
 std::string RequestProcessor::handleMethod(const Request& req, const std::vector<ServerBlock>& server_blocks)
@@ -72,11 +146,11 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 	case DELETE:
 		return processDelete(req, server_blocks);
 	default:
-		throw std::runtime_error("Unsupported HTTP method");
+		throw RequestException(CODE_405); // Method Not Allowed
 	}
 }
 
-// GET method
+// -------------- GET method ------------------------
 // get the server block that corresponds to the request
 // get the location that corresponds to the request
 // check if the method is allowed in the location
@@ -142,7 +216,7 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 	}
 }
 
-// POST method
+// -------------- POST method -------------------------
 // get the server block that corresponds to the request
 // get the location that corresponds to the request
 // check if the method is allowed in the location
@@ -159,20 +233,26 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
 	if (!matchingLocation->is_post())
-		throw RequestException(CODE_405);
+		throw RequestException(CODE_405); // Method Not Allowed
 
 	int contentTypeIdx = req.get_content_type_idx();
+
+	std::ostringstream response;
 
 	switch (contentTypeIdx)
 	{
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
 	{
-		// Process form data
+		std::map<std::string, std::string> formData = parseForm(req.get_request_body()); // Q: what to do with the parsed form data?
+		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
 		break;
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
-		// Process file uploads
+		if (!matchingLocation->is_upload_allowed())
+			throw RequestException(CODE_405); // Method Not Allowed
+		parseMultipartFormData(req, matchingServer, matchingLocation);
+		response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
 		break;
 	}
 	case TEXT_PLAIN:
@@ -185,14 +265,13 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 	case IMAGE_JPEG:
 	case IMAGE_PNG:
 	{
-		std::string body = req.get_request_body();
-		// Process the body content
+		std::string body = req.get_request_body(); // Q: what to do with the body?
+		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
 		break;
 	}
 	default:
 		throw RequestException(CODE_415); // Unsupported Media Type
-	std::ostringstream response;
-	response << "HTTP/1.1 200 OK\r\n" << "\r\n";
+
 	return response.str();
 }
 
@@ -230,8 +309,7 @@ std::string RequestProcessor::processDelete(const Request& req, const std::vecto
 			throw RequestException(CODE_500);  // CHECK: "Internal Server Error" best choice here?
 
 	std::ostringstream response;
-	response << "HTTP/1.1 204 No Content\r\n"
-				<< "\r\n";
+	response << "HTTP/1.1 204 No Content\r\n\r\n";
 	return response.str();
 }
 
