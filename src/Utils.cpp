@@ -32,7 +32,7 @@ std::string Utils::readFile(const std::string& file)
 	std::ifstream read_file(file.c_str());
 	if (!read_file.is_open())
 	{
-		throw std::runtime_error("Error opening the file");
+		throw std::runtime_error("Error opening the file '" + file + "'");
 	}
 	std::stringstream buffer;
 	buffer << read_file.rdbuf();

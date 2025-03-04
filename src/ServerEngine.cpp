@@ -40,8 +40,8 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	sockaddr_in socket_addr;
 	socket_addr.sin_family = AF_INET;
 	socket_addr.sin_addr.s_addr = INADDR_ANY;  // or set to server_block._host?
-	// socket_addr.sin_addr.s_addr = sb.get_host();  
-	socket_addr.sin_port = htons(sb.get_port());
+	// socket_addr.sin_addr.s_addr = sb.get_host();  cannot bind?
+	socket_addr.sin_port = htons(sb.get_port());  // ensures endianness of network default, big endian
 
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
@@ -58,9 +58,10 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.type = LISTENER_SOCKET;
 	info.sockaddr = socket_addr;
 	info.host = sb.get_host();
+	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << sb.get_port() << std::endl;
+	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << socket_addr.sin_port << std::endl;
 }
 
 void ServerEngine::init_listener_pfds()
@@ -80,6 +81,11 @@ void ServerEngine::init_listener_pfds()
 	}
 }
 
+/** accept() returns a new client_fd. We initiate a new request and map the client to pfd_info_map with:
+ * (1) type CLIENT_CONNECTION_SOCKET
+ * (2) reqs_idx of the newly initiated Request in vector<Request>
+ * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them? 
+*/
 void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 {
 	int addrlen = sizeof(meta.sockaddr);
@@ -101,7 +107,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	// Full engine procedure of adding and mapping a new client 
 	pfds.push_back(fd);
 	pfds_vector_modified = true;
-	reqs.push_back(Request(meta.sockaddr.sin_port, meta.host));
+	reqs.push_back(Request(meta.port, meta.host));
 	pfd_info info = {};
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.reqs_idx = reqs.size() - 1;
@@ -202,10 +208,13 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		{
 			process_request(pfds_it, reqs[idx]);
 		}
-		catch (RequestException& e)
+		catch (std::exception& e)
 		{
 			std::cerr << "Error: " << e.what() << std::endl;  // LOG
-			initiate_error_response(pfds_it, idx, e.code());
+			if (dynamic_cast<RequestException*>(&e))
+				initiate_error_response(pfds_it, idx, dynamic_cast<RequestException*>(&e)->code());
+			else
+				initiate_error_response(pfds_it, idx, CODE_500);
 			return;
 		}
 		// OBSOLETE:
