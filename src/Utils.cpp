@@ -6,11 +6,12 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:46:36 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:54:36 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
+#include "Request.hpp"
 
 
 std::vector<std::string> Utils::split(const std::string& str, char delim)

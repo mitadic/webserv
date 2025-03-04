@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:37:29 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:57:49 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,44 +242,39 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 
 	switch (contentTypeIdx)
 	{
-	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
-	{
-		std::map<std::string, std::string> formData = parseForm(req.get_request_body()); // Q: what to do with the parsed form data?
-		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
-		break;
+		case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
+		{
+			std::map<std::string, std::string> formData = parseForm(req.get_request_body()); // Q: what to do with the parsed form data?
+			response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
+			break;
+		}
+		case MULTIPART_FORM_DATA: // file uploads
+		{
+			if (!matchingLocation->is_upload_allowed())
+				throw RequestException(CODE_405); // Method Not Allowed
+			parseMultipartFormData(req, matchingServer, matchingLocation);
+			response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
+			break;
+		}
+		case TEXT_PLAIN:
+		case TEXT_HTML:
+		case TEXT_XML:
+		case APPLICATION_XML:
+		case APPLICATION_XHTML_XML:
+		case APPLICATION_OCTET_STREAM:
+		case IMAGE_GIF:
+		case IMAGE_JPEG:
+		case IMAGE_PNG:
+		{
+			std::string body = req.get_request_body(); // Q: what to do with the body?
+			response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
+			break;
+		}
+		default:
+			throw RequestException(CODE_415); // Unsupported Media Type
 	}
-	case MULTIPART_FORM_DATA: // file uploads
-	{
-		if (!matchingLocation->is_upload_allowed())
-			throw RequestException(CODE_405); // Method Not Allowed
-		parseMultipartFormData(req, matchingServer, matchingLocation);
-		response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
-		break;
-	}
-	case TEXT_PLAIN:
-	case TEXT_HTML:
-	case TEXT_XML:
-	case APPLICATION_XML:
-	case APPLICATION_XHTML_XML:
-	case APPLICATION_OCTET_STREAM:
-	case IMAGE_GIF:
-	case IMAGE_JPEG:
-	case IMAGE_PNG:
-	{
-		std::string body = req.get_request_body(); // Q: what to do with the body?
-		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
-		break;
-	}
-	default:
-		throw RequestException(CODE_415); // Unsupported Media Type
-
-	//TDO
 	return "HTTP/1.1 201 Placeholder_OK\r\n\r\n";
 }
-
-
-}
-
 
 // DELETE method
 // get the server block that corresponds to the request

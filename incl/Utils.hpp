@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:46:43 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:58:31 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <vector>
 #include "ServerBlock.hpp"
-#include "Request.hpp"
 
 class Request;
 
