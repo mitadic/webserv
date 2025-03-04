@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:08 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 20:39:33 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 09:37:59 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,10 @@
 #include "Utils.hpp"
 #include "Request.hpp"
 #include "Exceptions.hpp"
+#include "ContentTypes.hpp"
 #include "ServerBlock.hpp"
 #include <stdexcept>
+#include <algorithm>
 
 class RequestProcessor
 {

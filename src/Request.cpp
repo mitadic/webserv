@@ -65,10 +65,10 @@ const int Request::get_minor_http_v() const { return _minor_http_v; }
 const int Request::get_cgi_status() const { return _cgi_status; }
 
 /* Get the port specified in the request */
-const short Request::get_port() { return _port; }
+const short Request::get_port() const { return _port; }
 
 /* Get the host specified in the request */
-const in_addr_t Request::get_host() { return _host; }
+const in_addr_t Request::get_host() const { return _host; }
 
 
 const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
@@ -104,7 +104,6 @@ void Request::set_response_status(int code)
 {
 	_response_status = code;
 }
-
 
 int Request::parse()
 {

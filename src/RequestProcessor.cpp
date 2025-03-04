@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/01 13:44:40 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 11:19:39 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,13 +45,13 @@ std::string defineMime(const std::string& file)
 		return "application/octet-stream";
 }
 
-std::string createContentString(const std::string& file)
+std::string createContentString(const std::string& file, const std::string& mimeType)
 {
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				<< "Content-Type: " << defineMime(file) << "\r\n"
+				<< "Content-Type: " << mimeType << "\r\n"
 				<< "Content-Length: " << body.size() << "\r\n"
 				<< "\r\n"
 				<< body;
@@ -82,19 +82,19 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // check if the method is allowed in the location
 // - if not, throw 405 error page
 // check if the file exists
-// if it's a file, return the file content
-// if it doesn't exist, return 404 error page
+// - if it doesn't exist, return 404 error page
 // if it's a directory, show default index file
 // - if index file doesn't exist, show directory content if autoindex is on
 // - if autoindex is off, return 403 error page
-
+// if it's a file, return the file content if it's an accepted type
+// - if it's not an accepted type, return 406 error page
 std::string RequestProcessor::processGet(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
 	if (!matchingLocation->is_get())
-		throw RequestException(CODE_405);
+		throw RequestException(CODE_405); // Method Not Allowed
 
 	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
 
@@ -103,22 +103,42 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 		if (Utils::isDirectory(filePath))
 		{
 			if (Utils::fileExists(filePath + matchingLocation->get_index()))
-				return createContentString(filePath + matchingLocation->get_index());
+				filePath += matchingLocation->get_index();
 			else
 			{
 				if (matchingLocation->is_autoindex())
 				{
-					//TODO return directory listing -- is this something we want / need to implement?
+					//TODO return directory listing page
 				}
 				else
-					throw RequestException(CODE_403);
+					throw RequestException(CODE_403); // Forbidden
 			}
 		}
-		return createContentString(filePath);
+
+		std::string mimeType = defineMime(filePath);
+		std::vector<std::string> acceptHeader = req.get_accepted_types();
+
+		if (acceptHeader.size() > 0)
+		{
+			bool matchFound = false;
+			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
+{				const std::string& acceptedType = *it;
+				if (acceptedType == mimeType || acceptedType == "*/*" ||
+					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
+				{
+					mimeType = acceptedType;
+					break;
+				}
+			}
+			if (!matchFound)
+				throw RequestException(CODE_406); // Not Acceptable
+		}
+
+		return createContentString(filePath, mimeType);
 	}
 	else
 	{
-		throw RequestException(CODE_404);;
+		throw RequestException(CODE_404); // Not Found
 	}
 }
 
@@ -127,11 +147,58 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 // get the location that corresponds to the request
 // check if the method is allowed in the location
 // - if not, throw 405 error page
-// 
+// check the content type to determine how to process the request
+// - If it’s multipart/form-data, treat it as a file upload (and use appropriate middleware or parsers to extract files).
+// - If it’s application/json, parse it as JSON.
+// - If it’s application/x-www-form-urlencoded, process it as form data.
+// If the request is for uploading a file, make sure uploads are allowed in the location
+// - if not, throw error page
 std::string RequestProcessor::processPost(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
-	//TDO
+	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
+	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
+
+	if (!matchingLocation->is_post())
+		throw RequestException(CODE_405);
+
+	int contentTypeIdx = req.get_content_type_idx();
+
+	switch (contentTypeIdx)
+	{
+	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
+	{
+		// Process form data
+		break;
+	}
+	case MULTIPART_FORM_DATA: // file uploads
+	{
+		// Process file uploads
+		break;
+	}
+	case TEXT_PLAIN:
+	case TEXT_HTML:
+	case TEXT_XML:
+	case APPLICATION_XML:
+	case APPLICATION_XHTML_XML:
+	case APPLICATION_OCTET_STREAM:
+	case IMAGE_GIF:
+	case IMAGE_JPEG:
+	case IMAGE_PNG:
+	{
+		std::string body = req.get_request_body();
+		// Process the body content
+		break;
+	}
+	default:
+		throw RequestException(CODE_415); // Unsupported Media Type
+	std::ostringstream response;
+	response << "HTTP/1.1 200 OK\r\n" << "\r\n";
+	return response.str();
 }
+
+
+}
+
 
 // DELETE method
 // get the server block that corresponds to the request
