@@ -11,10 +11,7 @@
                 "-std=c++98",
                 "-g",
                 "-I${workspaceFolder}/incl/",
-                "${workspaceFolder}/src/main.cpp",
-                "${workspaceFolder}/src/ServerEngine.cpp",
-                "${workspaceFolder}/src/CgiHandler.cpp",
-                "${workspaceFolder}/src/Request.cpp",
+                "${workspaceFolder}/src/*.cpp",
                 "-o",
                 "${workspaceFolder}/src/a.out"
             ],

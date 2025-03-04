@@ -1,25 +1,30 @@
 #pragma once
 
-#include <sys/socket.h> // For socket functions
-#include <netinet/in.h> // For sockaddr_in
-#include <unistd.h>		// close()
 #include <iostream>
-#include <cstdlib>
-#include <cstdio>
 #include <vector>
 #include <map>
-#include <poll.h>
 #include <algorithm>
-#include <csignal> // For signal handling
-#include <cerrno> // For errno
-#include <fcntl.h> // For fcntl
-#include <cstring>
 #include <fstream>
 
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno> // For errno
+#include <cstring>
+
+#include <unistd.h>		// close()
+#include <fcntl.h> // For fcntl
+#include <poll.h>
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
+
 #include "Types.hpp"
+#include "ServerBlock.hpp"
+#include "SignalHandling.hpp"
 #include "Request.hpp"
 #include "CgiHandler.hpp"
 #include "Exceptions.hpp"
+#include "Config.hpp"
+#include "ErrorPageGenerator.hpp"
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
@@ -27,29 +32,38 @@
 #define BUF_SZ 2
 
 
-extern volatile std::sig_atomic_t g_signal;  // declaration, 'extern' avoids multiple defs. Init in main.cpp
-
-
 class ServerEngine {
 public:
-    ServerEngine();
-    ~ServerEngine();
+	ServerEngine(std::vector<ServerBlock>&);
+	~ServerEngine();
 
 	void	run();
 	bool	make_non_blocking(int &fd);
-	void	setup_listening_socket(int port);
+	void	setup_listening_socket(const ServerBlock& sb);
 	void	init_listener_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
-	void	set_response(std::vector<pollfd>::iterator& pfds_it, int idx);
-	void	set_basic_response(std::vector<pollfd>::iterator& pfds_it, int idx, std::string response);
-
+	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	initiate_error_response(std::vector<pollfd>::iterator&, int idx, int code);
 	void	print_pfds();
+
+	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_eof_on_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+
+	void	process_request(std::vector<pollfd>::iterator&, Request&);
 
 	static void	signal_handler(int signal);
 
-private:
-	std::vector<int> ports;  // will be contained by vector<ServerBlock> in the future
+	std::vector<ServerBlock> server_blocks;
 	std::map<int, pfd_info> pfd_info_map;  // pfd.fd to all meta
 	std::vector<struct pollfd> pfds;
 	std::vector<Request> reqs;
+
+	bool pfds_vector_modified;
+
+private:
+	ServerEngine();
 };

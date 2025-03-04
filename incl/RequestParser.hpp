@@ -1,16 +1,12 @@
 #pragma once
 
+#include <algorithm>
+#include "Request.hpp"
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
 #include "StatusCodes.hpp"
 #include "ContentTypes.hpp"
 #include "RequestUtils.hpp"
-#include "Request.hpp"
-
-#define SP " "
-#define LWS_CHARS " \t"
-#define UNINITIALIZED -1
-#define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
 
 class RequestParser {
 public:
@@ -19,6 +15,9 @@ public:
 	RequestParser(const RequestParser&);
 
 	void	parse_request_line(Request& req, std::istringstream& stream, std::string& line);
+	void	parse_headers(Request& req, std::istringstream& stream, std::string& line);
+	void	parse_body(Request& req, std::istringstream& stream, std::string& line);
+
 	void	parse_header_line(Request& req, std::istringstream& stream, std::string& line);
 	void	dispatch_header_parser(Request& req, const int legal_header_idx, std::string& header_val);
 

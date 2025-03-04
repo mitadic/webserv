@@ -15,7 +15,7 @@ in_addr_t   Config::ft_inet(std::string host)
             || std::atoi(host_c) > 255 || std::atoi(host_c) < 0)
             throw std::runtime_error("invalid IP address");
         ip |= std::atoi(host_c) << (i * 8);
-        host_c = std::strtok(nullptr, ".");
+        host_c = std::strtok(NULL, ".");
     }
     if (i < 0)
         throw std::runtime_error("invalid IP address");
@@ -28,7 +28,7 @@ std::string Config::ft_inet_ntoa(in_addr_t ip)
     for (int i = 3; i >= 0; --i)
     {
         std::stringstream ss;
-        ss << std::to_string((ip >> (i * 8)) & 255);
+        ss << ((ip >> (i * 8)) & 255);
         host += ss.str();
         if (i > 0)
             host += ".";

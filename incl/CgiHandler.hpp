@@ -13,8 +13,8 @@
 #pragma once
 
 #include <string>
-#include <sys/wait.h> // For waitpid()
 #include <cstdlib>
+#include <sys/wait.h> // For waitpid()
 
 #define IS_GET true
 #define IS_POST false

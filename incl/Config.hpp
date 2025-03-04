@@ -4,11 +4,11 @@
 
 # include <vector>
 # include <map>
-# include <cstring>
 # include <sstream>
 # include <fstream>
-# include <arpa/inet.h>
 # include <limits>
+# include <cstring>
+# include <arpa/inet.h>
 
 # include "Log.hpp"
 # include "ServerBlock.hpp"
@@ -17,7 +17,7 @@
 
 namespace Config {
         // Parsing
-        std::stringstream load_file(const std::string & filename);
+        void load_file(const std::string & filename, std::stringstream & content);
         void parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks);
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
         void parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content);

@@ -6,11 +6,12 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:15:17 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:26:50 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestProcessor.hpp"
+#include "Request.hpp"  // safe in .cpp, won't cause circular imports
 
 // ------- Helper functions ------------
 
@@ -272,7 +273,8 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 	default:
 		throw RequestException(CODE_415); // Unsupported Media Type
 
-	return response.str();
+	//TDO
+	return "HTTP/1.1 201 Placeholder_OK\r\n\r\n";
 }
 
 

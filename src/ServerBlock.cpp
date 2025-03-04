@@ -2,12 +2,37 @@
 #include "ServerBlock.hpp"
 #include "Config.hpp"
 
-ServerBlock::ServerBlock() : _port(-1), _max_client_body(0)
-{
-    _host = Config::ft_inet("255.255.255.255");
-};
+ServerBlock::ServerBlock() :
+    _port(0),
+    _max_client_body(0),
+    _host(Config::ft_inet("255.255.255.255"))
+{}
 
-short ServerBlock::get_port() const
+ServerBlock::~ServerBlock()
+{}
+
+ServerBlock::ServerBlock(const ServerBlock& oth) :
+    _port(oth._port),
+    _max_client_body(oth._max_client_body),
+    _host(oth._host),
+    _locations(oth._locations),
+    _error_pages(oth._error_pages)
+{}
+
+ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
+{
+    if (this != &oth)
+    {
+        _port = oth._port;
+        _max_client_body = oth._max_client_body;
+        _host = oth._host;
+        _locations = oth._locations;
+        _error_pages = oth._error_pages;
+    }
+    return *this;
+}
+
+uint16_t ServerBlock::get_port() const
 {
     return (_port);
 };
@@ -34,7 +59,7 @@ const std::vector<Location>&   ServerBlock::get_locations() const
 
 void    ServerBlock::set_port(std::string port)
 {
-    if (_port != -1)
+    if (_port != 0)
         throw std::runtime_error("server cannot have multiple ports");
     if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
         throw std::runtime_error("invalid port number" + port);

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Utils.hpp"
+#include "Request.hpp"  // here in .cpp safe combo with fwd declaration in .hpp, include unsafe in .hpp 
 
 std::vector<std::string> Utils::split(const std::string& str, char delim)
 {
@@ -43,7 +44,7 @@ std::string Utils::readFile(const std::string& file)
 	std::ifstream read_file(file.c_str());
 	if (!read_file.is_open())
 	{
-		throw std::runtime_error("Error opening the file");
+		throw std::runtime_error("Error opening the file '" + file + "'");
 	}
 	std::stringstream buffer;
 	buffer << read_file.rdbuf();
@@ -59,6 +60,7 @@ const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<S
 
 	for (size_t i = 0; i < server_blocks.size(); ++i)
 	{
+		std::cout << "sb.port, req.port, sb.host, req.host: " << server_blocks[i].get_port() << ", " << req.get_port() << ", " << server_blocks[i].get_host() << ", " << req.get_host() << std::endl;
 		if (server_blocks[i].get_port() == req.get_port() && server_blocks[i].get_host() == req.get_host())
 		{
 			matchingServer = &server_blocks[i];
