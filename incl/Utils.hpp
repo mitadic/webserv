@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 12:37:47 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:46:43 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,19 +18,20 @@
 #include <sys/stat.h>
 #include <vector>
 #include "ServerBlock.hpp"
-// #include "Request.hpp"
+#include "Request.hpp"
 
 class Request;
 
 namespace Utils
 {
 	std::vector<std::string> split(const std::string& str, char delim);
+	std::vector<std::string> split(const std::string& str, const std::string& delim);
 
 	bool fileExists (const std::string& file);
 	bool isDirectory(const std::string& path);
 
 	std::string readFile(const std::string& file);
-	
+
 	const ServerBlock* getServerBlock(const Request& req, const std::vector<ServerBlock>& server_blocks);
 	const Location* getLocation(const Request& req, const ServerBlock* server);
 }

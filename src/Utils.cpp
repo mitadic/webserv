@@ -6,12 +6,12 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 12:36:39 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:46:36 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
-#include "Request.hpp"  // here in .cpp safe combo with fwd declaration in .hpp, include unsafe in .hpp 
+
 
 std::vector<std::string> Utils::split(const std::string& str, char delim)
 {
@@ -22,6 +22,25 @@ std::vector<std::string> Utils::split(const std::string& str, char delim)
 	{
 		tokens.push_back(token);
 	}
+	return tokens;
+}
+
+std::vector<std::string> Utils::split(const std::string& str, const std::string& delim)
+{
+	std::vector<std::string> tokens;
+	size_t startPos = 0;
+	size_t delimPos;
+
+	while ((delimPos = str.find(delim, startPos)) != std::string::npos) {
+		tokens.push_back(str.substr(startPos, delimPos - startPos));
+		startPos = delimPos + delim.length();
+	}
+
+	// Add the last token after the last delimiter
+	if (startPos < str.length()) {
+		tokens.push_back(str.substr(startPos));
+	}
+
 	return tokens;
 }
 
@@ -44,7 +63,7 @@ std::string Utils::readFile(const std::string& file)
 	std::ifstream read_file(file.c_str());
 	if (!read_file.is_open())
 	{
-		throw std::runtime_error("Error opening the file '" + file + "'");
+		throw std::runtime_error("Error opening the file");
 	}
 	std::stringstream buffer;
 	buffer << read_file.rdbuf();
@@ -60,7 +79,6 @@ const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<S
 
 	for (size_t i = 0; i < server_blocks.size(); ++i)
 	{
-		std::cout << "sb.port, req.port, sb.host, req.host: " << server_blocks[i].get_port() << ", " << req.get_port() << ", " << server_blocks[i].get_host() << ", " << req.get_host() << std::endl;
 		if (server_blocks[i].get_port() == req.get_port() && server_blocks[i].get_host() == req.get_host())
 		{
 			matchingServer = &server_blocks[i];

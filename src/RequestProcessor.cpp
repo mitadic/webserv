@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:26:50 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/04 17:37:29 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 // -- if the file can't be saved, throw 500 error page
 void parseMultipartFormData(const Request& req, const ServerBlock* server, const Location* location)
 {
-	std::string boundary = "--" + req.get_boundary();
+	std::string boundary = "--"; // TODO: + req.get_boundary()
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
 
 	std::string uploadDir = location->get_upload_location();
@@ -108,7 +108,7 @@ void parseMultipartFormData(const Request& req, const ServerBlock* server, const
 				size_t filenameEnd = part.find("\"", filenameStart);
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
-				filename = Utils::sanitize_filename(filename);
+				// TODO: filename = Utils::sanitize_filename(filename);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)

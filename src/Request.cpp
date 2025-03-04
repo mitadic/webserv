@@ -181,12 +181,8 @@ void Request::validate_self()
 		_accepted_types.push_back(it->second);
 }
 
-<<<<<<< HEAD
-int Request::parse()
-=======
 /* Includes request validation before parsing the body */
 void Request::parse()
->>>>>>> 2ea2ec28c4b8828f90bfda76b92ae454a49fad32
 {
 	std::istringstream stream(_request_str);
 	std::string line;
