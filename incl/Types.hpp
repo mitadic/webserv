@@ -28,5 +28,6 @@ struct pfd_info {
 	int type;
 
 	int reqs_idx;			// needed only by CONNECTION, PIPE
-	sockaddr_in sockaddr;	// needed only by LISTENER
+	sockaddr_in sockaddr;	// needed only by LISTENER + socket_addr.sin_port has the [port]
+	in_addr_t host;			// mapping pretend IP [host] for req and processing
 };

@@ -28,7 +28,7 @@ bool ServerEngine::make_non_blocking(int &fd)
 	return (true);
 }
 
-void ServerEngine::setup_listening_socket(const int& port)
+void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1 || !make_non_blocking(sockfd))
@@ -39,12 +39,13 @@ void ServerEngine::setup_listening_socket(const int& port)
 
 	sockaddr_in socket_addr;
 	socket_addr.sin_family = AF_INET;
-	socket_addr.sin_addr.s_addr = INADDR_ANY;
-	socket_addr.sin_port = htons(port);
+	socket_addr.sin_addr.s_addr = INADDR_ANY;  // or set to server_block._host?
+	// socket_addr.sin_addr.s_addr = sb.get_host();  
+	socket_addr.sin_port = htons(sb.get_port());
 
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
-		std::cerr << "Failed to bind to port " << port << ". Errno:" << errno << std::endl;
+		std::cerr << "Failed to bind to port " << sb.get_port() << ". Errno:" << errno << std::endl;
 		return;
 	}
 	if (listen(sockfd, 10) == -1)
@@ -56,9 +57,10 @@ void ServerEngine::setup_listening_socket(const int& port)
 	pfd_info info = {};
 	info.type = LISTENER_SOCKET;
 	info.sockaddr = socket_addr;
+	info.host = sb.get_host();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << port << std::endl;
+	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << sb.get_port() << std::endl;
 }
 
 void ServerEngine::init_listener_pfds()
@@ -98,13 +100,12 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 
 	// Full engine procedure of adding and mapping a new client 
 	pfds.push_back(fd);
-	// we'll 
-	reqs.push_back(Request());
+	pfds_vector_modified = true;
+	reqs.push_back(Request(meta.sockaddr.sin_port, meta.host));
 	pfd_info info = {};
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.reqs_idx = reqs.size() - 1;
 	pfd_info_map[client] = info;
-	pfds_vector_modified = true;
 
 	std::cout << "New client accepted on FD " << client << std::endl;
 }
@@ -188,10 +189,15 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		}
 		return;
 	}
+	// std::cout << "reqs.size(): " << reqs.size() << std::endl;
+	// std::cout << "idx: " << idx << std::endl;
+	// std::cout << "reqs[idx].get_request_str(): " << reqs[idx].get_request_str() << std::endl;
+	// std::cout << "found CRLF: " << reqs[idx].get_request_str().find("\r\n\r\n") << std::endl;
 	reqs[idx].append_to_request_str(buf);
 	// TODO: optimize with substring and .rfind()
 	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos) // if proper HTTP ending
 	{
+		// TODO: parse headers, determine if we need to read the body as well
 		try
 		{
 			process_request(pfds_it, reqs[idx]);
@@ -244,7 +250,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		}
 		else
 		{
-			reqs[idx].reset();
+			reqs[idx].reset();  // TODO: obsolete, rather remove the request
 			pfds_it->events = POLLIN;
 		}
 		pfds_vector_modified = true;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
@@ -273,12 +279,18 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 {
 	int idx = meta_it->second.reqs_idx;
 
-	if (!reqs[idx].get_request_str().empty())
-		initiate_error_response(pfds_it, idx, CODE_400);
-	else  // request is empty, we can close client connection
-		initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
-	reqs[idx].flag_the_timeout();
-	pfds_vector_modified = true;  // needed here? Cause I suspect it might block actually
+	try
+	{
+		if (!reqs[idx].get_request_str().empty())
+			initiate_error_response(pfds_it, idx, CODE_400);
+		else  // request is empty, we can close client connection
+			initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+		reqs[idx].flag_the_timeout();
+		pfds_vector_modified = true;  // needed here? Cause I suspect it might block actually
+	}
+	catch (RequestException& e) {
+		std::cout << e.what() << std::endl;
+	}
 }
 
 void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Request& req)
@@ -297,7 +309,7 @@ void ServerEngine::run()
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
 
 	for (size_t i = 0; i < server_blocks.size(); i++)
-		setup_listening_socket(server_blocks[i].get_port());
+		setup_listening_socket(server_blocks[i]);
 
 	init_listener_pfds();
 

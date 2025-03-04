@@ -48,6 +48,7 @@ const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<S
 
 	for (size_t i = 0; i < server_blocks.size(); ++i)
 	{
+		std::cout << "sb.port, req.port, sb.host, req.host: " << server_blocks[i].get_port() << ", " << req.get_port() << ", " << server_blocks[i].get_host() << ", " << req.get_host() << std::endl;
 		if (server_blocks[i].get_port() == req.get_port() && server_blocks[i].get_host() == req.get_host())
 		{
 			matchingServer = &server_blocks[i];

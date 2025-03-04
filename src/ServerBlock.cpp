@@ -3,7 +3,7 @@
 #include "Config.hpp"
 
 ServerBlock::ServerBlock() :
-    _port(-1),
+    _port(0),
     _max_client_body(0),
     _host(Config::ft_inet("255.255.255.255"))
 {}
@@ -32,7 +32,7 @@ ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
     return *this;
 }
 
-short ServerBlock::get_port() const
+uint16_t ServerBlock::get_port() const
 {
     return (_port);
 };
@@ -59,7 +59,7 @@ const std::vector<Location>&   ServerBlock::get_locations() const
 
 void    ServerBlock::set_port(std::string port)
 {
-    if (_port != -1)
+    if (_port != 0)
         throw std::runtime_error("server cannot have multiple ports");
     if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
         throw std::runtime_error("invalid port number" + port);
