@@ -6,7 +6,6 @@
 # include <vector>
 # include <ctime>
 # include <arpa/inet.h>
-# include "ServerBlock.hpp"
 
 # define GREEN "\033[32m"
 # define WHITE "\033[0m"
@@ -15,6 +14,9 @@
 # define MAGENTA "\033[35m"
 # define RED "\033[31m"
 # define DEBUGMODE 1
+
+class ServerBlock;
+class Location;
 
 typedef enum e_log_level
 {
@@ -35,7 +37,7 @@ class Log {
         // ideas for future logging overloads:
         // static void log(const Request & request);
         // static void log(const Response & response);
-        
+
 };
 
 #endif

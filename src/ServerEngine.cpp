@@ -36,15 +36,15 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 		std::cerr << "Failed to create listening socket. Errno: " << errno << std::endl;
 		return;
 	}
-
 	sockaddr_in socket_addr;
 	socket_addr.sin_family = AF_INET;
-	socket_addr.sin_addr.s_addr = INADDR_ANY;  // or set to server_block._host?
-	// socket_addr.sin_addr.s_addr = sb.get_host();  cannot bind?
+	socket_addr.sin_addr.s_addr = sb.get_host();
+	// socket_addr.sin_addr.s_addr = INADDR_ANY;
 	socket_addr.sin_port = htons(sb.get_port());  // ensures endianness of network default, big endian
 
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
+		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
 		std::cerr << "Failed to bind to port " << sb.get_port() << ". Errno:" << errno << std::endl;
 		return;
 	}
@@ -61,7 +61,7 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << sb.get_port() << std::endl;
+	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << ntohs(socket_addr.sin_port) << std::endl;
 }
 
 void ServerEngine::init_listener_pfds()
@@ -84,7 +84,7 @@ void ServerEngine::init_listener_pfds()
 /** accept() returns a new client_fd. We initiate a new request and map the client to pfd_info_map with:
  * (1) type CLIENT_CONNECTION_SOCKET
  * (2) reqs_idx of the newly initiated Request in vector<Request>
- * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them? 
+ * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them?
 */
 void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 {
@@ -104,7 +104,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 		return ;
 	}
 
-	// Full engine procedure of adding and mapping a new client 
+	// Full engine procedure of adding and mapping a new client
 	pfds.push_back(fd);
 	pfds_vector_modified = true;
 	reqs.push_back(Request(meta.port, meta.host));
@@ -308,6 +308,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	std::string result;
 
 	req.parse();
+	// is there a redirection? -> redirect
+	// is there a cgi? -> add it to pfds
 	result = processor.handleMethod(req, server_blocks);
 	req.set_response(result);
 	pfds_it->events = POLLOUT;

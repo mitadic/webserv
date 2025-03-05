@@ -1,5 +1,8 @@
 
+#include "ServerBlock.hpp"
+#include "Config.hpp"
 #include "Location.hpp"
+#include "Log.hpp"
 
 Location::Location() : _upload_allowed(false), _get(false), _post(false), _del(false), _autoindex(false), _redirect(0, "") {};
 
@@ -138,7 +141,7 @@ void Location::set_cgi_extensions(std::string extensions)
 {
     if (_cgi_extensions.empty() == false)
         throw std::runtime_error("double declaration of 'cgi_extension'");
-    
+
     char str[extensions.size() + 1];
     std::strcpy(str, extensions.c_str());
     char *token = std::strtok(str, " ");
@@ -157,11 +160,15 @@ void Location::set_redirect(std::string redirection)
         throw std::runtime_error("double declaration of 'return'");
     std::string code, url;
     std::stringstream ss(redirection);
-    if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos))
-        throw std::runtime_error("in location block: return directive requires 2 arguments");
+    if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos)
+		|| !Config::has_only_digits(const_cast<char *>(code.c_str())))
+        throw std::runtime_error("in location block: return directive has wrong arguments");
     if (_path == url)
         throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
-    _redirect = std::make_pair(std::atoi(code.c_str()), url);
+	int status = std::atoi(code.c_str());
+	if (status != 301 && status != 302 && status != 307 && status != 308)
+		throw std::runtime_error("return directive contains unknown status code");
+    _redirect = std::make_pair(status, url);
 };
 
 /**
@@ -170,11 +177,11 @@ void Location::set_redirect(std::string redirection)
 void Location::check_valid_path(std::string & path, t_path type)
 {
     if (path[0] != '/')
-        throw std::runtime_error("Invalid path: absolute path has to start with '/'");
+        throw std::runtime_error("invalid path: absolute path has to start with '/'");
     if (type == ROOT && path[path.size() - 1] == '/')
-        throw std::runtime_error("Invalid path: root should not end with '/'");
+        throw std::runtime_error("invalid path: root should not end with '/'");
     if (path.find("//") != std::string::npos || path.find_first_of("*?$\\% ") != std::string::npos)
-        throw std::runtime_error("Invalid path: contains '//' or one of the characters ' *?$\\%'");
+        throw std::runtime_error("invalid path: contains '//' or one of the characters ' *?$\\%'");
 };
 
 bool Location::compare_prefix(const Location & a, const Location & b)

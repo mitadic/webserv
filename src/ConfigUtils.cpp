@@ -3,15 +3,15 @@
 
 in_addr_t   Config::ft_inet(std::string host)
 {
-    char *host_c = const_cast<char *>(host.c_str());
+     char *host_c = const_cast<char *>(host.c_str());
     host_c = std::strtok(host_c, ".");
-    uint32_t ip = 0;
+    in_addr_t ip = 0;
     int i = 4;
     while (host_c)
     {
         --i;
-        if (std::strlen(host_c) > 3 || std::strlen(host_c) < 1 || !has_only_digits(host_c) 
-            || (std::strlen(host_c) > 1 && host_c[0] == '0') 
+        if (std::strlen(host_c) > 3 || std::strlen(host_c) < 1 || !has_only_digits(host_c)
+            || (std::strlen(host_c) > 1 && host_c[0] == '0')
             || std::atoi(host_c) > 255 || std::atoi(host_c) < 0)
             throw std::runtime_error("invalid IP address");
         ip |= std::atoi(host_c) << (i * 8);
@@ -19,12 +19,14 @@ in_addr_t   Config::ft_inet(std::string host)
     }
     if (i < 0)
         throw std::runtime_error("invalid IP address");
-    return (ip);
+    return (htonl(ip)); //converts from host byte to network byte order
 }
 
 std::string Config::ft_inet_ntoa(in_addr_t ip)
 {
     std::string host;
+	in_addr_t host_ip = ntohl(ip);
+
     for (int i = 3; i >= 0; --i)
     {
         std::stringstream ss;
