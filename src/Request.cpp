@@ -2,29 +2,69 @@
 #include "RequestParser.hpp"  // it's ok we're not including this in Request.hpp and it works due to fwd decl
 
 Request::Request() :
-		_request_str(""),
-		_response(""),
-		_response_status(CODE_200),
-		_total_sent(0),
-		_method(UNINITIALIZED),
-		_client_fd(UNINITIALIZED),
-		_content_type_idx(UNINITIALIZED),
-		_content_length(UNINITIALIZED),
-		_flagged_as_chunked(false),
-		_timed_out(false),
-		_await_reconnection(false),
-		_keep_alive(true),
-		_port(80),  // default for when unspecified
-		_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
-		_cgi_status(NOT_CGI),
-		cgi()
-	{}
+	_request_str(""),
+	_response(""),
+	_response_status(CODE_200),
+	_total_sent(0),
+	_method(UNINITIALIZED),
+	_client_fd(UNINITIALIZED),
+	_content_type_idx(UNINITIALIZED),
+	_content_length(UNINITIALIZED),
+	_flagged_as_chunked(false),
+	_timed_out(false),
+	_await_reconnection(false),
+	_keep_alive(true),
+	_port(80),  // default for when unspecified
+	_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
+	_cgi_status(NOT_CGI),
+	_minor_http_v(UNINITIALIZED),
+	_major_http_v(UNINITIALIZED),
+	cgi()
+{}
+
+/* Parametrized constructor for when accepting client */
+Request::Request(uint16_t port, in_addr_t host) :
+	_request_str(""),
+	_response(""),
+	_response_status(CODE_200),
+	_total_sent(0),
+	_method(UNINITIALIZED),
+	_client_fd(UNINITIALIZED),
+	_content_type_idx(UNINITIALIZED),
+	_content_length(UNINITIALIZED),
+	_flagged_as_chunked(false),
+	_timed_out(false),
+	_await_reconnection(false),
+	_keep_alive(true),
+	_port(port),
+	_host(host),
+	_cgi_status(NOT_CGI),
+	_minor_http_v(UNINITIALIZED),
+	_major_http_v(UNINITIALIZED),
+	cgi()
+{}
 
 Request::~Request() {};
 
 Request::Request(const Request& oth) : cgi()
 {
-	(void)oth;
+	_request_str = oth._request_str;
+	_response = oth._response;
+	_response_status = oth._response_status;
+	_total_sent = oth._total_sent;
+	_method = oth._method;
+	_client_fd = oth._client_fd;
+	_content_type_idx = oth._content_type_idx;
+	_content_length = oth._content_length;
+	_flagged_as_chunked = oth._flagged_as_chunked;
+	_timed_out = oth._timed_out;
+	_await_reconnection = oth._await_reconnection;
+	_keep_alive = oth._keep_alive;
+	_port = oth._port;
+	_host = oth._host;
+	_minor_http_v = oth._minor_http_v;
+	_major_http_v = oth._major_http_v;
+	_cgi_status = oth._cgi_status;
 }
 
 
@@ -46,15 +86,15 @@ void Request::reset_client()
 }
 
 
-const std::string Request::get_request_str() const { return _request_str; };
-const std::string Request::get_request_body() const { return _request_body; };
-const std::string Request::get_response() const { return _response; };
-const std::string Request::get_request_uri() const { return _request_uri; };
-const std::string Request::get_cgi_job_id() const { return _cgi_job_id; };
-const std::string Request::get_cgi_output() const { return _cgi_output; };
-const int Request::get_response_status() const { return _response_status; };
-const int Request::get_total_sent() const { return _total_sent; };
-const int Request::get_content_length() const { return _content_length; };
+const std::string Request::get_request_str() const { return _request_str; }
+const std::string Request::get_request_body() const { return _request_body; }
+const std::string Request::get_response() const { return _response; }
+const std::string Request::get_request_uri() const { return _request_uri; }
+const std::string Request::get_cgi_job_id() const { return _cgi_job_id; }
+const std::string Request::get_cgi_output() const { return _cgi_output; }
+const int Request::get_response_status() const { return _response_status; }
+const int Request::get_total_sent() const { return _total_sent; }
+const int Request::get_content_length() const { return _content_length; }
 const int Request::get_content_type_idx() const { return _content_type_idx; }
 const char *Request::get_content_type() const { return content_types[_content_type_idx]; }
 const int Request::get_client_fd() const { return _client_fd; }

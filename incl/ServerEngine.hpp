@@ -39,7 +39,7 @@ public:
 
 	void	run();
 	bool	make_non_blocking(int &fd);
-	void	setup_listening_socket(const int& port);
+	void	setup_listening_socket(const ServerBlock& sb);
 	void	init_listener_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
 	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);

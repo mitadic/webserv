@@ -6,12 +6,44 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/02/28 20:29:12 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 14:09:17 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
-#include "Request.hpp"  // here in .cpp safe combo with fwd declaration in .hpp, include unsafe in .hpp 
+#include "Request.hpp"
+
+
+std::vector<std::string> Utils::split(const std::string& str, char delim)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(str);
+	while (std::getline(tokenStream, token, delim))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
+std::vector<std::string> Utils::split(const std::string& str, const std::string& delim)
+{
+	std::vector<std::string> tokens;
+	size_t startPos = 0;
+	size_t delimPos;
+
+	while ((delimPos = str.find(delim, startPos)) != std::string::npos) {
+		tokens.push_back(str.substr(startPos, delimPos - startPos));
+		startPos = delimPos + delim.length();
+	}
+
+	// Add the last token after the last delimiter
+	if (startPos < str.length()) {
+		tokens.push_back(str.substr(startPos));
+	}
+
+	return tokens;
+}
 
 bool Utils::fileExists (const std::string& file)
 {
@@ -83,4 +115,43 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 		throw std::runtime_error("No matching location found for the request");
 	}
 	return matchingLocation;
+}
+
+
+
+std::string Utils::sanitizeFilename(const std::string& filename)
+{
+	std::string sanitized;
+	for (size_t i = 0; i < filename.size(); ++i)
+	{
+		char c = filename[i];
+		if (isalnum(c) || strchr("._-", c) != NULL)
+			sanitized += c;
+		else
+			sanitized += '_';
+	}
+	return sanitized;
+}
+
+// ensure the uri does not travel up above the root directory
+bool Utils::uriIsSafe(const std::string& uri)
+{
+	std::istringstream stream(uri);
+	std::string segment;
+	int depth = 0;
+
+	while (std::getline(stream, segment, '/'))
+	{
+		if (segment == "..")
+		{
+			if (depth > 0)
+				--depth;
+			else
+				return false; // Invalid, because trying to go above root directory
+		}
+		else if (!segment.empty() && segment != ".")
+			++depth;
+	}
+
+	return true;
 }

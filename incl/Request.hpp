@@ -21,6 +21,7 @@ class Request {
 
 public:
     Request();
+	Request(uint16_t, in_addr_t);
     ~Request();
 	Request(const Request&);
 
@@ -55,6 +56,8 @@ public:
 	bool should_await_reconnection();
 	bool should_keep_alive();
 
+	// void set_port(const uint16_t&);
+	// void set_host(const in_addr_t&);
 	void append_to_request_str(const std::string& s);
 	void set_response(const std::string& s);
 	void append_to_response(const std::string& s);
