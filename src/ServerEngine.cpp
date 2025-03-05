@@ -44,6 +44,7 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
+		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
 		std::cerr << "Failed to bind to port " << sb.get_port() << ". Errno:" << errno << std::endl;
 		return;
 	}
