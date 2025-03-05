@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 20:16:01 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/01 11:46:58 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 10:56:52 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ std::string generateErrorPage(int status)
 	return oss.str();
 }
 
-/** 
+/**
  * @brief Create error page
  * @param req Reference to a request that the ServerEngine is processing
  * @param server_blocks Reference to the vector of ServerBlocks that the ServerEngine is using

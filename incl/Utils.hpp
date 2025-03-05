@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:58:31 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 14:09:44 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,4 +33,7 @@ namespace Utils
 
 	const ServerBlock* getServerBlock(const Request& req, const std::vector<ServerBlock>& server_blocks);
 	const Location* getLocation(const Request& req, const ServerBlock* server);
+
+	std::string sanitizeFilename(const std::string& filename);
+	bool uriIsSafe(const std::string& uri);
 }

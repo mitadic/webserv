@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 14:12:19 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:05:11 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 // - sanitize the filename to prevent directory traversal attacks
 // - save the files to the server in the upload directory
 // -- if the file can't be saved, throw 500 error page
-void parseMultipartFormData(const Request& req, const ServerBlock* server, const Location* location)
+void parseMultipartFormData(const Request& req, const Location* location)
 {
 	std::string boundary = "--"; // TODO: + req.get_boundary()
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
@@ -117,7 +117,7 @@ void parseMultipartFormData(const Request& req, const ServerBlock* server, const
 					size_t contentEnd = part.rfind("\r\n");
 					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
 
-					std::string filePath = uploadDir + "/" + filename; // Q! What id the file already exists? Refuse or overwrite? Or should we always add timestamp?
+					std::string filePath = uploadDir + "/" + filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 					if (file.is_open())
 					{
@@ -135,19 +135,38 @@ void parseMultipartFormData(const Request& req, const ServerBlock* server, const
 }
 
 // ------- METHODS --------------
-
+// Handle redicetion
+// - if the location has a redirect directive with a status code, return that status code and Location header
+// -- for status codes 301 and 302, check if the method is DELETE and throw 405 error page
+// - if the location has no redirect directive, return the result of the method processing
 std::string RequestProcessor::handleMethod(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
+	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
+	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
+
+	if (!matchingLocation->get_redirect().second.empty())
+	{
+		if ((matchingLocation->get_redirect().first == 301 || matchingLocation->get_redirect().first == 302)
+			&& req.get_method() == DELETE)
+			throw RequestException(CODE_405); // Method Not Allowed
+		std::ostringstream response;
+		response << "HTTP/1.1 " << matchingLocation->get_redirect().first << " "
+					<< status_messages[matchingLocation->get_redirect().first] << "\r\n"
+					<< "Location: " << matchingLocation->get_redirect().second << "\r\n"
+					<< "\r\n";
+		return response.str();
+	}
+
 	switch (req.get_method())
 	{
-	case GET:
-		return processGet(req, server_blocks);
-	case POST:
-		return processPost(req, server_blocks);
-	case DELETE:
-		return processDelete(req, server_blocks);
-	default:
-		throw RequestException(CODE_405); // Method Not Allowed
+		case GET:
+			return processGet(req, matchingLocation);
+		case POST:
+			return processPost(req, matchingLocation);
+		case DELETE:
+			return processDelete(req, matchingLocation);
+		default:
+			throw RequestException(CODE_405); // Method Not Allowed
 	}
 }
 
@@ -163,26 +182,23 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // - if autoindex is off, return 403 error page
 // if it's a file, return the file content if it's an accepted type
 // - if it's not an accepted type, return 406 error page
-std::string RequestProcessor::processGet(const Request& req, const std::vector<ServerBlock>& server_blocks)
+std::string RequestProcessor::processGet(const Request& req, const Location* location)
 {
-	std::cout << "GET request received\n";
-	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
-	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
-	if (!matchingLocation->is_get())
+	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
 
-	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
+	std::string filePath = location->get_root() + req.get_request_uri();
 
 	if (Utils::fileExists(filePath))
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			if (Utils::fileExists(filePath + matchingLocation->get_index()))
-				filePath += matchingLocation->get_index();
+			if (Utils::fileExists(filePath + location->get_index()))
+				filePath += location->get_index();
 			else
 			{
-				if (matchingLocation->is_autoindex())
+				if (location->is_autoindex())
 				{
 					//TODO return directory listing page
 				}
@@ -201,10 +217,10 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 {				const std::string& acceptedType = *it;
 				if (acceptedType == mimeType || acceptedType == "*/*" ||
 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
-				{
-					matchFound = true;
-					break;
-				}
+					{
+						mimeType = acceptedType;
+						break;
+					}
 			}
 			if (!matchFound)
 				throw RequestException(CODE_406); // Not Acceptable
@@ -229,12 +245,10 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 // - If it’s application/x-www-form-urlencoded, process it as form data.
 // If the request is for uploading a file, make sure uploads are allowed in the location
 // - if not, throw error page
-std::string RequestProcessor::processPost(const Request& req, const std::vector<ServerBlock>& server_blocks)
+std::string RequestProcessor::processPost(const Request& req, const Location* location)
 {
-	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
-	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
-	if (!matchingLocation->is_post())
+	if (!location->is_post())
 		throw RequestException(CODE_405); // Method Not Allowed
 
 	int contentTypeIdx = req.get_content_type_idx();
@@ -243,38 +257,42 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 
 	switch (contentTypeIdx)
 	{
-		case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
-		{
-			std::map<std::string, std::string> formData = parseForm(req.get_request_body()); // Q: what to do with the parsed form data?
-			response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
-			break;
-		}
-		case MULTIPART_FORM_DATA: // file uploads
-		{
-			if (!matchingLocation->is_upload_allowed())
-				throw RequestException(CODE_405); // Method Not Allowed
-			parseMultipartFormData(req, matchingServer, matchingLocation);
-			response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
-			break;
-		}
-		case TEXT_PLAIN:
-		case TEXT_HTML:
-		case TEXT_XML:
-		case APPLICATION_XML:
-		case APPLICATION_XHTML_XML:
-		case APPLICATION_OCTET_STREAM:
-		case IMAGE_GIF:
-		case IMAGE_JPEG:
-		case IMAGE_PNG:
-		{
-			std::string body = req.get_request_body(); // Q: what to do with the body?
-			response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
-			break;
-		}
-		default:
-			throw RequestException(CODE_415); // Unsupported Media Type
+	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
+	{
+		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
+		// CHECK:: Log the form data content in the server console:
+		for (const auto& pair : formData)
+			std::cout << "Form field: " << pair.first << " = " << pair.second << std::endl;
+		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
+		break;
 	}
-	return "HTTP/1.1 201 Placeholder_OK\r\n\r\n";
+	case MULTIPART_FORM_DATA: // file uploads
+	{
+		if (!location->is_upload_allowed())
+			throw RequestException(CODE_405); // Method Not Allowed
+		parseMultipartFormData(req, location);
+		response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
+		break;
+	}
+	case TEXT_PLAIN:
+	case TEXT_HTML:
+	case TEXT_XML:
+	case APPLICATION_XML:
+	case APPLICATION_XHTML_XML:
+	case APPLICATION_OCTET_STREAM:
+	case IMAGE_GIF:
+	case IMAGE_JPEG:
+	case IMAGE_PNG:
+	{
+		std::string body = req.get_request_body(); // TODO: Do something with the body? Save as file?
+		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
+		break;
+	}
+	default:
+		throw RequestException(CODE_415); // Unsupported Media Type
+	}
+
+	return response.str();
 }
 
 // DELETE method
@@ -287,21 +305,19 @@ std::string RequestProcessor::processPost(const Request& req, const std::vector<
 // if it doesn't exist, return 404 error page
 // if it's a directory, return 403 error page
 // if deletion is successful, return 204 No Content
-std::string RequestProcessor::processDelete(const Request& req, const std::vector<ServerBlock>& server_blocks)
+std::string RequestProcessor::processDelete(const Request& req, const Location* location)
 {
-	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
-	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
-	if (!matchingLocation->is_del())
+	if (!location->is_del())
 		throw RequestException(CODE_405);
 
-	std::string filePath = matchingLocation->get_root() + req.get_request_uri();
+	std::string filePath = location->get_root() + req.get_request_uri();
 
 	if (!Utils::fileExists(filePath))
 		throw RequestException(CODE_404);
 
 	if (Utils::isDirectory(filePath))
-		throw RequestException(CODE_403); // Q! Or do we want to allow directory deletion and implement recursive deletion?
+		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
 
 	else if (std::remove(filePath.c_str()) != 0)
 			throw RequestException(CODE_500);  // CHECK: "Internal Server Error" best choice here?
