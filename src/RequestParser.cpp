@@ -161,8 +161,8 @@ void RequestParser::_parse_header_from(Request& req, std::string& header_val)
 /* Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions */
 void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 {
-	if (req._host)  // has already been set to something for this request. Not client, this request
-		throw RequestException(CODE_400);
+	// if (req._host)  // has already been set to something for this request. Not client, this request
+	// 	throw RequestException(CODE_400);
 
 	size_t start, end;
 	start = header_val.find_first_not_of(LWS_CHARS);

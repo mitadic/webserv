@@ -1,7 +1,5 @@
 #pragma once
 
-#define STATUS_CODES_N 41
-
 enum e_status_codes {
     CODE_100 = 0,
     CODE_101,
@@ -20,6 +18,7 @@ enum e_status_codes {
     CODE_305,
     CODE_306,
     CODE_307,
+    CODE_308,
     CODE_400,
     CODE_401,
     CODE_402,
@@ -43,7 +42,8 @@ enum e_status_codes {
     CODE_502,
     CODE_503,
     CODE_504,
-    CODE_505
+    CODE_505,
+    STATUS_CODES_N
 };
 
 extern const char *status_messages[STATUS_CODES_N];

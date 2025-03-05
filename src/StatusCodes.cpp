@@ -19,6 +19,7 @@ const char *status_messages[STATUS_CODES_N] =
     "305 Use Proxy",
     "306 Switch Proxy",  // unused in RFC 2616
     "307 Temporary Redirect",
+    "308 Permanent Redirect",
     "400 Bad Request",
     "401 Unauthorized",
     "402 Payment Required",

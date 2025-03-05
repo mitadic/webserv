@@ -61,7 +61,7 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << socket_addr.sin_port << std::endl;
+	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << sb.get_port() << std::endl;
 }
 
 void ServerEngine::init_listener_pfds()
