@@ -10,8 +10,6 @@
 # include <cstring>
 # include <cstdlib>  // std::atoi()
 
-# include "Config.hpp"
-
 typedef enum e_path {
     LOCATION,
     ROOT,

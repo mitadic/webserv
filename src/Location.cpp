@@ -1,5 +1,8 @@
 
+#include "ServerBlock.hpp"
+#include "Config.hpp"
 #include "Location.hpp"
+#include "Log.hpp"
 
 Location::Location() : _upload_allowed(false), _get(false), _post(false), _del(false), _autoindex(false), _redirect(0, "") {};
 
@@ -163,7 +166,7 @@ void Location::set_redirect(std::string redirection)
     if (_path == url)
         throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
 	int status = std::atoi(code.c_str());
-	if (status != 301 || status != 302 || status != 307 || status != 308)
+	if (status != 301 && status != 302 && status != 307 && status != 308)
 		throw std::runtime_error("return directive contains unknown status code");
     _redirect = std::make_pair(status, url);
 };

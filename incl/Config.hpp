@@ -9,6 +9,8 @@
 # include <limits>
 # include <cstring>
 # include <arpa/inet.h>
+# include <algorithm>
+# include <cstdlib>
 
 # define DEFAULT_CONF "conf/default.conf"
 

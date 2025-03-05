@@ -1,5 +1,8 @@
 
 #include "Config.hpp"
+#include "ServerBlock.hpp"
+#include "Location.hpp"
+#include "Log.hpp"
 
 /**
  * @brief Loads (the config) file into a stringstream
@@ -7,7 +10,7 @@
 void Config::load_file(const std::string & filename, std::stringstream& content)
 {
 	std::ifstream       file(filename.c_str());
-	
+
 	if (filename.substr(filename.find_last_of(".") + 1) != "conf")
 		throw std::runtime_error("*.conf file extension required");
 	if (!file.is_open())
@@ -59,7 +62,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
 	Log::log("Before validation:", DEBUG);
 	Log::log(server_blocks);
-	
+
 	if (server_blocks.empty())
 		throw std::runtime_error("Empty vector of server blocks");
 
@@ -67,7 +70,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 	std::map<int, in_addr_t> host_port_combo;
 	for (server_it = server_blocks.begin(); server_it != server_blocks.end(); ++server_it)
 	{
-		if (server_it->get_port() == -1 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
+		if (server_it->get_port() == 0 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
 			throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
 		if (host_port_combo.find(server_it->get_port()) != host_port_combo.end())
 		{
@@ -78,7 +81,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 				server_it--; // adjust iterator
 			}
 		}
-		else 
+		else
 			host_port_combo[server_it->get_port()] = server_it->get_host();
 		if (server_it->get_locations().empty())
 			continue ;
@@ -100,12 +103,12 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
 
 		if (line == "}") // end of server block
 			return ;
-		else if (line[line.size() - 1] == ';' 
+		else if (line[line.size() - 1] == ';'
 			|| (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ';'
 		{
 			line = line.substr(0, line.size() - 1);
 			line = trim(line);
-		}   
+		}
 		else
 			throw std::runtime_error("in server block: missing semicolon: " + line);
 		parse_server_block_directives(line, block, content);
@@ -165,7 +168,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 		{
 			line = line.substr(0, line.size() - 1);
 			line = trim(line);
-		} 
+		}
 		else
 			throw std::runtime_error("in location block: missing semicolon: " + line);
 		parse_location_block_directives(line, block, content);

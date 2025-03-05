@@ -1,6 +1,8 @@
 
 # include "Log.hpp"
 # include "Config.hpp"
+# include "ServerBlock.hpp"
+# include "Location.hpp"
 
 void Log::log(const std::string & message, t_log_level level)
 {
@@ -19,13 +21,13 @@ void Log::log(const std::string & message, t_log_level level)
 
     std::time_t t = std::time(0);
     std::tm *now = std::localtime(&t);
-    std::clog << color << "[" << now->tm_year + 1900 
-    << "-" << now->tm_mon + 1 
-    << "-" << now->tm_mday << " " 
-    << now->tm_hour << ":" 
-    << now->tm_min << ":" 
+    std::clog << color << "[" << now->tm_year + 1900
+    << "-" << now->tm_mon + 1
+    << "-" << now->tm_mday << " "
+    << now->tm_hour << ":"
+    << now->tm_min << ":"
     << now->tm_sec << "] ";
-    
+
     switch (level)
     {
         case DEBUG:
@@ -44,7 +46,7 @@ void Log::log(const std::string & message, t_log_level level)
             break;
     }
 
-    std::clog << message 
+    std::clog << message
     << WHITE << std::endl;
     std::clog.flush();
 };

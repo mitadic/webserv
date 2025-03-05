@@ -3,15 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 16:12:01 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 18:01:06 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestProcessor.hpp"
 #include "Request.hpp"  // safe in .cpp, won't cause circular imports
+#include "Location.hpp"
+#include "ServerBlock.hpp"
 
 // ------- Helper functions ------------
 
