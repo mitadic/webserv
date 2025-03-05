@@ -10,6 +10,8 @@
 # include <cstring>
 # include <cstdlib>  // std::atoi()
 
+# include "Config.hpp"
+
 typedef enum e_path {
     LOCATION,
     ROOT,
@@ -20,15 +22,15 @@ typedef enum e_path {
  * @var _path the location prefix (e.g. /images/)
  * @var _root the root directory of the prefix (e.g. /var/www/html)
  * @var _index file to serve if no file is specified in the request (index.html)
- * @var _upload_location the directory where uploaded files are stored 
- * @var _upload_allowed whether uploads are allowed 
- * @var _get whether GET requests are allowed 
+ * @var _upload_location the directory where uploaded files are stored
+ * @var _upload_allowed whether uploads are allowed
+ * @var _get whether GET requests are allowed
  * @var _post whether POST requests are allowed
  * @var _del whether DELETE requests are allowed
- * @var _autoindex whether autoindex is enabled 
+ * @var _autoindex whether autoindex is enabled
  * @var _cgi_extensions a vector of CGI extensions (e.g. .py)
- * @var _redirect a pair of an HTTP status code and a URL to redirect to 
- * 
+ * @var _redirect a pair of an HTTP status code and a URL to redirect to
+ *
  */
 class Location {
     public:
@@ -70,7 +72,7 @@ class Location {
         bool                        _upload_allowed;
         bool                        _get, _post, _del;
         bool                        _autoindex;
-        std::vector<std::string>    _cgi_extensions;       
+        std::vector<std::string>    _cgi_extensions;
         std::pair<int, std::string> _redirect;
 };
 
