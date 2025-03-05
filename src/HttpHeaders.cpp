@@ -1,5 +1,7 @@
 #include "../incl/HttpHeaders.hpp"
 
+/*
+
 const char *http_header_names[HTTP_HEADERS_N] =
 {
 	"Accept",
@@ -150,6 +152,8 @@ const char *http_entity_headers[HTTP_ENTITY_HEADERS_N] =
 	"Expires",
 	"Last-Modified"
 };
+
+*/
 
 
 const char *http_request_legal_headers[HTTP_REQUEST_LEGAL_HEADERS_N] =

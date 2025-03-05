@@ -166,11 +166,12 @@ void check_stream_for_errors(std::istringstream& stream)
 		throw RequestException(CODE_500);
 }
 
+/* Consult http_request_legal_headers */
 int get_http_header_idx(const std::string& s)
 {
-	for (int i = 0; i < HTTP_HEADERS_N; i++)
+	for (int i = 0; i < HTTP_REQUEST_LEGAL_HEADERS_N; i++)
 	{
-		if (s == http_header_names[i])
+		if (s == http_request_legal_headers[i])
 			return i;
 	}
 	return UNRECOGNIZED_HEADER;
