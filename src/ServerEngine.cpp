@@ -84,7 +84,7 @@ void ServerEngine::init_listener_pfds()
 /** accept() returns a new client_fd. We initiate a new request and map the client to pfd_info_map with:
  * (1) type CLIENT_CONNECTION_SOCKET
  * (2) reqs_idx of the newly initiated Request in vector<Request>
- * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them? 
+ * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them?
 */
 void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 {
@@ -104,7 +104,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 		return ;
 	}
 
-	// Full engine procedure of adding and mapping a new client 
+	// Full engine procedure of adding and mapping a new client
 	pfds.push_back(fd);
 	pfds_vector_modified = true;
 	reqs.push_back(Request(meta.port, meta.host));
@@ -308,6 +308,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	std::string result;
 
 	req.parse();
+	// is there a redirection? -> redirect
+	// is there a cgi? -> add it to pfds
 	result = processor.handleMethod(req, server_blocks);
 	req.set_response(result);
 	pfds_it->events = POLLOUT;
