@@ -10,10 +10,10 @@
 # include <cstring>
 # include <arpa/inet.h>
 
-# include "Log.hpp"
-# include "ServerBlock.hpp"
-
 # define DEFAULT_CONF "conf/default.conf"
+
+class Location;
+class ServerBlock;
 
 namespace Config {
         // Parsing
@@ -24,7 +24,7 @@ namespace Config {
         void parse_location(std::string & line, Location & block, std::stringstream & content);
         void parse_location_block_directives(std::string & line, Location & block, std::stringstream & content);
         void validate_blocks(std::vector<ServerBlock> & server_blocks);
-        
+
         // Utils
         std::string trim(const std::string & str);
         int has_only_digits(char *str);
