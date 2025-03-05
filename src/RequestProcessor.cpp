@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 16:05:11 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 16:12:01 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,8 +261,8 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	{
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
 		// CHECK:: Log the form data content in the server console:
-		for (const auto& pair : formData)
-			std::cout << "Form field: " << pair.first << " = " << pair.second << std::endl;
+		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
+			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
 		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
 		break;
 	}
