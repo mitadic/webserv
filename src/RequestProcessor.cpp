@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:57:49 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 11:16:39 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,7 @@ void parseMultipartFormData(const Request& req, const ServerBlock* server, const
 					size_t contentEnd = part.rfind("\r\n");
 					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
 
-					std::string filePath = uploadDir + "/" + filename;
+					std::string filePath = uploadDir + "/" + filename; // Q! What id the file already exists? Refuse or overwrite? Or should we always add timestamp?
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 					if (file.is_open())
 					{
@@ -165,6 +165,7 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // - if it's not an accepted type, return 406 error page
 std::string RequestProcessor::processGet(const Request& req, const std::vector<ServerBlock>& server_blocks)
 {
+	std::cout << "GET request received\n";
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
@@ -201,7 +202,7 @@ std::string RequestProcessor::processGet(const Request& req, const std::vector<S
 				if (acceptedType == mimeType || acceptedType == "*/*" ||
 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
 				{
-					mimeType = acceptedType;
+					matchFound = true;
 					break;
 				}
 			}
@@ -300,7 +301,7 @@ std::string RequestProcessor::processDelete(const Request& req, const std::vecto
 		throw RequestException(CODE_404);
 
 	if (Utils::isDirectory(filePath))
-		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
+		throw RequestException(CODE_403); // Q! Or do we want to allow directory deletion and implement recursive deletion?
 
 	else if (std::remove(filePath.c_str()) != 0)
 			throw RequestException(CODE_500);  // CHECK: "Internal Server Error" best choice here?
