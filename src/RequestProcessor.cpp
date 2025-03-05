@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 11:16:39 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 14:12:19 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ void parseMultipartFormData(const Request& req, const ServerBlock* server, const
 				size_t filenameEnd = part.find("\"", filenameStart);
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
-				// TODO: filename = Utils::sanitize_filename(filename);
+				filename = Utils::sanitizeFilename(filename);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)

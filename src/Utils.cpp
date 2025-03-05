@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/04 17:54:36 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/05 14:09:17 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,4 +115,43 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 		throw std::runtime_error("No matching location found for the request");
 	}
 	return matchingLocation;
+}
+
+
+
+std::string Utils::sanitizeFilename(const std::string& filename)
+{
+	std::string sanitized;
+	for (size_t i = 0; i < filename.size(); ++i)
+	{
+		char c = filename[i];
+		if (isalnum(c) || strchr("._-", c) != NULL)
+			sanitized += c;
+		else
+			sanitized += '_';
+	}
+	return sanitized;
+}
+
+// ensure the uri does not travel up above the root directory
+bool Utils::uriIsSafe(const std::string& uri)
+{
+	std::istringstream stream(uri);
+	std::string segment;
+	int depth = 0;
+
+	while (std::getline(stream, segment, '/'))
+	{
+		if (segment == "..")
+		{
+			if (depth > 0)
+				--depth;
+			else
+				return false; // Invalid, because trying to go above root directory
+		}
+		else if (!segment.empty() && segment != ".")
+			++depth;
+	}
+
+	return true;
 }
