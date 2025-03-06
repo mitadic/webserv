@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 18:02:59 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/06 00:48:18 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ std::vector<std::string> Utils::split(const std::string& str, const std::string&
 
 bool Utils::fileExists (const std::string& file)
 {
-	return (access(file.c_str(), F_OK) != -1);
+	return (access((file).c_str(), F_OK) != -1);
 }
 
 // stat returns 0 on success, and -1 on failure (e.g., if the file does not exist)

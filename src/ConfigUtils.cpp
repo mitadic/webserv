@@ -1,7 +1,7 @@
 
 #include "Config.hpp"
 
-in_addr_t   Config::ft_inet(std::string host)
+in_addr_t   Config::ft_inet(const std::string& host)
 {
      char *host_c = const_cast<char *>(host.c_str());
     host_c = std::strtok(host_c, ".");
@@ -17,9 +17,9 @@ in_addr_t   Config::ft_inet(std::string host)
         ip |= std::atoi(host_c) << (i * 8);
         host_c = std::strtok(NULL, ".");
     }
-    if (i < 0)
+    if (i < 0)  // will never be reached
         throw std::runtime_error("invalid IP address");
-    return (htonl(ip)); //converts from host byte to network byte order
+    return (ip); //does not convert from host byte to network byte order, so we gain readability and uniform handling in listeners setup
 }
 
 std::string Config::ft_inet_ntoa(in_addr_t ip)

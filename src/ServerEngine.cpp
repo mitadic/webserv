@@ -28,6 +28,7 @@ bool ServerEngine::make_non_blocking(int &fd)
 	return (true);
 }
 
+/* project-wide htonl() and htons() should be contained to this function only */
 void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -38,7 +39,7 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	}
 	sockaddr_in socket_addr;
 	socket_addr.sin_family = AF_INET;
-	socket_addr.sin_addr.s_addr = sb.get_host();
+	socket_addr.sin_addr.s_addr = htonl(sb.get_host());
 	// socket_addr.sin_addr.s_addr = INADDR_ANY;
 	socket_addr.sin_port = htons(sb.get_port());  // ensures endianness of network default, big endian
 
@@ -240,6 +241,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
 		{
 			perror("send");  // LOG
+			std::cerr << "sz_to_send: " << sz_to_send << ", total size: " << response_size  << ", sent_so_far: " << sent_so_far << std::endl;
 			// TODO: depending on request attributes, handle removal differently?
 		}
 		reqs[idx].increment_total_sent_by(sz_to_send);

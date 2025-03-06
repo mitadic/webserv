@@ -15,6 +15,7 @@
 #define LWS_CHARS " \t"
 #define UNINITIALIZED -1
 #define HTTP_SEPARATORS "()<>@,;:\\\"/[]?={} \t"
+#define HTTP_SEPARATORS_OTHER_THAN_FWDSLASH "()<>@,;:\\\"[]?={} \t"
 #define DOTS_OR_DIGITS ".1234567890"
 #define LOOPBACK_NUMERIC 2130706433
 #define MAX_URI_LENGTH 4096  // NGINX default

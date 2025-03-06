@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 18:01:06 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/06 00:56:07 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,7 +190,7 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
 
-	std::string filePath = location->get_root() + req.get_request_uri();
+	std::string filePath = "." + location->get_root() + req.get_request_uri();
 
 	if (Utils::fileExists(filePath))
 	{
@@ -212,21 +212,21 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 		std::string mimeType = defineMime(filePath);
 		std::vector<std::string> acceptHeader = req.get_accepted_types();
 
-		if (acceptHeader.size() > 0)
-		{
-			bool matchFound = false;
-			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
-{				const std::string& acceptedType = *it;
-				if (acceptedType == mimeType || acceptedType == "*/*" ||
-					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
-					{
-						mimeType = acceptedType;
-						break;
-					}
-			}
-			if (!matchFound)
-				throw RequestException(CODE_406); // Not Acceptable
-		}
+// 		if (acceptHeader.size() > 0)
+// 		{
+// 			bool matchFound = false;
+// 			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
+// {				const std::string& acceptedType = *it;
+// 				if (acceptedType == mimeType || acceptedType == "*/*" ||
+// 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
+// 					{
+// 						mimeType = acceptedType;
+// 						break;
+// 					}
+// 			}
+// 			if (!matchFound)
+// 				throw RequestException(CODE_406); // Not Acceptable
+// 		}
 
 		return createContentString(filePath, mimeType);
 	}

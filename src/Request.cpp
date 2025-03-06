@@ -177,7 +177,7 @@ void Request::validate_self()
 			|| (_major_http_v == 0 && _minor_http_v < 9))
 		throw RequestException(CODE_505);
 
-	for (std::map<float, std::string>::reverse_iterator it = _accepted_types_m.rbegin(); it != _accepted_types_m.rend(); it++)
+	for (std::multimap<float, std::string>::reverse_iterator it = _accepted_types_m.rbegin(); it != _accepted_types_m.rend(); it++)
 		_accepted_types.push_back(it->second);
 }
 

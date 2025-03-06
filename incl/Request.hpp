@@ -86,7 +86,7 @@ private:
 	bool		_timed_out;
 	bool		_await_reconnection;
 	std::vector<std::string> _accepted_types;
-	std::map<float, std::string> _accepted_types_m;
+	std::multimap<float, std::string> _accepted_types_m;
 
 	int			_method;
 	int			_major_http_v;

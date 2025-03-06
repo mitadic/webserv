@@ -75,7 +75,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 		trim_lws(specs[0]);
 		if (specs[0].find_first_of("/") == std::string::npos ||
 			specs[0].find_first_of("/") != specs[0].find_last_of("/") ||
-			specs[0].find_first_of(HTTP_SEPARATORS) != std::string::npos)
+			specs[0].find_first_of(HTTP_SEPARATORS_OTHER_THAN_FWDSLASH) != std::string::npos)
 			throw RequestException(CODE_400);
 
 		float quality_factor = 1.0f;
@@ -86,8 +86,8 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=')  // Flag: make it case-insensitive
 				continue;
 			std::string q_value_string = (*it_j).substr(2);
-			if (contains_non_digits(q_value_string))
-				throw RequestException(CODE_400);
+			// if (contains_non_digits(q_value_string))
+			// 	throw RequestException(CODE_400);
 
 			char *endptr;
 			quality_factor = std::strtof((*it_j).substr(2).c_str(), &endptr);
@@ -158,13 +158,19 @@ void RequestParser::_parse_header_expect(Request& req, std::string& header_val)
 void RequestParser::_parse_header_from(Request& req, std::string& header_val)
 {}
 
-/* Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions */
+/** 
+ * Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions
+ * Notably, perhaps paradoxically, this is meant to confirm that the header has the info matching to the REALITY of the connection established on the SB
+ */
 void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 {
 	// if (req._host)  // has already been set to something for this request. Not client, this request
 	// 	throw RequestException(CODE_400);
 
 	size_t start, end;
+	uint16_t parsed_port = 0;
+	in_addr_t parsed_host = 0;
+
 	start = header_val.find_first_not_of(LWS_CHARS);
 	if (start == std::string::npos)
 		throw RequestException(CODE_400);
@@ -174,21 +180,26 @@ void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 	else
 	{
 		std::string port_value_as_str = header_val.substr(end + 1);
-		if (webserv_atouint16_set(port_value_as_str, req._port) != OK)
+		if (webserv_atouint16_set(port_value_as_str, parsed_port) != OK)
 			throw RequestException(CODE_400);
 	}
 
 	std::string host_value_as_str = header_val.substr(start, end - start);
 	if (host_value_as_str == "localhost")
+		parsed_host = LOOPBACK_NUMERIC;
+	else
 	{
-		req._host = LOOPBACK_NUMERIC;
-		return;
+		if (!is_valid_ip_str(host_value_as_str))
+			throw RequestException(CODE_400);
+		std::vector<std::string> nums = split(host_value_as_str, ".");
+		for (int i = 0; i < 4; i++)
+			parsed_host |= (static_cast<in_addr_t>(std::atoi(nums[i].c_str())) << (8 * (3 - i)));
 	}
-	if (!is_valid_ip_str(host_value_as_str))
+
+	// parsed_port = htons(parsed_port);
+	// parsed_host = htonl(parsed_host);
+	if (parsed_port != req._port || parsed_host != req._host)
 		throw RequestException(CODE_400);
-	std::vector<std::string> nums = split(host_value_as_str, ".");
-	for (int i = 0; i < 4; i++)
-		req._host |= (static_cast<unsigned int>(std::atoi(nums[i].c_str())) << (8 * (3 - i)));
 	
 	// validate whether "valid host IP" (non-private) later
 }
@@ -399,6 +410,12 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	req._request_uri = tokens[1];
 
 	size_t dot = 0;
+	if (tokens[2] == "undefined")  // seen this in Mozilla
+	{
+		req._major_http_v = 1;
+		req._minor_http_v = 1;
+		return;
+	}
 	if (tokens[2].substr(0, 5) != "HTTP/")
 		throw RequestException(CODE_400);
 	dot = tokens[2].find_first_of(".", 5);
@@ -453,5 +470,6 @@ void RequestParser::parse_body(Request& req, std::istringstream& stream, std::st
 		req._request_body += line;
 		req._request_body += '\n';
 	}
-	check_stream_for_errors(stream);
+	// incorrectly flagging for error when eof() ? temp disabled
+	// check_stream_for_errors(stream);
 }
