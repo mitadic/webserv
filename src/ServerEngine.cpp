@@ -112,6 +112,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	pfd_info info = {};
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.reqs_idx = reqs.size() - 1;
+	info.last_active = time(NULL);
 	pfd_info_map[client] = info;
 
 	std::cout << "New client accepted on FD " << client << std::endl;
@@ -315,6 +316,17 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	pfds_it->events = POLLOUT;
 }
 
+bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
+{
+	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)
+	{
+		time_t now = time(NULL);
+		if (now - pfd_meta.last_active >= CONNECTION_TIMEOUT)
+			return true;
+	}
+	return false;
+}
+
 void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
@@ -372,7 +384,7 @@ void ServerEngine::run()
 				std::cout << "POLLERR | POLLNVAL" << std::endl;
 				forget_client(pfds_it, meta_it);
 			}
-			else if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)  // no flag AND is client
+			else if (is_client_and_timed_out(pfd_meta))  // no flag AND is client
 				process_connection_timeout(pfds_it, meta_it);
 
 			if (pfds_vector_modified)

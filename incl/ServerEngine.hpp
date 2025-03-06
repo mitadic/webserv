@@ -55,6 +55,8 @@ public:
 
 	void	process_request(std::vector<pollfd>::iterator&, Request&);
 
+	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
+
 	static void	signal_handler(int signal);
 
 	std::vector<ServerBlock> server_blocks;
