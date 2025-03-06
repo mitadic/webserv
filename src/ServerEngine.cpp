@@ -52,12 +52,14 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
 		std::cerr << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
 			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
+		close(sockfd);
 		return (1);
 	}
 	if (listen(sockfd, 10) == -1)
 	{
 		std::cerr << "Failed to listen on socket. Errno: " << errno
 			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
+		close(sockfd);
 		return (1);
 	}
 
@@ -430,4 +432,7 @@ void ServerEngine::run()
 			pfds_it++;
 		}
 	}
+	std::vector<pollfd>::iterator pfds_it;
+	for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
+		close(pfds_it->fd);
 }

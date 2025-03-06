@@ -84,7 +84,7 @@ void    ServerBlock::set_host(std::string host)
         throw std::runtime_error("host already declared");
     _host = Config::ft_inet(host.c_str());
     // optional: add more checks for valid ip addresses
-    if (_host == Config::ft_inet("255.255.255.255"))
+    if (_host == Config::ft_inet("255.255.255.255") || _host == Config::ft_inet("0.0.0.0"))
         throw std::runtime_error("invalid IP address");
 };
 
