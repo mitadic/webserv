@@ -1,4 +1,5 @@
 #include "ServerEngine.hpp"
+#include "Log.hpp"
 
 ServerEngine::ServerEngine(std::vector<ServerBlock>& initialized_server_blocks) :
 		pfds_vector_modified(false)
@@ -29,13 +30,16 @@ bool ServerEngine::make_non_blocking(int &fd)
 }
 
 /* project-wide htonl() and htons() should be contained to this function only */
-void ServerEngine::setup_listening_socket(const ServerBlock& sb)
+/**
+ * @details bind() by default only binds to loacl IP addresses.
+*/
+int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1 || !make_non_blocking(sockfd))
 	{
 		std::cerr << "Failed to create listening socket. Errno: " << errno << std::endl;
-		return;
+		return (1);
 	}
 	sockaddr_in socket_addr;
 	socket_addr.sin_family = AF_INET;
@@ -48,13 +52,13 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
 		std::cerr << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
 			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
-		return;
+		return (1);
 	}
 	if (listen(sockfd, 10) == -1)
 	{
 		std::cerr << "Failed to listen on socket. Errno: " << errno
 			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
-		return;
+		return (1);
 	}
 
 	pfd_info info = {};
@@ -66,6 +70,8 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 
 	std::cout << "Set up listener_fd no. " << sockfd << " for host "
 		<< Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port() << ".\n";
+
+	return (0);
 }
 
 void ServerEngine::init_listener_pfds()
@@ -330,12 +336,38 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
 	return false;
 }
 
+void	ServerEngine::remove_failed_blocks(std::vector<ServerBlock> &server_blocks, std::vector<int> &failed_indexes)
+{
+	if (failed_indexes.empty())
+		return ;
+	std::vector<ServerBlock>::reverse_iterator it;
+	int i = server_blocks.size() - 1;
+	for (it = server_blocks.rbegin(); it != server_blocks.rend(); it++)
+	{
+		if (!failed_indexes.empty() && failed_indexes.back() == i)
+		{
+			server_blocks.erase((it.base() - 1));
+			std::clog << "Erasing server block at index " << i << std::endl;
+			failed_indexes.pop_back();
+		}
+		i--;
+	}
+	Log::log(server_blocks);
+}
+
 void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
+	std::vector<int> failed_indexes;
 
 	for (size_t i = 0; i < server_blocks.size(); i++)
-		setup_listening_socket(server_blocks[i]);
+	{
+		if (setup_listening_socket(server_blocks[i]))
+			failed_indexes.push_back(i);
+	}
+
+	// remove server_blocks[i] that fail
+	remove_failed_blocks(server_blocks, failed_indexes);
 
 	init_listener_pfds();
 

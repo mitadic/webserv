@@ -60,9 +60,12 @@ const std::vector<Location>&   ServerBlock::get_locations() const
 }
 
 /**
- * @brief Sets and checks the port number.
+ * @brief Sets and checks the port number. Accepts > 1023.
  * @details The valid range is 0-65535, but 0 is reserved for
- * unspecified source/destination.
+ * unspecified source/destination. Ports 1-1023 are "reserved" or
+ * "priviledged" ports and only a priviledged process may bind to
+ * a socket with this port. They are reserved for widely used
+ * services e.g. HTTPS.
  */
 void    ServerBlock::set_port(std::string port)
 {
@@ -70,10 +73,9 @@ void    ServerBlock::set_port(std::string port)
         throw std::runtime_error("server cannot have multiple ports");
     if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
         throw std::runtime_error("invalid port number" + port);
-	if (std::atoi(port.c_str()) > 65535 || std::atoi(port.c_str()) == 0)
+	if (std::atoi(port.c_str()) > 65535 || std::atoi(port.c_str()) < 1024)
         throw std::runtime_error("invalid port number range");
 	_port = static_cast<uint16_t>(std::atoi(port.c_str()));
-    // optional: add more checks for valid ports
 };
 
 void    ServerBlock::set_host(std::string host)

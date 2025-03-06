@@ -51,7 +51,6 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
 			throw std::runtime_error("in config file: unexpected line");
 	}
 	validate_blocks(server_blocks);
-	// iterate through serverblocks and remove double entries (same host and port)
 }
 
 /**
@@ -67,22 +66,11 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 		throw std::runtime_error("Empty vector of server blocks");
 
 	std::vector<ServerBlock>::iterator server_it;
-	std::map<int, in_addr_t> host_port_combo;
 	for (server_it = server_blocks.begin(); server_it != server_blocks.end(); ++server_it)
 	{
 		if (server_it->get_port() == 0 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
 			throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
-		if (host_port_combo.find(server_it->get_port()) != host_port_combo.end())
-		{
-			if (host_port_combo[server_it->get_port()] == server_it->get_host())
-			{
-				Log::log("same host-port combination, removing server block...", WARNING);
-				server_blocks.erase(server_it); // remove server block from blocks
-				server_it--; // adjust iterator
-			}
-		}
-		else
-			host_port_combo[server_it->get_port()] = server_it->get_host();
+		// optional: check for same host-port combinations
 		if (server_it->get_locations().empty())
 			continue ;
 		server_it->validate_locations();
