@@ -113,6 +113,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.reqs_idx = reqs.size() - 1;
 	info.last_active = time(NULL);
+	info.had_at_least_one_req_processed = false;
 	pfd_info_map[client] = info;
 
 	std::cout << "New client accepted on FD " << client << std::endl;
@@ -198,6 +199,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		return;
 	}
 	reqs[idx].append_to_request_str(buf);
+	meta_it->second.last_active = time(NULL);
 	// TODO: optimize with substring and .rfind()
 	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos) // if proper HTTP ending
 	{
@@ -244,6 +246,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			// TODO: depending on request attributes, handle removal differently?
 		}
 		reqs[idx].increment_total_sent_by(sz_to_send);
+		meta_it->second.last_active = time(NULL);
 	}
 	else  // sz_to_send == 0
 	{
@@ -261,6 +264,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		else
 		{
 			reqs[idx].reset();  // TODO: obsolete, rather remove the request
+			meta_it->second.had_at_least_one_req_processed = true;
 			pfds_it->events = POLLIN;
 		}
 		pfds_vector_modified = true;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
@@ -291,10 +295,13 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 
 	try
 	{
-		if (!reqs[idx].get_request_str().empty())
-			initiate_error_response(pfds_it, idx, CODE_400);
-		else  // request is empty, we can close client connection
-			initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+		std::cout << "Client connection " << pfds_it->fd << " has timed out." << std::endl;
+		if (meta_it->second.had_at_least_one_req_processed)  // silent close
+		{
+			forget_client(pfds_it, meta_it);
+			return ;
+		}
+		initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
 		reqs[idx].flag_the_timeout();
 		pfds_vector_modified = true;  // needed here? Cause I suspect it might block actually
 	}
@@ -321,7 +328,8 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
 	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)
 	{
 		time_t now = time(NULL);
-		if (now - pfd_meta.last_active >= CONNECTION_TIMEOUT)
+		long delta = now - pfd_meta.last_active;
+		if (delta >= CONNECTION_TIMEOUT / 1000)
 			return true;
 	}
 	return false;
