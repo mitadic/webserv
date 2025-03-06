@@ -196,14 +196,12 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		}
 		return;
 	}
-	// std::cout << "reqs.size(): " << reqs.size() << std::endl;
-	// std::cout << "idx: " << idx << std::endl;
-	// std::cout << "reqs[idx].get_request_str(): " << reqs[idx].get_request_str() << std::endl;
-	// std::cout << "found CRLF: " << reqs[idx].get_request_str().find("\r\n\r\n") << std::endl;
 	reqs[idx].append_to_request_str(buf);
 	// TODO: optimize with substring and .rfind()
 	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos) // if proper HTTP ending
 	{
+		while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
+			;
 		// TODO: parse headers, determine if we need to read the body as well
 		try
 		{
