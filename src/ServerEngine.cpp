@@ -46,12 +46,14 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
-		std::cerr << "Failed to bind to port " << sb.get_port() << ". Errno:" << errno << std::endl;
+		std::cerr << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
+			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
 		return;
 	}
 	if (listen(sockfd, 10) == -1)
 	{
-		std::cerr << "Failed to listen on socket. Errno: " << errno << std::endl;
+		std::cerr << "Failed to listen on socket. Errno: " << errno
+			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
 		return;
 	}
 
@@ -62,7 +64,8 @@ void ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for port no. " << ntohs(socket_addr.sin_port) << std::endl;
+	std::cout << "Set up listener_fd no. " << sockfd << " for host "
+		<< Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port() << ".\n";
 }
 
 void ServerEngine::init_listener_pfds()
