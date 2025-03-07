@@ -38,7 +38,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1 || !make_non_blocking(sockfd))
 	{
-		std::cerr << "Failed to create listening socket. Errno: " << errno << std::endl;
+		std::ostringstream ss; ss << "Failed to create listening socket. Errno: " << errno;
+		Log::log(ss.str(), ERROR);
 		return (1);
 	}
 	sockaddr_in socket_addr;
@@ -50,8 +51,9 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
-		std::cerr << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
-			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
+		std::ostringstream ss; ss << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
+			<< ". Errno: " << errno << ". Error: " << strerror(errno) << ".";
+		Log::log(ss.str(), ERROR);
 		close(sockfd);
 		return (1);
 	}
@@ -128,7 +130,10 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.had_at_least_one_req_processed = false;
 	pfd_info_map[client] = info;
 
-	std::cout << "New client accepted on FD " << client << " requesting to connect from " << meta.sockaddr.sin_addr.s_addr << " with port: " << meta.sockaddr.sin_port << std::endl;
+	std::stringstream ss;
+	ss << "New client requesting to connect from " << Utils::host_to_str(ntohl(meta.sockaddr.sin_addr.s_addr))
+		<< ":" << meta.sockaddr.sin_port << ", accepted on FD " << client;
+	Log::log(ss.str(), INFO);
 }
 
 /**
