@@ -129,11 +129,10 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
  */
 void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
+	std::cout << "Forgetting client on socket FD: " << pfds_it->fd << std::endl;
 	if (close(pfds_it->fd) == -1)
 		perror("close");
 	pfds.erase(pfds_it);
-	// DELETED ELSEWHERE
-	// reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
 	pfd_info_map.erase(meta_it);
 	pfds_vector_modified = true;
 }
@@ -176,6 +175,29 @@ void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, st
 	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
 }
 
+void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator& meta_it)
+{
+	if (meta_it->second.reqs_idx == UNINITIALIZED)
+	{
+		reqs.push_back(Request(meta_it->second.host, meta_it->second.port));
+		meta_it->second.reqs_idx = reqs.size() - 1;
+	}
+}
+
+void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	reqs.erase(reqs.begin() + meta_it->second.reqs_idx);  // UPDATED
+	meta_it->second.reqs_idx = UNINITIALIZED;
+	meta_it->second.had_at_least_one_req_processed = true;
+	pfds_it->events = POLLIN;
+}
+
+void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::iterator& meta_it)
+{
+	meta_it->second.last_active = time(NULL);
+}
+
+
 /* Once it reads CRLF CRLF it begings parsing the headers and then reads body if applicable, then processes the request */
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
@@ -184,7 +206,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	int		nbytes;
 
 	memset(buf, 0, BUF_SZ);
-
+	
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 	if (nbytes <= 0)  // hangup or error
 	{
@@ -201,7 +223,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		return;
 	}
 	reqs[idx].append_to_request_str(buf);
-	meta_it->second.last_active = time(NULL);
+	update_client_activity_timestamp(meta_it);
 	// TODO: optimize with substring and .rfind()
 	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
 	{
@@ -234,7 +256,11 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	size_t	sent_so_far = reqs[idx].get_total_sent();
 
 	if (response_size - sent_so_far < BUF_SZ)
+	{
+		if (response_size - sent_so_far < 0)
+			std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
 		sz_to_send = response_size - sent_so_far;
+	}
 
 	if (sz_to_send)
 	{
@@ -249,6 +275,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			else if (errno == EPIPE)
 			{
 				std::cerr << "Client closed connection (EPIPE), closing socket: " << pfds_it->fd << std::endl;
+				std::cout << reqs[idx].get_request_str() << std::endl;
 				forget_client(pfds_it, meta_it);  // Close the socket properly
 				return;
 			}
@@ -260,7 +287,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			}
 		}
 		reqs[idx].increment_total_sent_by(sz_to_send);
-		meta_it->second.last_active = time(NULL);
+		update_client_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
@@ -276,12 +303,8 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			}
 		}
 		else
-		{
-			reqs.erase(reqs.begin() + idx);  // UPDATED
-			meta_it->second.reqs_idx = UNINITIALIZED;
-			meta_it->second.had_at_least_one_req_processed = true;
-			pfds_it->events = POLLIN;
-		}
+			liberate_client_for_next_request(pfds_it, meta_it);
+
 		// pfds_vector_modified = true;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
 	}
 }
@@ -290,6 +313,7 @@ void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, s
 {
 	int idx = meta_it->second.reqs_idx;
 
+	std::cout << "Processing EOF on pipe, close" << std::endl; 
 	close(pfds_it->fd);
 	pfds.erase(pfds_it);
 	// do not erase pfd_info_map, it's staying
@@ -336,7 +360,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	// is there a cgi? -> add it to pfds
 	result = processor.handleMethod(req, server_blocks);
 	req.set_response(result);
-	pfds_it->events = POLLOUT;
+	pfds_it->events = POLLOUT;  // get ready for writing
 }
 
 bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
@@ -392,15 +416,13 @@ void ServerEngine::run()
 				}
 				else if (pfds_it->revents & POLLIN)
 				{
-					if (pfd_meta.reqs_idx == UNINITIALIZED)
-					{
-						reqs.push_back(Request(pfd_meta.host, pfd_meta.port));
-						pfd_meta.reqs_idx = reqs.size() - 1;
-					}
 					if (pfd_meta.type == CGI_PIPE)
 						read_from_cgi_pipe(pfds_it, meta_it);
 					else
+					{
+						initialize_new_request_if_no_active_one(meta_it);
 						read_from_client_fd(pfds_it, meta_it);  // has the try / catch
+					}
 				}
 				else if (pfds_it->revents & POLLOUT)
 				{

@@ -29,7 +29,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 50000
-#define BUF_SZ 2
+#define BUF_SZ 256
 
 
 class ServerEngine {
@@ -44,7 +44,10 @@ public:
 	void	accept_client(int listener_fd, pfd_info meta);
 	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	initiate_error_response(std::vector<pollfd>::iterator&, int idx, int code);
+	void	initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator&);
+	void	liberate_client_for_next_request(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	print_pfds();
+	void	update_client_activity_timestamp(std::map<int, pfd_info>::iterator&);
 
 	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
