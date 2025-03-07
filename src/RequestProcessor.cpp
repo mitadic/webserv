@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/07 15:21:02 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/07 19:05:38 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,8 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 {
 	std::map<std::string, std::string> formData;
 	std::vector<std::string> pairs = Utils::split(form, '&');
+
+	//TODO: Add URL Decoder?
 
 	for (std::vector<std::string>::const_iterator it = pairs.begin(); it != pairs.end(); ++it)
 	{
@@ -262,7 +264,6 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 // - if not, throw error page
 std::string RequestProcessor::processPost(const Request& req, const Location* location)
 {
-
 	if (!location->is_post())
 		throw RequestException(CODE_405); // Method Not Allowed
 
@@ -274,10 +275,14 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	{
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
 	{
+		Log::log("Processing form submission", INFO);
+		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
+		 // Log the form data content in the server console:
 		// CHECK:: Log the form data content in the server console:
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
+		Log::log("Form submission processed successfully", INFO);
 		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
 		break;
 	}
