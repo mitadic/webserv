@@ -21,7 +21,7 @@ class Request {
 
 public:
     Request();
-	Request(uint16_t, in_addr_t);
+	Request(in_addr_t, uint16_t);
     ~Request();
 	Request(const Request&);
 

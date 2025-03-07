@@ -23,7 +23,7 @@ Request::Request() :
 {}
 
 /* Parametrized constructor for when accepting client */
-Request::Request(uint16_t port, in_addr_t host) :
+Request::Request(in_addr_t host, uint16_t port) :
 	_request_str(""),
 	_response(""),
 	_response_status(CODE_200),
