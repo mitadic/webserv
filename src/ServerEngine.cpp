@@ -70,8 +70,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for host "
-		<< Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port() << ".\n";
+	std::cout << "Set up listener_fd no. " << sockfd << " on "
+		<< Utils::host_to_str(sb.get_host()) << ":" << sb.get_port() << std::endl;
 
 	return (0);
 }
