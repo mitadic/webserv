@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/07 14:18:00 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/07 15:21:02 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,21 +225,21 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 		std::string mimeType = defineMime(filePath);
 		std::vector<std::string> acceptHeader = req.get_accepted_types();
 
-// 		if (acceptHeader.size() > 0)
-// 		{
-// 			bool matchFound = false;
-// 			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
-// {				const std::string& acceptedType = *it;
-// 				if (acceptedType == mimeType || acceptedType == "*/*" ||
-// 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
-// 					{
-// 						mimeType = acceptedType;
-// 						break;
-// 					}
-// 			}
-// 			if (!matchFound)
-// 				throw RequestException(CODE_406); // Not Acceptable
-// 		}
+		if (acceptHeader.size() > 0)
+		{
+			bool matchFound = false;
+			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
+{				const std::string& acceptedType = *it;
+				if (acceptedType == mimeType || acceptedType == "*/*" ||
+					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
+					{
+						matchFound = true;
+						break;
+					}
+			}
+			if (!matchFound)
+				throw RequestException(CODE_406); // Not Acceptable
+		}
 
 		return createContentString(filePath, mimeType);
 	}
@@ -317,16 +317,19 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 // - if not, throw 405 error page
 // check if the file exists
 // if it's a file, try to delete
-// if it doesn't exist, return 404 error page
-// if it's a directory, return 403 error page
+// if it doesn't exist, return 404 error page (Not Found)
+// if it's a directory, return 403 error page (Forbidden)
 // if deletion is successful, return 204 No Content
+// if deletion fails, return 500 error page (Internal Server Error)
 std::string RequestProcessor::processDelete(const Request& req, const Location* location)
 {
 
 	if (!location->is_del())
 		throw RequestException(CODE_405);
 
-	std::string filePath = location->get_root() + req.get_request_uri();
+	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+
+	Log::log("Deleting file: " + filePath, WARNING);
 
 	if (!Utils::fileExists(filePath))
 		throw RequestException(CODE_404);
@@ -335,8 +338,9 @@ std::string RequestProcessor::processDelete(const Request& req, const Location* 
 		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
 
 	else if (std::remove(filePath.c_str()) != 0)
-			throw RequestException(CODE_500);  // CHECK: "Internal Server Error" best choice here?
+			throw RequestException(CODE_500);
 
+	Log::log("File deleted successfully", INFO);
 	std::ostringstream response;
 	response << "HTTP/1.1 204 No Content\r\n\r\n";
 	return response.str();
