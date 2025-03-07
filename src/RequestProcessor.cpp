@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/06 00:56:07 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/07 14:18:00 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,6 +151,7 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 		if ((matchingLocation->get_redirect().first == 301 || matchingLocation->get_redirect().first == 302)
 			&& req.get_method() == DELETE)
 			throw RequestException(CODE_405); // Method Not Allowed
+		Log::log("Redirecting to: " + matchingLocation->get_redirect().second, INFO);
 		std::ostringstream response;
 		response << "HTTP/1.1 " << matchingLocation->get_redirect().first << " "
 					<< status_messages[matchingLocation->get_redirect().first] << "\r\n"
@@ -162,11 +163,23 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 	switch (req.get_method())
 	{
 		case GET:
+		{
+			Log::log("GET request", INFO);
+			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
 			return processGet(req, matchingLocation);
+		}
 		case POST:
+		{
+			Log::log("POST request", INFO);
+			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
 			return processPost(req, matchingLocation);
+		}
 		case DELETE:
+		{
+			Log::log("DELETE request", INFO);
+			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
 			return processDelete(req, matchingLocation);
+		}
 		default:
 			throw RequestException(CODE_405); // Method Not Allowed
 	}
