@@ -47,3 +47,4 @@ enum e_status_codes {
 };
 
 extern const char *status_messages[STATUS_CODES_N];
+extern const int status_code_values[STATUS_CODES_N];

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/06 00:48:18 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/07 21:40:03 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ std::string Utils::readFile(const std::string& file)
 	std::ifstream read_file(file.c_str());
 	if (!read_file.is_open())
 	{
-		throw std::runtime_error("Error opening the file");
+		throw std::runtime_error("Error opening the file: " + file);
 	}
 	std::stringstream buffer;
 	buffer << read_file.rdbuf();
