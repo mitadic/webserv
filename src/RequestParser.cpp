@@ -288,7 +288,7 @@ void RequestParser::_parse_header_last_modified(Request& req, std::string& heade
 
 
 
-/* Early exit if UNRECOGNIZED_HEADER. Else substr() the value trimmed away from leading LWS or trailing '\r' */
+/* Early return if UNRECOGNIZED_HEADER. Else substr() the value trimmed away from leading LWS or trailing '\r' */
 void RequestParser::dispatch_header_parser(Request& req, const int header_idx, std::string& header_val)
 {
 	if (header_idx == UNRECOGNIZED_HEADER)

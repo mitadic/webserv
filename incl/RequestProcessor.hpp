@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:08 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/05 15:55:54 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/07 14:16:00 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include "Exceptions.hpp"
 #include "ContentTypes.hpp"
 #include "ServerBlock.hpp"
+#include "Log.hpp"
 #include <stdexcept>
 #include <algorithm>
 

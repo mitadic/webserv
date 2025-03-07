@@ -25,6 +25,9 @@ enum e_retval {
 #define FORMULATE_RESPONSE 203
 #define AWAIT_CLIENT_RECONNECT 204
 
+/** Initialized and pushed_back for each client_fd
+ * @param reqs_idx updated for each current request
+ * */
 struct pfd_info {
 	int type;
 
@@ -33,4 +36,5 @@ struct pfd_info {
 	in_addr_t host;			// mapping pretend IP [host] for req and processing
 	uint16_t port;			// representation from server_block in READABLE endianness
 	time_t last_active;		// needed only by CONNECTION; connection established | (done writing? | began reading?)
+	bool had_at_least_one_req_processed;  // needed only by CONNECTION, to differentiate between 408 and silent close
 };
