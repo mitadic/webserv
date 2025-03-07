@@ -39,7 +39,7 @@ public:
 
 	void	run();
 	bool	make_non_blocking(int &fd);
-	void	setup_listening_socket(const ServerBlock& sb);
+	int		setup_listening_socket(const ServerBlock& sb);
 	void	init_listener_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
 	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
@@ -48,6 +48,7 @@ public:
 	void	liberate_client_for_next_request(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	print_pfds();
 	void	update_client_activity_timestamp(std::map<int, pfd_info>::iterator&);
+	void	remove_failed_blocks(std::vector<ServerBlock> &server_blocks, std::vector<int> &failed_indexes);
 
 	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
