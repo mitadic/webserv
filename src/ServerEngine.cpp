@@ -72,8 +72,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " on "
-		<< Utils::host_to_str(sb.get_host()) << ":" << sb.get_port() << std::endl;
+	std::ostringstream ss; ss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
+	Log::log(ss.str(), DEBUG);
 
 	return (0);
 }
@@ -435,8 +435,14 @@ void ServerEngine::run()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				for (int i = 0; i < pfds.size(); i++)
-					close(pfds[i].fd);
+				int i;
+				for (i = 0; i < pfds.size(); i++)
+				{
+					if (close(pfds[i].fd) == -1)
+						Log::log(strerror(errno), ERROR);
+				}
+				std::ostringstream ss; ss << "Closed " << i << " pfds before exiting";
+				Log::log(ss.str(), DEBUG);
 				break;
 			}
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
@@ -494,11 +500,12 @@ void ServerEngine::run()
 			}
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << std::endl;
+				Log::log(e.what(), ERROR);
+				pfds_it++;
 			}
 		}
 	}
-	std::vector<pollfd>::iterator pfds_it;
-	for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
-		close(pfds_it->fd);
+	// std::vector<pollfd>::iterator pfds_it;
+	// for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
+	// 	close(pfds_it->fd);
 }
