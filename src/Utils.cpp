@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/07 21:40:03 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/08 16:10:23 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,4 +154,16 @@ bool Utils::uriIsSafe(const std::string& uri)
 	}
 
 	return true;
+}
+
+std::string Utils::host_to_str(const in_addr_t num)
+{
+	std::stringstream ss;
+	for (int i = 0; i < 4; i++)
+	{
+		ss << (num >> (24 - (8 * i)) & 255);
+		if (i != 3)
+			ss << ".";
+	}
+	return ss.str();
 }
