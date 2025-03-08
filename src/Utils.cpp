@@ -114,27 +114,20 @@ const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<S
 }
 
 // Find the corresponding location in the server block based on the uri
-// iterate though locations and return the longest matching location
+// Locations are sorted by length, so the first match is the longest match
 const Location* Utils::getLocation(const Request& req, const ServerBlock* server)
 {
-	const Location* matchingLocation = NULL;
-	std::string longestMatch = "";
 	const std::vector<Location>& locations = server->get_locations();
 
 	for (size_t i = 0; i < server->get_locations().size(); ++i)
 	{
-		if (req.get_request_uri().find(locations[i].get_path()) == 0 && locations[i].get_path().size() > longestMatch.size())
-		{
-			longestMatch = locations[i].get_path();
-			matchingLocation = &locations[i];
-		}
+		if (req.get_request_uri().find(locations[i].get_path()) == 0)
+			return &locations[i];
 	}
 
-	if (!matchingLocation)
-	{
-		throw std::runtime_error("No matching location found for the request");
-	}
-	return matchingLocation;
+	Log::log("No matching location found for the request", WARNING);
+	std::cout << "Request URI: " << req.get_request_uri() << std::endl;
+	throw std::runtime_error("No matching location found for the request");
 }
 
 
