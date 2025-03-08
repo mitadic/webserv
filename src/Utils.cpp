@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 19:41:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/07 21:40:03 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/08 16:50:03 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,25 @@ bool Utils::isDirectory(const std::string& path)
 	if (stat(path.c_str(), &info) != 0)
 		return false;
 	return S_ISDIR(info.st_mode);
+}
+
+std::vector<std::string> Utils::listDirectory(std::string filePath)
+{
+	DIR* dir = opendir(filePath.c_str());
+	if (!dir)
+	{
+		throw std::runtime_error("Error opening directory: " + filePath);
+	}
+
+	std::vector<std::string> files;
+	struct dirent* ent;
+	while ((ent = readdir(dir)) != NULL)
+	{
+		files.push_back(ent->d_name);
+	}
+	closedir(dir);
+
+	return files;
 }
 
 std::string Utils::readFile(const std::string& file)

@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/07 19:05:38 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/08 17:19:38 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,7 +201,6 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // - if it's not an accepted type, return 406 error page
 std::string RequestProcessor::processGet(const Request& req, const Location* location)
 {
-
 	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
 
@@ -211,13 +210,32 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			if (Utils::fileExists(filePath + location->get_index()))
-				filePath += location->get_index();
+			Log::log("Requesting directory", DEBUG);
+			std::cerr << "Resolved filePath: " << filePath << std::endl;
+			if (Utils::fileExists(location->get_root() + location->get_index()))
+				filePath += "/" + location->get_index();
 			else
 			{
-				if (location->is_autoindex())
+				if (location->is_autoindex()) // Show directory listing
 				{
-					//TODO return directory listing page
+					Log::log("Showing directory content", INFO);
+					std::ostringstream response;
+					response << "HTTP/1.1 200 OK\r\n"
+								<< "Content-Type: text/html\r\n"
+								<< "\r\n"
+								<< "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"
+								<< "<h1>Index of " << req.get_request_uri() << "</h1>"
+								<< "<ul>";
+
+					std::vector<std::string> files = Utils::listDirectory(filePath);
+					for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it)
+					{
+						if (*it == "." || *it == "..")
+							continue;
+						response << "<li><a href=\"" << req.get_request_uri() + "/" + *it << "\">" << *it << "</a></li>";
+					}
+					response << "</ul></body></html>";
+					return response.str();
 				}
 				else
 					throw RequestException(CODE_403); // Forbidden
@@ -271,6 +289,8 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 
 	std::ostringstream response;
 
+	std::cout << "Content type: " << contentTypeIdx << std::endl;
+
 	switch (contentTypeIdx)
 	{
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
@@ -278,7 +298,6 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 		Log::log("Processing form submission", INFO);
 		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		 // Log the form data content in the server console:
 		// CHECK:: Log the form data content in the server console:
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
@@ -288,6 +307,8 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
+		Log::log("Processing form submission", INFO);
+		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
@@ -334,7 +355,7 @@ std::string RequestProcessor::processDelete(const Request& req, const Location* 
 
 	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
 
-	Log::log("Deleting file: " + filePath, WARNING);
+	Log::log("Attempting to deleting file: " + filePath, WARNING);
 
 	if (!Utils::fileExists(filePath))
 		throw RequestException(CODE_404);
