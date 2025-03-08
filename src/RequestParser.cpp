@@ -267,9 +267,19 @@ void RequestParser::_parse_header_content_range(Request& req, std::string& heade
 
 void RequestParser::_parse_header_content_type(Request& req, std::string& header_val)
 {
+	if (req._content_type_idx != UNINITIALIZED)
+		throw RequestException(CODE_400);
+	std::vector<std::string> params = split(header_val, ";");
+	const std::string header_defined_content_type = params[0];
+	for (std::vector<std::string>::iterator it = params.begin() + 1; it != params.end(); it++)
+	{
+		trim_lws(*it);
+		req._content_type_params.push_back(*it);
+	}
+	
 	for (int i = 0; i < CONTENT_TYPES_N; i++)
 	{
-		if (content_types[i] == header_val)
+		if (content_types[i] == header_defined_content_type)
 		{
 			req._content_type_idx = i;
 			return;

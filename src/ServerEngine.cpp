@@ -39,7 +39,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	int reuse = 1;
 	if (sockfd == -1 || !make_non_blocking(sockfd) || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
 	{
-		std::cerr << "Failed to create listening socket. Errno: " << errno << ". " << strerror(errno) << "." << std::endl;;
+		std::ostringstream ss; ss << "Failed to create listening socket. Errno: " << errno;
+		Log::log(ss.str(), ERROR);
 		return (1);
 	}
 	sockaddr_in socket_addr;
@@ -51,8 +52,9 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
-		std::cerr << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
-			<< ". Errno: " << errno << ". " << strerror(errno) << "." << std::endl;
+		std::ostringstream ss; ss << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
+			<< ". Errno: " << errno << ". Error: " << strerror(errno) << ".";
+		Log::log(ss.str(), ERROR);
 		close(sockfd);
 		return (1);
 	}
@@ -71,8 +73,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.port = sb.get_port();
 	pfd_info_map[sockfd] = info;
 
-	std::cout << "Set up listener_fd no. " << sockfd << " for host "
-		<< Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port() << ".\n";
+	std::ostringstream ss; ss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
+	Log::log(ss.str(), DEBUG);
 
 	return (0);
 }
@@ -129,7 +131,10 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.had_at_least_one_req_processed = false;
 	pfd_info_map[client] = info;
 
-	std::cout << "New client accepted on FD " << client << " requesting to connect from " << meta.sockaddr.sin_addr.s_addr << " with port: " << meta.sockaddr.sin_port << std::endl;
+	std::stringstream ss;
+	ss << "New client requesting to connect from " << Utils::host_to_str(ntohl(meta.sockaddr.sin_addr.s_addr))
+		<< ":" << meta.sockaddr.sin_port << ", accepted on FD " << client;
+	Log::log(ss.str(), INFO);
 }
 
 /**
@@ -403,7 +408,7 @@ void	ServerEngine::remove_failed_blocks(std::vector<ServerBlock> &server_blocks,
 		}
 		i--;
 	}
-	Log::log(server_blocks);
+	// Log::log(server_blocks);
 }
 
 void ServerEngine::run()
@@ -431,8 +436,14 @@ void ServerEngine::run()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				for (int i = 0; i < pfds.size(); i++)
-					close(pfds[i].fd);
+				int i;
+				for (i = 0; i < pfds.size(); i++)
+				{
+					if (close(pfds[i].fd) == -1)
+						Log::log(strerror(errno), ERROR);
+				}
+				std::ostringstream ss; ss << "Closed " << i << " pfds before exiting";
+				Log::log(ss.str(), DEBUG);
 				break;
 			}
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
@@ -490,11 +501,12 @@ void ServerEngine::run()
 			}
 			catch (std::exception& e)
 			{
-				std::cout << e.what() << std::endl;
+				Log::log(e.what(), ERROR);
+				pfds_it++;
 			}
 		}
 	}
-	std::vector<pollfd>::iterator pfds_it;
-	for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
-		close(pfds_it->fd);
+	// std::vector<pollfd>::iterator pfds_it;
+	// for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
+	// 	close(pfds_it->fd);
 }

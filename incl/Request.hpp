@@ -41,6 +41,8 @@ public:
 	const int get_content_length() const;
 	const int get_content_type_idx() const;
 	const char *get_content_type() const;
+	const std::vector<std::string> get_content_type_params() const;
+
 	const int get_client_fd() const;
 	const int get_method() const;
 	const int get_major_http_v() const;
@@ -81,6 +83,7 @@ private:
 	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
+	std::vector<std::string> _content_type_params;
 	int			_client_fd;
 	bool		_keep_alive;
 	bool		_timed_out;
