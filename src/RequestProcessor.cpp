@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/08 17:19:38 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/08 20:59:01 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,15 +210,13 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			Log::log("Requesting directory", DEBUG);
-			std::cerr << "Resolved filePath: " << filePath << std::endl;
-			if (Utils::fileExists(location->get_root() + location->get_index()))
-				filePath += "/" + location->get_index();
+			if (Utils::fileExists(filePath + "/index.html"))
+				filePath += "/index.html";
 			else
 			{
 				if (location->is_autoindex()) // Show directory listing
 				{
-					Log::log("Showing directory content", INFO);
+					Log::log("Showing directory listing", INFO);
 					std::ostringstream response;
 					response << "HTTP/1.1 200 OK\r\n"
 								<< "Content-Type: text/html\r\n"
