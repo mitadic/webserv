@@ -16,6 +16,7 @@
 #include <poll.h>
 #include <sys/socket.h> // For socket functions
 #include <netinet/in.h> // For sockaddr_in
+#include <netdb.h> // getprotobyname
 
 #include "Types.hpp"
 #include "ServerBlock.hpp"

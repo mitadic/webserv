@@ -36,9 +36,10 @@ bool ServerEngine::make_non_blocking(int &fd)
 int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd == -1 || !make_non_blocking(sockfd))
+	int reuse = 1;
+	if (sockfd == -1 || !make_non_blocking(sockfd) || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
 	{
-		std::cerr << "Failed to create listening socket. Errno: " << errno << std::endl;
+		std::cerr << "Failed to create listening socket. Errno: " << errno << ". " << strerror(errno) << "." << std::endl;;
 		return (1);
 	}
 	sockaddr_in socket_addr;
@@ -217,7 +218,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	int		nbytes;
 
 	memset(buf, 0, BUF_SZ);
-	
+
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 	if (nbytes <= 0)  // hangup or error
 	{
@@ -324,7 +325,7 @@ void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, s
 {
 	int idx = meta_it->second.reqs_idx;
 
-	std::cout << "Processing EOF on pipe, close" << std::endl; 
+	std::cout << "Processing EOF on pipe, close" << std::endl;
 	close(pfds_it->fd);
 	pfds.erase(pfds_it);
 	// do not erase pfd_info_map, it's staying
