@@ -219,10 +219,10 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int		idx = meta_it->second.reqs_idx;
-	char	buf[BUF_SZ];
+	char	buf[BUF_SZ + 1];
 	int		nbytes;
 
-	memset(buf, 0, BUF_SZ);
+	memset(buf, 0, BUF_SZ + 1);
 
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 	if (nbytes <= 0)  // hangup or error
@@ -267,7 +267,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	size_t	sz_to_send = BUF_SZ;
+	size_t	sz_to_send = BUF_SZ; // maybe BUF_SZ + 1
 	int		idx = meta_it->second.reqs_idx;
 	size_t	response_size = reqs[idx].get_response().size();
 	size_t	sent_so_far = reqs[idx].get_total_sent();
@@ -279,7 +279,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		sz_to_send = response_size - sent_so_far;
 	}
 
-	if (sz_to_send)
+	if (sz_to_send)// what if response is empty?
 	{
 		std::string str_to_send = reqs[idx].get_response().substr(reqs[idx].get_total_sent());
 		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
