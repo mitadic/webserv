@@ -29,8 +29,8 @@ void RequestParser::_parse_header_connection(Request& req, std::string& header_v
 			req._keep_alive = true;
 		else if (*it == "close")
 			req._keep_alive = false;
-		else if (*it == "Upgrade")
-			;
+		// else if (*it == "Upgrade")
+		// 	;
 	}
 }
 

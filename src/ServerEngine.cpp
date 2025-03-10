@@ -204,7 +204,7 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
     int idx = meta_it->second.reqs_idx;
-    if (idx != UNINITIALIZED && idx < reqs.size()) {
+    if (idx != UNINITIALIZED && idx < static_cast<int>(reqs.size())) {
         reqs.erase(reqs.begin() + idx);
     }
     meta_it->second.reqs_idx = UNINITIALIZED;
@@ -272,12 +272,12 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 {
     size_t sz_to_send = BUF_SZ;
     int idx = meta_it->second.reqs_idx;
-    if (idx == UNINITIALIZED || idx >= reqs.size()) {
+    if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size())) {
         forget_client(pfds_it, meta_it);
         return;
     }
-    size_t response_size = reqs[idx].get_response().size();
-    size_t sent_so_far = reqs[idx].get_total_sent();
+    int response_size = reqs[idx].get_response().size();
+    int sent_so_far = reqs[idx].get_total_sent();
 
     if (response_size - sent_so_far < BUF_SZ) {
         if (response_size - sent_so_far < 0)
