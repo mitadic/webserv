@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/10 12:17:31 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/10 18:28:17 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,7 @@ void parseMultipartFormData(const Request& req, const Location* location)
 		std::string part = *it;
 		if (part.empty() || part == "--\r\n")
 			continue;
+
 		size_t dispositionStart = part.find("Content-Disposition: form-data;");
 		if (dispositionStart != std::string::npos)
 		{
@@ -128,7 +129,6 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
 				filename = Utils::sanitizeFilename(filename);
-
 				Log::log("Filename to save: " + filename, DEBUG);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
@@ -136,24 +136,58 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				{
 					contentStart += 4;
 					size_t contentEnd = part.rfind("\r\n");
-					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
+					if (contentEnd == std::string::npos || contentEnd < contentStart)
+					{
+						Log::log("Invalid content boundaries", ERROR);
+						throw RequestException(CODE_500); // Internal Server Error
+					}
+
+					size_t contentLength = contentEnd - contentStart;
+					std::stringstream ss;
+					ss << contentLength;
+					Log::log("Content length: " + ss.str(), DEBUG);
+
+					// Validate content length before creating the vector
+					if (contentLength > part.size())
+					{
+						Log::log("Error: Content length exceeds part size", ERROR);
+						throw RequestException(CODE_500); // Internal Server Error
+					}
+
+					std::vector<char> fileContent(part.begin() + contentStart, part.begin() + contentEnd - contentStart);
 
 					std::string filePath = uploadDir + "/" + filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 
-					Log::log("Saving file to: " + filePath, DEBUG);
+					Log::log("Saving file to: " + filePath, DEBUG); // TODO: Add timestamp to prevent overwriting?
 
 					if (file.is_open())
 					{
-						file << fileContent;
+						file.write(fileContent.data(), fileContent.size());
 						file.close();
 					}
 					else
 					{
+						Log::log("Error: Could not open file for writing", ERROR);
 						throw RequestException(CODE_500); // Internal Server Error
 					}
 				}
+				else
+				{
+					Log::log("Error: Could not find start of content", ERROR);
+					throw RequestException(CODE_500); // Internal Server Error
+				}
 			}
+			else
+			{
+				Log::log("Error: Could not find filename", ERROR);
+				throw RequestException(CODE_500); // Internal Server Error
+			}
+		}
+		else
+		{
+			Log::log("Error: Could not find Content-Disposition", ERROR);
+			throw RequestException(CODE_500); // Internal Server Error
 		}
 	}
 }
@@ -168,17 +202,26 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
 
+	Log::log("Matching location: " + matchingLocation->get_path(), DEBUG);
+
 	if (!matchingLocation->get_redirect().second.empty())
 	{
+		Log::log("Redirect directive found", DEBUG);
 		if ((matchingLocation->get_redirect().first == 301 || matchingLocation->get_redirect().first == 302)
 			&& req.get_method() == DELETE)
 			throw RequestException(CODE_405); // Method Not Allowed
-		Log::log("Redirecting to: " + matchingLocation->get_redirect().second, INFO);
+		Log::log("Redirecting to: " + matchingLocation->get_redirect().second, WARNING);
 		std::ostringstream response;
+		int response_code;
+		if (matchingLocation->get_redirect().first == 301)
+			response_code = CODE_301;
+		else
+			response_code = CODE_302;
 		response << "HTTP/1.1 " << matchingLocation->get_redirect().first << " "
-					<< status_messages[matchingLocation->get_redirect().first] << "\r\n"
+					<< status_messages[response_code] << "\r\n"
 					<< "Location: " << matchingLocation->get_redirect().second << "\r\n"
 					<< "\r\n";
+		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
 	}
 
@@ -186,20 +229,17 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 	{
 		case GET:
 		{
-			Log::log("GET request", INFO);
-			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
+			Log::log("GET request: " + req.get_request_uri(), INFO);
 			return processGet(req, matchingLocation);
 		}
 		case POST:
 		{
-			Log::log("POST request", INFO);
-			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
+			Log::log("POST request: " + req.get_request_uri(), INFO);
 			return processPost(req, matchingLocation);
 		}
 		case DELETE:
 		{
-			Log::log("DELETE request", INFO);
-			Log::log("Request URI: " + req.get_request_uri(), DEBUG);
+			Log::log("DELETE request: " + req.get_request_uri(), INFO);
 			return processDelete(req, matchingLocation);
 		}
 		default:
