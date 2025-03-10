@@ -44,7 +44,7 @@ Request::Request(in_addr_t host, uint16_t port) :
 	cgi()
 {}
 
-Request::~Request() {};
+Request::~Request() {}
 
 Request::Request(const Request& oth) : cgi()
 {
@@ -67,7 +67,6 @@ Request::Request(const Request& oth) : cgi()
 	_cgi_status = oth._cgi_status;
 }
 
-
 void Request::reset()
 {
 	_request_str.clear();
@@ -84,7 +83,6 @@ void Request::reset_client()
 	reset();
 	_client_fd = UNINITIALIZED;
 }
-
 
 const std::string Request::get_request_str() const { return _request_str; }
 const std::string Request::get_request_body() const { return _request_body; }
