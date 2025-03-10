@@ -203,10 +203,13 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	reqs.erase(reqs.begin() + meta_it->second.reqs_idx);  // UPDATED
-	meta_it->second.reqs_idx = UNINITIALIZED;
-	meta_it->second.had_at_least_one_req_processed = true;
-	pfds_it->events = POLLIN;
+    int idx = meta_it->second.reqs_idx;
+    if (idx != UNINITIALIZED && idx < static_cast<int>(reqs.size())) {
+        reqs.erase(reqs.begin() + idx);
+    }
+    meta_it->second.reqs_idx = UNINITIALIZED;
+    meta_it->second.had_at_least_one_req_processed = true;
+    pfds_it->events = POLLIN;
 }
 
 void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::iterator& meta_it)
@@ -219,10 +222,10 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int		idx = meta_it->second.reqs_idx;
-	char	buf[BUF_SZ];
+	char	buf[BUF_SZ + 1];
 	int		nbytes;
 
-	memset(buf, 0, BUF_SZ);
+	memset(buf, 0, BUF_SZ + 1);
 
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 	if (nbytes <= 0)  // hangup or error
@@ -267,17 +270,20 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	size_t	sz_to_send = BUF_SZ;
-	int		idx = meta_it->second.reqs_idx;
-	size_t	response_size = reqs[idx].get_response().size();
-	size_t	sent_so_far = reqs[idx].get_total_sent();
+    size_t sz_to_send = BUF_SZ;
+    int idx = meta_it->second.reqs_idx;
+    if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size())) {
+        forget_client(pfds_it, meta_it);
+        return;
+    }
+    int response_size = reqs[idx].get_response().size();
+    int sent_so_far = reqs[idx].get_total_sent();
 
-	if (response_size - sent_so_far < BUF_SZ)
-	{
-		if (response_size - sent_so_far < 0)
-			std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
-		sz_to_send = response_size - sent_so_far;
-	}
+    if (response_size - sent_so_far < BUF_SZ) {
+        if (response_size - sent_so_far < 0)
+            std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
+        sz_to_send = response_size - sent_so_far;
+    }
 
 	if (sz_to_send)
 	{
@@ -436,7 +442,7 @@ void ServerEngine::run()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				int i;
+				size_t i;
 				for (i = 0; i < pfds.size(); i++)
 				{
 					if (close(pfds[i].fd) == -1)

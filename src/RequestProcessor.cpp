@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/08 20:59:01 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:17:31 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,18 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 	return formData;
 }
 
+// Find boundary from the request params
+std::string findBoundary(const Request& req)
+{
+	std::vector<std::string> contentTypeParams = req.get_content_type_params();
+	for (std::vector<std::string>::const_iterator it = contentTypeParams.begin(); it != contentTypeParams.end(); ++it)
+	{
+		if (it->find("boundary=") != std::string::npos)
+			return it->substr(it->find("boundary=") + 9);
+	}
+	throw RequestException(CODE_400); // Bad Request
+}
+
 // For file uploads:
 // - split the request body into parts per boundary
 // - for each part, extract the filename and the file content
@@ -92,10 +104,13 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 // -- if the file can't be saved, throw 500 error page
 void parseMultipartFormData(const Request& req, const Location* location)
 {
-	std::string boundary = "--"; // TODO: + req.get_boundary()
+	std::string boundary = "--" + findBoundary(req);
+
+	Log::log("Boundary: " + boundary, DEBUG);
+
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
 
-	std::string uploadDir = location->get_upload_location();
+	std::string uploadDir = "." + location->get_upload_location();
 
 	for (std::vector<std::string>::const_iterator it = parts.begin(); it != parts.end(); ++it)
 	{
@@ -114,6 +129,8 @@ void parseMultipartFormData(const Request& req, const Location* location)
 
 				filename = Utils::sanitizeFilename(filename);
 
+				Log::log("Filename to save: " + filename, DEBUG);
+
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)
 				{
@@ -123,6 +140,9 @@ void parseMultipartFormData(const Request& req, const Location* location)
 
 					std::string filePath = uploadDir + "/" + filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
+
+					Log::log("Saving file to: " + filePath, DEBUG);
+
 					if (file.is_open())
 					{
 						file << fileContent;
@@ -287,7 +307,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 
 	std::ostringstream response;
 
-	std::cout << "Content type: " << contentTypeIdx << std::endl;
+	std::cout << "Content type: " << content_types[contentTypeIdx] << std::endl;
 
 	switch (contentTypeIdx)
 	{
@@ -305,7 +325,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
-		Log::log("Processing form submission", INFO);
+		Log::log("Processing file upload", INFO);
 		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
