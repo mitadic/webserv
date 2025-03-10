@@ -30,27 +30,27 @@ public:
 	void	parse();
 	void	validate_self();
 
-	const std::string get_request_str() const;
-	const std::string get_request_body() const;
-	const std::string get_response() const;
-	const std::string get_request_uri() const;
-	const std::string get_cgi_job_id() const;
-	const std::string get_cgi_output() const;
-	const int get_response_status() const;
-	const int get_total_sent() const;
-	const int get_content_length() const;
-	const int get_content_type_idx() const;
+	const std::string& get_request_str() const;
+	const std::string& get_request_body() const;
+	const std::string& get_response() const;
+	const std::string& get_request_uri() const;
+	const std::string& get_cgi_job_id() const;
+	const std::string& get_cgi_output() const;
+	const int& get_response_status() const;
+	const int& get_total_sent() const;
+	const int& get_content_length() const;
+	const int& get_content_type_idx() const;
 	const char *get_content_type() const;
-	const std::vector<std::string> get_content_type_params() const;
+	const std::vector<std::string>& get_content_type_params() const;
 
-	const int get_client_fd() const;
-	const int get_method() const;
-	const int get_major_http_v() const;
-	const int get_minor_http_v() const;
-	const int get_cgi_status() const;
-	const uint16_t get_port() const;
-	const in_addr_t get_host() const;
-	const std::vector<std::string> get_accepted_types() const;
+	const int& get_client_fd() const;
+	const int& get_method() const;
+	const int& get_major_http_v() const;
+	const int& get_minor_http_v() const;
+	const int& get_cgi_status() const;
+	const uint16_t& get_port() const;
+	const in_addr_t& get_host() const;
+	const std::vector<std::string>& get_accepted_types() const;
 
 	bool is_flagged_as_chunked();
 

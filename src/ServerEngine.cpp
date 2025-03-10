@@ -442,7 +442,7 @@ void ServerEngine::run()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				int i;
+				size_t i;
 				for (i = 0; i < pfds.size(); i++)
 				{
 					if (close(pfds[i].fd) == -1)

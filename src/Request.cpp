@@ -2,46 +2,46 @@
 #include "RequestParser.hpp"  // it's ok we're not including this in Request.hpp and it works due to fwd decl
 
 Request::Request() :
+	cgi(),
 	_request_str(""),
 	_response(""),
-	_response_status(CODE_200),
-	_total_sent(0),
-	_method(UNINITIALIZED),
-	_client_fd(UNINITIALIZED),
-	_content_type_idx(UNINITIALIZED),
-	_content_length(UNINITIALIZED),
-	_flagged_as_chunked(false),
-	_timed_out(false),
-	_await_reconnection(false),
-	_keep_alive(true),
 	_port(80),  // default for when unspecified
 	_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
-	_cgi_status(NOT_CGI),
-	_minor_http_v(UNINITIALIZED),
+	_response_status(CODE_200),
+	_total_sent(0),
+	_content_length(UNINITIALIZED),
+	_flagged_as_chunked(false),
+	_content_type_idx(UNINITIALIZED),
+	_client_fd(UNINITIALIZED),
+	_keep_alive(true),
+	_timed_out(false),
+	_await_reconnection(false),
+	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
-	cgi()
+	_minor_http_v(UNINITIALIZED),
+	_cgi_status(NOT_CGI)
 {}
 
 /* Parametrized constructor for when accepting client */
 Request::Request(in_addr_t host, uint16_t port) :
+	cgi(),
 	_request_str(""),
 	_response(""),
-	_response_status(CODE_200),
-	_total_sent(0),
-	_method(UNINITIALIZED),
-	_client_fd(UNINITIALIZED),
-	_content_type_idx(UNINITIALIZED),
-	_content_length(UNINITIALIZED),
-	_flagged_as_chunked(false),
-	_timed_out(false),
-	_await_reconnection(false),
-	_keep_alive(true),
 	_port(port),
 	_host(host),
-	_cgi_status(NOT_CGI),
-	_minor_http_v(UNINITIALIZED),
+	_response_status(CODE_200),
+	_total_sent(0),
+	_content_length(UNINITIALIZED),
+	_flagged_as_chunked(false),
+	_content_type_idx(UNINITIALIZED),
+	_client_fd(UNINITIALIZED),
+	_keep_alive(true),
+	_timed_out(false),
+	_await_reconnection(false),
+	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
-	cgi()
+	_minor_http_v(UNINITIALIZED),
+	_cgi_status(NOT_CGI)
 {}
 
 Request::~Request() {}
@@ -84,32 +84,33 @@ void Request::reset_client()
 	_client_fd = UNINITIALIZED;
 }
 
-const std::string Request::get_request_str() const { return _request_str; }
-const std::string Request::get_request_body() const { return _request_body; }
-const std::string Request::get_response() const { return _response; }
-const std::string Request::get_request_uri() const { return _request_uri; }
-const std::string Request::get_cgi_job_id() const { return _cgi_job_id; }
-const std::string Request::get_cgi_output() const { return _cgi_output; }
-const int Request::get_response_status() const { return _response_status; }
-const int Request::get_total_sent() const { return _total_sent; }
-const int Request::get_content_length() const { return _content_length; }
-const int Request::get_content_type_idx() const { return _content_type_idx; }
-const std::vector<std::string> Request::get_content_type_params() const { return _content_type_params; }
+
+const std::string& Request::get_request_str() const { return _request_str; }
+const std::string& Request::get_request_body() const { return _request_body; }
+const std::string& Request::get_response() const { return _response; }
+const std::string& Request::get_request_uri() const { return _request_uri; }
+const std::string& Request::get_cgi_job_id() const { return _cgi_job_id; }
+const std::string& Request::get_cgi_output() const { return _cgi_output; }
+const int& Request::get_response_status() const { return _response_status; }
+const int& Request::get_total_sent() const { return _total_sent; }
+const int& Request::get_content_length() const { return _content_length; }
+const int& Request::get_content_type_idx() const { return _content_type_idx; }
+const std::vector<std::string>& Request::get_content_type_params() const { return _content_type_params; }
 const char *Request::get_content_type() const { return content_types[_content_type_idx]; }
-const int Request::get_client_fd() const { return _client_fd; }
-const int Request::get_method() const { return _method; }
-const int Request::get_major_http_v() const { return _major_http_v; }
-const int Request::get_minor_http_v() const { return _minor_http_v; }
-const int Request::get_cgi_status() const { return _cgi_status; }
+const int& Request::get_client_fd() const { return _client_fd; }
+const int& Request::get_method() const { return _method; }
+const int& Request::get_major_http_v() const { return _major_http_v; }
+const int& Request::get_minor_http_v() const { return _minor_http_v; }
+const int& Request::get_cgi_status() const { return _cgi_status; }
 
 /* Get the port_no specified in the request; it has been validated to fit the legal range for ports */
-const uint16_t Request::get_port() const { return _port; }
+const uint16_t& Request::get_port() const { return _port; }
 
 /* Get the host specified in the request; it has been confirmed to fit between 0.0.0.0 and 255.255.255.254 */
-const in_addr_t Request::get_host() const { return _host; }
+const in_addr_t& Request::get_host() const { return _host; }
 
 /* Get the Accept specified types, sorted by priority */
-const std::vector<std::string> Request::get_accepted_types() const { return _accepted_types; }
+const std::vector<std::string>& Request::get_accepted_types() const { return _accepted_types; }
 
 /* See if the request has specified Content-Type to be "chunked" in the headers */
 bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
@@ -189,7 +190,7 @@ void Request::parse()
 
 	spin_through_leading_crlf(stream, line);
 
-	parser.parse_request_line(*this, stream, line);
+	parser.parse_request_line(*this, line);
 	parser.parse_headers(*this, stream, line);
 	validate_self();
 	parser.parse_body(*this, stream, line);

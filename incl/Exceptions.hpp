@@ -8,10 +8,10 @@ class RequestException : public std::exception {
     private:
         RequestException();
         int error_code;
-    
+
     public:
         RequestException(int code);
-    
-        const int code() const throw();
+
+        int code() const throw();
         const char* what() const throw();
     };
