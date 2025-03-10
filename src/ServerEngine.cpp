@@ -431,6 +431,8 @@ void ServerEngine::run()
 
 	// remove server_blocks[i] that fail
 	remove_failed_blocks(server_blocks, failed_indexes);
+	if (server_blocks.empty())
+		return (Log::log("No server blocks set up. Exiting...", ERROR));
 
 	init_listener_pfds();
 
@@ -442,14 +444,6 @@ void ServerEngine::run()
 			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
 				std::cout << "\nSignal received. Exiting..." << std::endl;
-				size_t i;
-				for (i = 0; i < pfds.size(); i++)
-				{
-					if (close(pfds[i].fd) == -1)
-						Log::log(strerror(errno), ERROR);
-				}
-				std::ostringstream ss; ss << "Closed " << i << " pfds before exiting";
-				Log::log(ss.str(), DEBUG);
 				break;
 			}
 			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
@@ -512,7 +506,12 @@ void ServerEngine::run()
 			}
 		}
 	}
-	// std::vector<pollfd>::iterator pfds_it;
-	// for (pfds_it = pfds.begin(); pfds_it != pfds.end(); pfds_it++)
-	// 	close(pfds_it->fd);
+	size_t i;
+	for (i = 0; i < pfds.size(); i++)
+	{
+		if (close(pfds[i].fd) == -1)
+			Log::log(strerror(errno), ERROR);
+	}
+	std::ostringstream ss; ss << "Closed " << i << " pfds before exiting";
+	Log::log(ss.str(), DEBUG);
 }
