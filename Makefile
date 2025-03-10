@@ -1,26 +1,27 @@
 CXX		=	c++
-# FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-FLAGS	=	-g -std=c++98
-# FLAGS	+=	-Wall -Wextra -Werror
+FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
+#FLAGS	=	-g -std=c++98
+#FLAGS	+=	-Wall -Wextra -Werror
 # FLAGS	+= -fsanitize=address
-SRC		=	ServerEngine.cpp \
-			CgiHandler.cpp \
-			Config.cpp \
+SRC		=	Config.cpp \
+			main.cpp \
 			ConfigUtils.cpp \
+			Location.cpp \
+			Log.cpp \
+			ServerEngine.cpp \
+			CgiHandler.cpp \
 			ContentTypes.cpp \
 			ErrorPageGenerator.cpp \
 			Exceptions.cpp \
 			HttpHeaders.cpp \
-			Location.cpp \
-			Log.cpp \
 			Request.cpp \
 			RequestParser.cpp \
 			RequestProcessor.cpp \
 			RequestUtils.cpp \
 			ServerBlock.cpp \
 			StatusCodes.cpp \
-			Utils.cpp \
-			main.cpp
+			Utils.cpp
+
 SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
 OBJ_DIR	=	./obj/

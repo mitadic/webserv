@@ -24,7 +24,7 @@ namespace Config {
         void parse_server_block(ServerBlock & block, std::stringstream & file, std::string & line);
         void parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content);
         void parse_location(std::string & line, Location & block, std::stringstream & content);
-        void parse_location_block_directives(std::string & line, Location & block, std::stringstream & content);
+        void parse_location_block_directives(std::string & line, Location & block);
         void validate_blocks(std::vector<ServerBlock> & server_blocks);
 
         // Utils

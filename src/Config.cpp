@@ -159,7 +159,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 		}
 		else
 			throw std::runtime_error("in location block: missing semicolon: " + line);
-		parse_location_block_directives(line, block, content);
+		parse_location_block_directives(line, block);
 		directive_count++;
 	}
 }
@@ -167,7 +167,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 /**
  * @brief Parses the directives inside a location block e.g. root, index
  */
-void Config::parse_location_block_directives(std::string & line, Location & block, std::stringstream & content)
+void Config::parse_location_block_directives(std::string & line, Location & block)
 {
 	std::string         directive, value;
 	std::stringstream   ss(line);

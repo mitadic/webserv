@@ -6,8 +6,8 @@
 
 ServerBlock::ServerBlock() :
     _port(0),
-    _max_client_body(0),
-    _host(Config::ft_inet("255.255.255.255"))
+    _host(Config::ft_inet("255.255.255.255")),
+    _max_client_body(0)
 {}
 
 ServerBlock::~ServerBlock()
@@ -15,10 +15,10 @@ ServerBlock::~ServerBlock()
 
 ServerBlock::ServerBlock(const ServerBlock& oth) :
     _port(oth._port),
-    _max_client_body(oth._max_client_body),
     _host(oth._host),
-    _locations(oth._locations),
-    _error_pages(oth._error_pages)
+    _error_pages(oth._error_pages),
+    _max_client_body(oth._max_client_body),
+    _locations(oth._locations)
 {}
 
 ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
@@ -26,10 +26,10 @@ ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
     if (this != &oth)
     {
         _port = oth._port;
-        _max_client_body = oth._max_client_body;
         _host = oth._host;
-        _locations = oth._locations;
         _error_pages = oth._error_pages;
+        _max_client_body = oth._max_client_body;
+        _locations = oth._locations;
     }
     return *this;
 }
@@ -69,12 +69,12 @@ const std::vector<Location>&   ServerBlock::get_locations() const
  */
 void    ServerBlock::set_port(std::string port)
 {
-    if (_port != 0)
-        throw std::runtime_error("server cannot have multiple ports");
-    if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
-        throw std::runtime_error("invalid port number" + port);
+	if (_port != 0)
+		throw std::runtime_error("server cannot have multiple ports");
+	if (port.size() > 5 || !Config::has_only_digits(const_cast<char *>(port.c_str())))
+		throw std::runtime_error("invalid port number" + port);
 	if (std::atoi(port.c_str()) > 65535 || std::atoi(port.c_str()) <= 0)
-        throw std::runtime_error("invalid port number range");
+		throw std::runtime_error("invalid port number range");
 	_port = static_cast<uint16_t>(std::atoi(port.c_str()));
 };
 

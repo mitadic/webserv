@@ -156,19 +156,19 @@ void Location::set_cgi_extensions(std::string extensions)
 
 void Location::set_redirect(std::string redirection)
 {
-    if (_redirect.second.empty() == false)
-        throw std::runtime_error("double declaration of 'return'");
-    std::string code, url;
-    std::stringstream ss(redirection);
-    if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos)
+	if (_redirect.second.empty() == false)
+		throw std::runtime_error("double declaration of 'return'");
+	std::string code, url;
+	std::stringstream ss(redirection);
+	if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos)
 		|| !Config::has_only_digits(const_cast<char *>(code.c_str())))
-        throw std::runtime_error("in location block: return directive has wrong arguments");
-    if (_path == url)
-        throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
+		throw std::runtime_error("in location block: return directive has wrong arguments");
+	if (_path == url)
+		throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
 	int status = std::atoi(code.c_str());
 	if (status != 301 && status != 302 && status != 307 && status != 308)
 		throw std::runtime_error("return directive contains unknown status code");
-    _redirect = std::make_pair(status, url);
+	_redirect = std::make_pair(status, url);
 };
 
 /**

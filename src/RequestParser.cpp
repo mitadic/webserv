@@ -13,7 +13,10 @@ RequestParser::RequestParser(const RequestParser& oth)
 // ###############################################
 
 void RequestParser::_parse_header_cache_control(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_connection(Request& req, std::string& header_val)
 {
@@ -32,13 +35,22 @@ void RequestParser::_parse_header_connection(Request& req, std::string& header_v
 }
 
 void RequestParser::_parse_header_date(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_pragma(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_trailer(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_transfer_encoding(Request& req, std::string& header_val)
 {
@@ -58,13 +70,22 @@ void RequestParser::_parse_header_transfer_encoding(Request& req, std::string& h
 }
 
 void RequestParser::_parse_header_upgrade(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_via(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_warning(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 {
@@ -79,7 +100,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 			throw RequestException(CODE_400);
 
 		float quality_factor = 1.0f;
-		
+
 		for (std::vector<std::string>::iterator it_j = specs.begin() + 1; it_j != specs.end(); it_j++)
 		{
 			trim_lws(*it_j);
@@ -141,24 +162,42 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 }
 
 void RequestParser::_parse_header_accept_charset(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_accept_encoding(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_accept_language(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_authorization(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_expect(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_from(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
-/** 
+/**
  * Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions
  * Notably, perhaps paradoxically, this is meant to confirm that the header has the info matching to the REALITY of the connection established on the SB
  */
@@ -200,51 +239,92 @@ void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 	// parsed_host = htonl(parsed_host);
 	if (parsed_port != req._port || parsed_host != req._host)
 		throw RequestException(CODE_400);
-	
+
 	// validate whether "valid host IP" (non-private) later
 }
 
 void RequestParser::_parse_header_if_match(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_if_modified_since(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_if_none_match(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_if_range(Request& req, std::string& header_val)
-{}
+{	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_unmodified_since(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_max_forwards(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_proxy_authorization(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_range(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_referer(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_te(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_user_agent(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_allow(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_encoding(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_language(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_length(Request& req, std::string& header_val)
 {
@@ -257,13 +337,22 @@ void RequestParser::_parse_header_content_length(Request& req, std::string& head
 }
 
 void RequestParser::_parse_header_content_location(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_md5(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_range(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_content_type(Request& req, std::string& header_val)
 {
@@ -276,7 +365,7 @@ void RequestParser::_parse_header_content_type(Request& req, std::string& header
 		trim_lws(*it);
 		req._content_type_params.push_back(*it);
 	}
-	
+
 	for (int i = 0; i < CONTENT_TYPES_N; i++)
 	{
 		if (content_types[i] == header_defined_content_type)
@@ -289,10 +378,16 @@ void RequestParser::_parse_header_content_type(Request& req, std::string& header
 }
 
 void RequestParser::_parse_header_expires(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 void RequestParser::_parse_header_last_modified(Request& req, std::string& header_val)
-{}
+{
+	(void)req;
+	(void)header_val;
+}
 
 // ###############################################
 
@@ -371,12 +466,12 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 // "
 
 
-// Request       = Request-Line              
-//                         *(( general-header       
-//                          | request-header        
-//                          | entity-header ) CRLF)  
+// Request       = Request-Line
+//                         *(( general-header
+//                          | request-header
+//                          | entity-header ) CRLF)
 //                         CRLF
-//                         [ message-body ]         
+//                         [ message-body ]
 
 
 // Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
@@ -391,12 +486,12 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 // Note: LWS == linear white space
 
 
-void RequestParser::parse_request_line(Request& req, std::istringstream& stream, std::string& line)
+void RequestParser::parse_request_line(Request& req, std::string& line)
 {
 	std::vector<std::string> tokens = split(line, " ");
 	if (tokens.size() != 3)
 		throw RequestException(CODE_400);
-	
+
 	if (tokens[0] == "GET")
 		req._method = GET;
 	else if (tokens[0] == "POST")
@@ -411,7 +506,7 @@ void RequestParser::parse_request_line(Request& req, std::istringstream& stream,
 	if (tokens[1].size() > MAX_URI_LENGTH)
 		throw RequestException(CODE_414);
 	char prev = '\0';
-	for (int i = 0; i < tokens[1].size(); i++)
+	for (size_t i = 0; i < tokens[1].size(); i++)
 	{
 		if (prev == '/' && tokens[1][i] == '/')
 			throw RequestException(CODE_400);
@@ -475,7 +570,7 @@ void RequestParser::parse_body(Request& req, std::istringstream& stream, std::st
 
 	while (std::getline(stream, line))
 	{
-		if (req._request_body.size() > req._content_length)
+		if (req._request_body.size() > static_cast<size_t>(req._content_length))
 			throw RequestException(CODE_400);
 		req._request_body += line;
 		req._request_body += '\n';

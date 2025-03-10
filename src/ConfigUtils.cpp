@@ -25,7 +25,6 @@ in_addr_t   Config::ft_inet(const std::string& host)
 std::string Config::ft_inet_ntoa(in_addr_t ip)
 {
     std::string host;
-	in_addr_t host_ip = ntohl(ip);
 
     for (int i = 3; i >= 0; --i)
     {

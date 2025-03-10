@@ -14,7 +14,7 @@ public:
 	~RequestParser();
 	RequestParser(const RequestParser&);
 
-	void	parse_request_line(Request& req, std::istringstream& stream, std::string& line);
+	void	parse_request_line(Request& req, std::string& line);
 	void	parse_headers(Request& req, std::istringstream& stream, std::string& line);
 	void	parse_body(Request& req, std::istringstream& stream, std::string& line);
 
