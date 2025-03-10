@@ -34,12 +34,12 @@ ServerBlock& ServerBlock::operator=(const ServerBlock& oth)
     return *this;
 }
 
-uint16_t ServerBlock::get_port() const
+const uint16_t& ServerBlock::get_port() const
 {
     return (_port);
 };
 
-in_addr_t   ServerBlock::get_host() const
+const in_addr_t&   ServerBlock::get_host() const
 {
     return (_host);
 };
@@ -49,7 +49,7 @@ const std::map<int, std::string>&  ServerBlock::get_error_pages() const
     return (_error_pages);
 };
 
-unsigned int    ServerBlock::get_max_client_body() const
+const unsigned int&    ServerBlock::get_max_client_body() const
 {
     return (_max_client_body);
 };

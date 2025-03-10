@@ -6,22 +6,22 @@
 
 Location::Location() : _upload_allowed(false), _get(false), _post(false), _del(false), _autoindex(false), _redirect(0, "") {};
 
-std::string Location::get_path() const
+const std::string& Location::get_path() const
 {
     return (_path);
 };
 
-std::string Location::get_root() const
+const std::string& Location::get_root() const
 {
     return (_root);
 };
 
-std::string Location::get_index() const
+const std::string& Location::get_index() const
 {
     return (_index);
 };
 
-std::string Location::get_upload_location() const
+const std::string& Location::get_upload_location() const
 {
     return (_upload_location);
 };

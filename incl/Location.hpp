@@ -35,10 +35,10 @@ class Location {
         Location();
 
         // getters
-        std::string                 get_path() const;
-        std::string                 get_root() const;
-        std::string                 get_index() const;
-        std::string                 get_upload_location() const;
+        const std::string&                 get_path() const;
+        const std::string&                 get_root() const;
+        const std::string&                 get_index() const;
+        const std::string&                 get_upload_location() const;
         bool                        is_upload_allowed() const;
         bool                        is_get() const;
         bool                        is_post() const;
