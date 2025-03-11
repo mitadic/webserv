@@ -4,7 +4,7 @@
 # include "ServerBlock.hpp"
 # include "Location.hpp"
 
-void Log::log(const std::string & message, t_log_level level)
+void Log::log(const std::string message, t_log_level level)
 {
     if (!DEBUGMODE)
         return ;
