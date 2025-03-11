@@ -7,8 +7,8 @@
 # include <algorithm>
 # include <string>
 # include <sstream>
-# include <cstdlib>  // std::atoi
-# include <stdint.h> // UINT32_MAX
+# include <cstdlib>
+# include <stdint.h>
 # include <arpa/inet.h>
 
 class Location;
@@ -29,24 +29,26 @@ class ServerBlock {
 		ServerBlock& operator=(const ServerBlock& oth);
 
 		// getters
-		const uint16_t&							get_port() const;
-		const in_addr_t&							get_host() const;
-		const std::map<int, std::string>&	get_error_pages() const;
-		const unsigned int&						get_max_client_body() const;
-		const std::vector<Location>&		get_locations() const;
+
+		const uint16_t& get_port() const;
+		const in_addr_t& get_host() const;
+		const std::map<int, std::string> get_error_pages() const;
+		const unsigned int& get_max_client_body() const;
+		const std::vector<Location> get_locations() const;
 
 		// setters
-		void						set_port(std::string port);
-		void						set_host(std::string host);
-		void						add_error_page(std::string page);
-		void						set_max_client_body(std::string size);
-		void						add_location(Location & location);
+
+		void set_port(std::string port);
+		void set_host(std::string host);
+		void add_error_page(std::string page);
+		void set_max_client_body(std::string size);
+		void add_location(Location & location);
 
 		// methods
-		void	validate_locations();
+
+		void validate_locations();
 
 	private:
-		//int         socket_fd; // or do we store it only in pfds?
 		uint16_t					_port;
 		in_addr_t					_host;
 		std::map<int, std::string>	_error_pages;

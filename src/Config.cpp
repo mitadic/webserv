@@ -15,8 +15,7 @@ void Config::load_file(const std::string & filename, std::stringstream& content)
 		throw std::runtime_error("*.conf file extension required");
 	if (!file.is_open())
 		throw std::runtime_error("couldn't open config file");
-
-	// content << file.rdbuf();
+		
 	char buffer[1024];
 	while (file.read(buffer, sizeof(buffer)))
 		content.write(buffer, file.gcount());
