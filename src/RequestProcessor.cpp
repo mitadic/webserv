@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/11 19:13:54 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/11 20:24:13 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -208,18 +208,14 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 	{
 		// the browser or Postman handle redirection loops, no need to check manually
 		Log::log("Redirect directive found", DEBUG);
-		if ((matchingLocation->get_redirect().first == 301 || matchingLocation->get_redirect().first == 302)
+		int response_code = matchingLocation->get_redirect().first;
+		if ((response_code == 301 || response_code == 302)
 			&& req.get_method() == DELETE)
 			throw RequestException(CODE_405); // Method Not Allowed
 		Log::log("Redirecting to: " + matchingLocation->get_redirect().second, WARNING);
 		std::ostringstream response;
-		int response_code;
-		if (matchingLocation->get_redirect().first == 301)
-			response_code = CODE_301;
-		else
-			response_code = CODE_302;
-		response << "HTTP/1.1 " << matchingLocation->get_redirect().first << " "
-					<< status_messages[response_code] << "\r\n"
+		response << "HTTP/1.1 "
+					<< status_messages[match_code(response_code)] << "\r\n"
 					<< "Location: " << matchingLocation->get_redirect().second << "\r\n"
 					<< "\r\n";
 		Log::log("Response: " + response.str(), DEBUG);

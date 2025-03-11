@@ -45,7 +45,7 @@ int	webserv_atoi_set(const std::string& s, int& num)
 {
     if (s.empty())
 		return 1;
-	
+
 	long long res = 0;
 	std::string::const_iterator it = s.begin();
 	for (; it != s.end() && *it == '0'; it++)  // RFC allows leading 0
@@ -73,7 +73,7 @@ int	webserv_atouint16_set(const std::string& s, uint16_t& num)
 {
     if (s.empty())
 		return 1;
-	
+
 	size_t res = 0;
 	std::string::const_iterator it = s.begin();
 	for (; it != s.end() && *it == '0'; it++)  // RFC allows leading 0
@@ -185,4 +185,16 @@ bool contains_non_digits(const std::string& s)
 			return true;
 	}
 	return false;
+}
+
+int match_code(int status_code)
+{
+	int i = 0;
+	while (i < STATUS_CODES_N)
+	{
+		if (status_code_values[i] == status_code)
+			return (i);
+		i++;
+	}
+	return (-1);
 }

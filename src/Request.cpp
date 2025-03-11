@@ -190,6 +190,7 @@ void Request::parse()
 
 	spin_through_leading_crlf(stream, line);
 
+	Log::log("Request line: " + line, DEBUG);
 	parser.parse_request_line(*this, line);
 	parser.parse_headers(*this, stream, line);
 	validate_self();

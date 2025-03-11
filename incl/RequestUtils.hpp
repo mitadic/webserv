@@ -19,7 +19,7 @@
 #define DOTS_OR_DIGITS ".1234567890"
 #define LOOPBACK_NUMERIC 2130706433
 #define MAX_URI_LENGTH 4096  // NGINX default
-#define MAX_CONTENT_LENGTH 10485760  
+#define MAX_CONTENT_LENGTH 10485760
 
 std::vector<std::string> split(const std::string& s, const std::string& delimiters);
 void    trim_lws(std::string& s);
@@ -34,3 +34,4 @@ void	check_stream_for_errors_or_eof(std::istringstream& stream);
 void	check_stream_for_errors(std::istringstream& stream);
 int		get_http_header_idx(const std::string& s);
 bool	contains_non_digits(const std::string& s);
+int		match_code(int status_code);
