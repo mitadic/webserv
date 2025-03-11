@@ -123,7 +123,10 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 	{
 		Log::log(" Comparing URI: " + req.get_request_uri() + " with location: " + locations[i].get_path(), DEBUG);
 		if (req.get_request_uri().find(locations[i].get_path()) == 0)
+		{
+			Log::log("Found matching location" + locations[i].get_path(), DEBUG);
 			return &locations[i];
+		}
 	}
 
 	Log::log("No matching location found for the request", WARNING);
