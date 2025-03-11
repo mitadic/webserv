@@ -10,8 +10,7 @@ Location::Location() :
 	_post(false),
 	_del(false),
 	_autoindex(false),
-	_redirect(0, ""),
-	_redirect_count(0)
+	_redirect(0, "")
 {};
 
 const std::string& Location::get_path() const
@@ -32,16 +31,6 @@ const std::string& Location::get_index() const
 const std::string& Location::get_upload_location() const
 {
     return (_upload_location);
-};
-
-const int& Location::get_redirect_count() const
-{
-	return (_redirect_count);
-};
-
-void Location::increment_redirect_count()
-{
-	_redirect_count++;
 };
 
 bool        Location::is_upload_allowed() const

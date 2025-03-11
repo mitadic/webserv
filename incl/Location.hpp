@@ -46,7 +46,6 @@ class Location {
         bool                        is_autoindex() const;
         const std::vector<std::string>&    get_cgi_extensions() const;
         const std::pair<int, std::string>& get_redirect() const;
-		const int& get_redirect_count() const;
 
         // setters
         void set_path(std::string path);
@@ -57,7 +56,6 @@ class Location {
         void set_autoindex(std::string autoindex);
         void set_cgi_extensions(std::string extension);
         void set_redirect(std::string redirection);
-		void increment_redirect_count();
 
         // methods
         static void check_valid_path(std::string & path, t_path type);
@@ -74,7 +72,6 @@ class Location {
         bool                        _autoindex;
         std::vector<std::string>    _cgi_extensions;
         std::pair<int, std::string> _redirect;
-		int							_redirect_count;
 };
 
 std::ostream &operator<<(std::ostream &os, const Location &location_block);
