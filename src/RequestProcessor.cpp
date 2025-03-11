@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/11 13:53:06 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/11 19:12:58 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,8 +206,9 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 
 	if (!matchingLocation->get_redirect().second.empty())
 	{
-		if (matchingLocation->get_redirect_count() > MAX_REDIRECTS)
-			throw RequestException(CODE_500); // Internal Server Error if loop is detected
+		// the browser or Postman handle redirection loops, no need to check manually
+		// if (matchingLocation->get_redirect_count() > MAX_REDIRECTS)
+			// throw RequestException(CODE_500); // Internal Server Error if loop is detected
 		Log::log("Redirect directive found", DEBUG);
 		if ((matchingLocation->get_redirect().first == 301 || matchingLocation->get_redirect().first == 302)
 			&& req.get_method() == DELETE)
@@ -224,6 +225,7 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 					<< "Location: " << matchingLocation->get_redirect().second << "\r\n"
 					<< "\r\n";
 		Log::log("Response: " + response.str(), DEBUG);
+		const_cast<Location *>(matchingLocation)->increment_redirect_count();
 		return response.str();
 	}
 
