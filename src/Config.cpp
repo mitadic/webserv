@@ -9,13 +9,13 @@
  */
 void Config::load_file(const std::string & filename, std::stringstream& content)
 {
-	std::ifstream       file(filename.c_str());
+	std::ifstream	file(filename.c_str());
 
 	if (filename.substr(filename.find_last_of(".") + 1) != "conf")
 		throw std::runtime_error("*.conf file extension required");
 	if (!file.is_open())
 		throw std::runtime_error("couldn't open config file");
-		
+
 	char buffer[1024];
 	while (file.read(buffer, sizeof(buffer)))
 		content.write(buffer, file.gcount());
@@ -30,8 +30,8 @@ void Config::load_file(const std::string & filename, std::stringstream& content)
  */
 void Config::parse_config(const std::string & filename, std::vector<ServerBlock> & server_blocks)
 {
-	std::string         line;
-	std::stringstream   content;
+	std::string			line;
+	std::stringstream	content;
 
 	load_file(filename, content);
 	while (getline(content, line))
@@ -56,7 +56,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
  * @brief Loops through server blocks and checks for missing directives,
  * for same host-port combinations and for same prefixes in location blocks
  */
-void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
+void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
 	Log::log("Before validation:", DEBUG);
 	Log::log(server_blocks);
@@ -79,7 +79,7 @@ void    Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 /**
  * @brief Parses one server {...} part of the config file into a server block
  */
-void Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
+void	Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
 	Log::log("inside parse server block", DEBUG);
 	while (getline(content, line))
@@ -107,8 +107,9 @@ void Config::parse_server_block(ServerBlock & block, std::stringstream & content
  */
 void Config::parse_server_block_directives(std::string & line, ServerBlock & block, std::stringstream & content)
 {
-	std::string         directive, value;
-	std::stringstream   ss(line);
+	std::string			directive, value;
+	std::stringstream	ss(line);
+
 	if (getline(ss, directive, ' ') && getline(ss, value))
 	{
 		if (directive == "listen")
@@ -168,8 +169,9 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
  */
 void Config::parse_location_block_directives(std::string & line, Location & block)
 {
-	std::string         directive, value;
-	std::stringstream   ss(line);
+	std::string			directive, value;
+	std::stringstream  	ss(line);
+
 	if (getline(ss, directive, ' ') && getline(ss, value))
 	{
 		if (directive == "root")

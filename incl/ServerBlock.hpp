@@ -32,9 +32,9 @@ class ServerBlock {
 
 		const uint16_t& get_port() const;
 		const in_addr_t& get_host() const;
-		const std::map<int, std::string> get_error_pages() const;
+		const std::map<int, std::string>& get_error_pages() const;
 		const unsigned int& get_max_client_body() const;
-		const std::vector<Location> get_locations() const;
+		const std::vector<Location>& get_locations() const;
 
 		// setters
 
