@@ -129,9 +129,7 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 		}
 	}
 
-	Log::log("No matching location found for the request", WARNING);
-	std::cout << "Request URI: " << req.get_request_uri() << std::endl;
-	throw std::runtime_error("No matching location found for the request");
+	return NULL;
 }
 
 
