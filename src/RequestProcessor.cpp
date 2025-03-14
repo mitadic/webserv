@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/14 15:48:10 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/14 19:39:20 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,6 @@ std::string findBoundary(const Request& req)
 void parseMultipartFormData(const Request& req, const Location* location)
 {
 	std::string boundary = "--" + findBoundary(req);
-
 	Log::log("Boundary: " + boundary, DEBUG);
 
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
@@ -137,6 +136,8 @@ void parseMultipartFormData(const Request& req, const Location* location)
 					contentStart += 4;
 					size_t contentEnd = part.rfind("\r\n");
 					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
+
+					Log::log("File content: " + fileContent, DEBUG);
 
 					std::string filePath = uploadDir + "/" + filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
@@ -318,23 +319,20 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
 	{
 		Log::log("Processing form submission", INFO);
-		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		// CHECK:: Log the form data content in the server console:
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
 		Log::log("Form submission processed successfully", INFO);
-		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
+		return createContentString("./www/three-socketeers/success.html", "text/html");
 		break;
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
 		Log::log("Processing file upload", INFO);
-		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
-		response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
+		response << "HTTP/1.1 200 OK\r\n\r\n";
 		break;
 	}
 	case TEXT_PLAIN:

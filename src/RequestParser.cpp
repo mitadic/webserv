@@ -575,6 +575,7 @@ void RequestParser::parse_body(Request& req, std::istringstream& stream, std::st
 		req._request_body += line;
 		req._request_body += '\n';
 	}
+	Log::log("Parsed Request body: " + req._request_body, WARNING);
 	// incorrectly flagging for error when eof() ? temp disabled
 	// check_stream_for_errors(stream);
 }

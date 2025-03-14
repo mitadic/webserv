@@ -128,10 +128,10 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 
 	for (size_t i = 0; i < server->get_locations().size(); ++i)
 	{
-		Log::log(" Comparing URI: " + req.get_request_uri() + " with location: " + locations[i].get_path(), DEBUG);
+		// Log::log(" Comparing URI: " + req.get_request_uri() + " with location: " + locations[i].get_path(), DEBUG);
 		if (req.get_request_uri().find(locations[i].get_path()) == 0)
 		{
-			Log::log("Found matching location: " + locations[i].get_path(), DEBUG);
+			// Log::log("Found matching location: " + locations[i].get_path(), DEBUG);
 			return &locations[i];
 		}
 	}
