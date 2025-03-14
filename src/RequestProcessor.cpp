@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/14 13:55:19 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/14 19:39:20 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,6 @@ std::string findBoundary(const Request& req)
 void parseMultipartFormData(const Request& req, const Location* location)
 {
 	std::string boundary = "--" + findBoundary(req);
-
 	Log::log("Boundary: " + boundary, DEBUG);
 
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
@@ -117,7 +116,6 @@ void parseMultipartFormData(const Request& req, const Location* location)
 		std::string part = *it;
 		if (part.empty() || part == "--\r\n")
 			continue;
-
 		size_t dispositionStart = part.find("Content-Disposition: form-data;");
 		if (dispositionStart != std::string::npos)
 		{
@@ -129,6 +127,7 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
 				filename = Utils::sanitizeFilename(filename);
+
 				Log::log("Filename to save: " + filename, DEBUG);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
@@ -136,58 +135,27 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				{
 					contentStart += 4;
 					size_t contentEnd = part.rfind("\r\n");
-					if (contentEnd == std::string::npos || contentEnd < contentStart)
-					{
-						Log::log("Invalid content boundaries", ERROR);
-						throw RequestException(CODE_500); // Internal Server Error
-					}
+					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
 
-					size_t contentLength = contentEnd - contentStart;
-					std::stringstream ss;
-					ss << contentLength;
-					Log::log("Content length: " + ss.str(), DEBUG);
-
-					// Validate content length before creating the vector
-					if (contentLength > part.size())
-					{
-						Log::log("Error: Content length exceeds part size", ERROR);
-						throw RequestException(CODE_500); // Internal Server Error
-					}
-
-					std::vector<char> fileContent(part.begin() + contentStart, part.begin() + contentEnd - contentStart);
+					Log::log("File content: " + fileContent, DEBUG);
 
 					std::string filePath = uploadDir + "/" + filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 
-					Log::log("Saving file to: " + filePath, DEBUG); // TODO: Add timestamp to prevent overwriting?
+					Log::log("Saving file to: " + filePath, DEBUG);
 
 					if (file.is_open())
 					{
-						file.write(fileContent.data(), fileContent.size());
+						file << fileContent;
 						file.close();
 					}
 					else
 					{
-						Log::log("Error: Could not open file for writing", ERROR);
 						throw RequestException(CODE_500); // Internal Server Error
 					}
-				}
-				else
-				{
-					Log::log("Error: Could not find start of content", ERROR);
-					throw RequestException(CODE_500); // Internal Server Error
+					Log::log("File saved successfully", INFO);
 				}
 			}
-			else
-			{
-				Log::log("Error: Could not find filename", ERROR);
-				throw RequestException(CODE_500); // Internal Server Error
-			}
-		}
-		else
-		{
-			Log::log("Error: Could not find Content-Disposition", ERROR);
-			throw RequestException(CODE_500); // Internal Server Error
 		}
 	}
 }
@@ -342,30 +310,29 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 
 	std::ostringstream response;
 
-	std::cout << "Content type: " << content_types[contentTypeIdx] << std::endl;
+	std::ostringstream oss;
+	oss << "Content type: " << content_types[contentTypeIdx];
+	Log::log(oss.str(), DEBUG);
 
 	switch (contentTypeIdx)
 	{
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
 	{
 		Log::log("Processing form submission", INFO);
-		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		// CHECK:: Log the form data content in the server console:
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
 		Log::log("Form submission processed successfully", INFO);
-		response << "HTTP/1.1 200 OK\r\n\r\nForm submission processed successfully.";
+		return createContentString("./www/three-socketeers/success.html", "text/html");
 		break;
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
 		Log::log("Processing file upload", INFO);
-		Log::log("Request body: " + req.get_request_body(), DEBUG);
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
-		response << "HTTP/1.1 200 OK\r\n\r\nFile upload processed successfully.";
+		response << "HTTP/1.1 200 OK\r\n\r\n";
 		break;
 	}
 	case TEXT_PLAIN:
