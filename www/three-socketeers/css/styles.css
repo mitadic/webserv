@@ -62,6 +62,16 @@ h2 {
 	font-weight: 400;  /* Use a value from 400 to 700 */
 }
 
+.logo {
+	background-image: url('../images/logo.webp');
+	background-size: contain;
+	background-repeat: no-repeat;
+	width: 400px;
+	height: 400px;
+	margin-bottom: 20px;
+	display: block;
+}
+
 
 /* HOME
 ----------------------------------------*/
@@ -70,12 +80,6 @@ h2 {
 	flex-grow: 1;
 	text-align: center;
 	margin-top: 30px;
-}
-
-.logo {
-	width: 400px;
-	height: auto;
-	margin-bottom: 20px;
 }
 
 .button-list {
@@ -101,6 +105,9 @@ h2 {
 	text-transform: uppercase;
 	border-radius: 8px;
 	transition: 0,3s;
+	width: auto;
+	max-width: fit-content;
+	margin-left: auto 
 }
 
 .btn:hover {

@@ -81,15 +81,22 @@ std::vector<std::string> Utils::listDirectory(std::string filePath)
 
 std::string Utils::readFile(const std::string& file)
 {
-	std::ifstream read_file(file.c_str());
-	if (!read_file.is_open())
+	std::ifstream read_file(file.c_str(), std::ios::binary | std::ios::ate);
+	if (!read_file)
 	{
 		throw std::runtime_error("Error opening the file: " + file);
 	}
-	std::stringstream buffer;
-	buffer << read_file.rdbuf();
-	read_file.close();
-	return buffer.str();
+
+	std::streamsize file_size = read_file.tellg();
+	read_file.seekg(0, std::ios::beg);
+
+	std::string content(file_size, '\0');
+	if (!read_file.read(&content[0], file_size))
+	{
+		throw std::runtime_error("Error reading the file: " + file);
+	}
+
+	return content;
 }
 
 // Find the server block that corresponds to the request based on port and host
@@ -124,11 +131,12 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 		Log::log(" Comparing URI: " + req.get_request_uri() + " with location: " + locations[i].get_path(), DEBUG);
 		if (req.get_request_uri().find(locations[i].get_path()) == 0)
 		{
-			Log::log("Found matching location" + locations[i].get_path(), DEBUG);
+			Log::log("Found matching location: " + locations[i].get_path(), DEBUG);
 			return &locations[i];
 		}
 	}
 
+	Log::log("No matching location found", ERROR);
 	return NULL;
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/11 20:24:13 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/14 13:55:19 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -201,8 +201,6 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 {
 	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
 	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
-
-	Log::log("Matching location: " + matchingLocation->get_path(), DEBUG);
 
 	if (!matchingLocation->get_redirect().second.empty())
 	{
