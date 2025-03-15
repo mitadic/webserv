@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/14 19:39:20 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/15 13:43:06 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -270,13 +270,14 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 		{
 			bool matchFound = false;
 			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
-{				const std::string& acceptedType = *it;
+			{
+				const std::string& acceptedType = *it;
 				if (acceptedType == mimeType || acceptedType == "*/*" ||
 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
-					{
-						matchFound = true;
-						break;
-					}
+				{
+					matchFound = true;
+					break;
+				}
 			}
 			if (!matchFound)
 				throw RequestException(CODE_406); // Not Acceptable
