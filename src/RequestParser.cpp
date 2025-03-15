@@ -542,6 +542,7 @@ void RequestParser::parse_headers(Request& req, std::istringstream& stream, std:
 
 	while (!is_empty_crlf(line) && !stream.eof())
 		parse_header_line(req, stream, line);
+	// std::cout << "FOUND CRLF" << std::endl;
 }
 
 void RequestParser::parse_header_line(Request& req, std::istringstream& stream, std::string& line)
@@ -565,11 +566,16 @@ void RequestParser::parse_header_line(Request& req, std::istringstream& stream, 
 /* If not EOF, continues reading until req._content_length */
 void RequestParser::parse_body(Request& req, std::istringstream& stream, std::string& line)
 {
-	if (stream.eof())  // there is no body
+	if (req._content_length <= 0)
 		return;
+
+	std::ostringstream oss;
+	oss << req._content_length;
+	Log::log("Parsing the body with content-length: " + oss.str(), DEBUG);
 
 	while (std::getline(stream, line))
 	{
+		std::cout << "." << std::endl;
 		if (req._request_body.size() > static_cast<size_t>(req._content_length))
 			throw RequestException(CODE_400);
 		req._request_body += line;

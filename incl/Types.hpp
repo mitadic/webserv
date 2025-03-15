@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 #include <cerrno> 		// For errno
-#include <cstdlib>		
+#include <cstdlib>
 #include <cstdio>		// perror()
 #include <ctime>
 #include <poll.h>
@@ -35,6 +35,7 @@ struct pfd_info {
 	sockaddr_in sockaddr;	// needed only by LISTENER + socket_addr.sin_port has the [port]
 	in_addr_t host;			// mapping pretend IP [host] for req and processing
 	uint16_t port;			// representation from server_block in READABLE endianness
+	uint32_t max_client_body;
 	time_t last_active;		// needed only by CONNECTION; connection established | (done writing? | began reading?)
 	bool had_at_least_one_req_processed;  // needed only by CONNECTION, to differentiate between 408 and silent close
 };

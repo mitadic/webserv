@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/15 15:05:28 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/15 18:48:34 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,9 +321,14 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	{
 		Log::log("Processing form submission", INFO);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		std::cout << "New message from " << Utils::url_decoder(formData["name"]) << " =\n" << Utils::url_decoder(formData["message"]);
+		std::cout << "New message from " << Utils::url_decoder(formData["name"]) << " =\n" << Utils::url_decoder(formData["message"]) << std::endl;
 		Log::log("Form submission processed successfully", INFO);
-		return createContentString("./www/three-socketeers/success.html", "text/html");
+		std::string body = "form submitted successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
 		break;
 	}
 	case MULTIPART_FORM_DATA: // file uploads
@@ -332,7 +337,12 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
-		response << "HTTP/1.1 200 OK\r\n\r\n";
+		std::string body = "file uploaded successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
 		break;
 	}
 	case TEXT_PLAIN:

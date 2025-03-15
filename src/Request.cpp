@@ -181,6 +181,8 @@ void Request::validate_self()
 		_accepted_types.push_back(it->second);
 }
 
+
+
 /* Includes request validation before parsing the body */
 void Request::parse()
 {
