@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 20:16:01 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/14 19:48:37 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/15 13:04:16 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,10 @@ std::string ErrorPageGenerator::createErrorPage(const Request& req, const std::v
 	std::string errorPage;
 
 	std::map<int, std::string>::const_iterator it = server->get_error_pages().find(http_status_code);
-	if (it != server->get_error_pages().end())
+	const Location* location = Utils::getLocation(req, server);
+	if (location && it != server->get_error_pages().end())
 	{
-		std::string errorPagePath = "./www/three-socketeers" + it->second;
+		std::string errorPagePath = "." + location->get_root() + it->second;
 		Log::log("Using custom error page: " + errorPagePath, DEBUG);
 		errorPage = Utils::readFile(errorPagePath);
 	}

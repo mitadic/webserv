@@ -46,9 +46,9 @@ std::vector<std::string> Utils::split(const std::string& str, const std::string&
 	return tokens;
 }
 
-bool Utils::fileExists (const std::string& file)
+bool Utils::fileExists(const std::string& file)
 {
-	return (access((file).c_str(), F_OK) != -1);
+	return (access(file.c_str(), F_OK) != -1);
 }
 
 // stat returns 0 on success, and -1 on failure (e.g., if the file does not exist)
