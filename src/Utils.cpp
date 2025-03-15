@@ -190,3 +190,41 @@ std::string Utils::host_to_str(const in_addr_t num)
 	}
 	return ss.str();
 }
+
+// URL decode
+std::string Utils::url_decoder(const std::string &value)
+{
+	std::ostringstream decoded_str;
+	decoded_str.fill('0');
+	decoded_str << std::hex;
+
+	for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i)
+	{
+		std::string::value_type c = (*i);
+
+		if (c == '%')
+		{
+			// Get the next two characters
+			std::string::value_type c1 = *(++i);
+			std::string::value_type c0 = *(++i);
+
+			// Convert hex to integer
+			int num = 0;
+			std::istringstream ss;
+			ss.str(std::string() + c1 + c0);
+			ss >> std::hex >> num;
+
+			decoded_str << static_cast<char>(num);
+		}
+		else if (c == '+')
+		{
+			decoded_str << ' ';
+		}
+		else
+		{
+			decoded_str << c;
+		}
+	}
+
+	return decoded_str.str();
+}

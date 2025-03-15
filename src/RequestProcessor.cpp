@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/15 13:43:06 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/15 15:05:28 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -321,8 +321,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	{
 		Log::log("Processing form submission", INFO);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
-			std::cout << "Form field: " << it->first << " = " << it->second << std::endl;
+		std::cout << "New message from " << Utils::url_decoder(formData["name"]) << " =\n" << Utils::url_decoder(formData["message"]);
 		Log::log("Form submission processed successfully", INFO);
 		return createContentString("./www/three-socketeers/success.html", "text/html");
 		break;
