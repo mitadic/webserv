@@ -228,3 +228,13 @@ std::string Utils::url_decoder(const std::string &value)
 
 	return decoded_str.str();
 }
+
+
+std::string Utils::generateTimestamp()
+{
+	std::time_t t = std::time(NULL);
+	std::stringstream timestamp;
+	timestamp << t;
+
+	return timestamp.str();
+}

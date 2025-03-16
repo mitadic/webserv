@@ -71,6 +71,7 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.sockaddr = socket_addr;
 	info.host = sb.get_host();
 	info.port = sb.get_port();
+	info.max_client_body = sb.get_max_client_body();
 	pfd_info_map[sockfd] = info;
 
 	std::ostringstream ss; ss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
@@ -126,6 +127,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.host = meta.host;
 	info.port = meta.port;
+	info.max_client_body = meta.max_client_body;
 	info.reqs_idx = UNINITIALIZED;
 	info.last_active = time(NULL);
 	info.had_at_least_one_req_processed = false;
@@ -222,30 +224,36 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int		idx = meta_it->second.reqs_idx;
-	char	buf[BUF_SZ + 1];
+	char	buf[BUF_SZ];
 	int		nbytes;
+	uint32_t total_read;
 
-	memset(buf, 0, BUF_SZ + 1);
+	memset(buf, 0, BUF_SZ);
 
-	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
-	if (nbytes <= 0)  // hangup or error
+	nbytes = recv(pfds_it->fd, buf, BUF_SZ - 1, MSG_DONTWAIT);
+	total_read = nbytes + reqs[idx].get_request_str().size();
+
+	if (nbytes <= 0 || total_read > meta_it->second.max_client_body)  // hangup or error or sb disallows read size
 	{
 		if (nbytes == 0)
 		{
 			std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
 			forget_client(pfds_it, meta_it);
 		}
-		else
+		else if (nbytes == -1)
 		{
 			std::perror("recv");
 			initiate_error_response(pfds_it, idx, CODE_503);
 		}
+		else
+			initiate_error_response(pfds_it, idx, CODE_413);
 		return;
 	}
 	reqs[idx].append_to_request_str(buf);
 	update_client_activity_timestamp(meta_it);
 	// TODO: optimize with substring and .rfind()
-	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
+	// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
+	if (nbytes < BUF_SZ - 1)
 	{
 		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
 		// 	;

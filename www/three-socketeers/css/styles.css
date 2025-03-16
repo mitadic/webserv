@@ -107,11 +107,15 @@ h2 {
 	transition: 0,3s;
 	width: auto;
 	max-width: fit-content;
-	margin-left: auto 
+	/* margin-left: auto */
 }
 
 .btn:hover {
 	background-color: #3281ab;
+}
+
+button[type="submit"] {
+	cursor: pointer;
 }
 
 
@@ -129,6 +133,8 @@ h2 {
 	background-attachment: fixed; /* Creates the parallax effect */
 	display: flex;
 	align-items: flex-end;
+	flex-direction: column;
+	align-items: center;
 	justify-content: center;
 	text-align: center;
 	color: #dbdcc9;
@@ -140,6 +146,8 @@ h2 {
 	background: rgba(0, 0, 0, 0.7);
 	padding: 10px 20px;
 	border-radius: 5px;
+	margin-bottom: 20px;
+	margin-top: 400px;
 }
 
 .content {
@@ -173,6 +181,10 @@ h2 {
 	text-align: left;
 	font-size: 1.5rem;
 	gap: 1rem;
+}
+
+.contact-form .btn {
+	margin-left: auto
 }
 
 /* ERROR PAGES
