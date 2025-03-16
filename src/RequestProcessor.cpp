@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/16 10:42:47 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/16 17:29:41 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,14 +106,15 @@ void parseMultipartFormData(const Request& req, const Location* location)
 {
 	std::string boundary = "--" + findBoundary(req);
 	Log::log("Boundary: " + boundary, DEBUG);
+	std::string request_body_str = req.get_request_body_as_str();
 
-	if (req.get_request_body().find(boundary) == std::string::npos)
+	if (request_body_str.find(boundary) == std::string::npos)
 	{
 		Log::log("Boundary not found in request body", ERROR);
 		throw RequestException(CODE_400); // Bad Request
 	}
 
-	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
+	std::vector<std::string> parts = Utils::split(request_body_str, boundary);
 
 	std::string uploadDir = "." + location->get_upload_location();
 
@@ -326,7 +327,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	case APPLICATION_X_WWW_FORM_URLENCODED: // form submissions
 	{
 		Log::log("Processing form submission", INFO);
-		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
+		std::map<std::string, std::string> formData = parseForm(req.get_request_body_as_str());
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << it->first << ": " << it->second << std::endl;
 		Log::log("Form submission processed successfully", INFO);
@@ -363,7 +364,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	case IMAGE_PNG:
 	{
 		Log::log("Processing png", DEBUG);
-		std::string body = req.get_request_body(); // TODO: Do something with the body? Save as file?
+		std::vector<unsigned char> body = req.get_request_body_raw(); // TODO: Do something with the body? Save as file?
 		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
 		break;
 	}

@@ -33,6 +33,7 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_total_sent(0),
 	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
+	_done_reading_headers(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
@@ -86,7 +87,13 @@ void Request::reset_client()
 
 
 const std::string& Request::get_request_str() const { return _request_str; }
-const std::string& Request::get_request_body() const { return _request_body; }
+const std::string Request::get_request_body_as_str() const { 
+	std::string body_as_str;
+	for (std::vector<unsigned char>::const_iterator it = _request_body.begin(); it != _request_body.end(); it++)
+		body_as_str += *it;
+	return body_as_str;
+}
+const std::vector<unsigned char>& Request::get_request_body_raw() const { return _request_body; }
 const std::string& Request::get_response() const { return _response; }
 const std::string& Request::get_request_uri() const { return _request_uri; }
 const std::string& Request::get_cgi_job_id() const { return _cgi_job_id; }
@@ -115,6 +122,12 @@ const std::vector<std::string>& Request::get_accepted_types() const { return _ac
 /* See if the request has specified Content-Type to be "chunked" in the headers */
 bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
 
+/* See if finished reading the headers */
+bool Request::done_reading_headers() { return _done_reading_headers; }
+
+/* Flip the attribute to indicate that we're now reading body */
+void Request::switch_to_reading_body() { _done_reading_headers = true; }
+
 /* If a request has timed out, then ServerEngine can handle it accordingly */
 bool Request::timed_out() { return _timed_out; }
 
@@ -142,6 +155,9 @@ void Request::set_response(const std::string& s)
 
 /* Append string to the _response */
 void Request::append_to_response(const std::string& s) { _response += s; }
+
+/* Append unsigned char to _request_body */
+void Request::append_byte_to_body(const unsigned char& c) { _request_body.push_back(c); }
 
 /* Overwrite the default 200 */
 void Request::set_response_status(const int& code) { _response_status = code; }
@@ -196,5 +212,5 @@ void Request::parse()
 	parser.parse_request_line(*this, line);
 	parser.parse_headers(*this, stream, line);
 	validate_self();
-	parser.parse_body(*this, stream, line);
+	// parser.parse_body(*this, stream, line);
 }
