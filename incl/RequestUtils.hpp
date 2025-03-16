@@ -10,6 +10,7 @@
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
 #include "Types.hpp"
+#include "Log.hpp"
 
 #define SP " "
 #define LWS_CHARS " \t"
