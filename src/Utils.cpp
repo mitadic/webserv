@@ -137,6 +137,7 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 	}
 
 	Log::log("No matching location found", ERROR);
+	Log::log(req.get_request_str(), DEBUG);
 	return NULL;
 }
 

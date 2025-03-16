@@ -20,7 +20,6 @@ class Request {
 	friend class RequestParser;
 
 public:
-    Request();
 	Request(in_addr_t, uint16_t);
     ~Request();
 	Request(const Request&);
@@ -77,6 +76,8 @@ public:
 	CgiHandler  cgi;
 
 private:
+	Request();
+	
 	std::string _request_str;
 	std::vector<unsigned char>	_request_body;
 	std::string _response;

@@ -11,6 +11,7 @@ Request::Request() :
 	_total_sent(0),
 	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
+	_done_reading_headers(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
@@ -58,6 +59,7 @@ Request::Request(const Request& oth) : cgi()
 	_content_type_idx = oth._content_type_idx;
 	_content_length = oth._content_length;
 	_flagged_as_chunked = oth._flagged_as_chunked;
+	_done_reading_headers = oth._done_reading_headers;
 	_timed_out = oth._timed_out;
 	_await_reconnection = oth._await_reconnection;
 	_keep_alive = oth._keep_alive;
@@ -212,5 +214,5 @@ void Request::parse()
 	parser.parse_request_line(*this, line);
 	parser.parse_headers(*this, stream, line);
 	validate_self();
-	// parser.parse_body(*this, stream, line);
+	parser.parse_body(*this, stream, line);
 }
