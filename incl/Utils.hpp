@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/15 14:57:10 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/16 10:31:43 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,4 +44,6 @@ namespace Utils
 	std::string host_to_str(const in_addr_t);
 
 	std::string url_decoder(const std::string &value);
+
+	std::string generateTimestamp();
 }

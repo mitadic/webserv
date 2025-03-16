@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/15 18:48:34 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/16 10:42:47 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 	{
 		std::vector<std::string> pair = Utils::split(*it, '=');
 		if (pair.size() == 2)
-			formData[pair[0]] = pair[1];
+			formData[Utils::url_decoder(pair[0])] = Utils::url_decoder(pair[1]);
 	}
 
 	return formData;
@@ -107,6 +107,12 @@ void parseMultipartFormData(const Request& req, const Location* location)
 	std::string boundary = "--" + findBoundary(req);
 	Log::log("Boundary: " + boundary, DEBUG);
 
+	if (req.get_request_body().find(boundary) == std::string::npos)
+	{
+		Log::log("Boundary not found in request body", ERROR);
+		throw RequestException(CODE_400); // Bad Request
+	}
+
 	std::vector<std::string> parts = Utils::split(req.get_request_body(), boundary);
 
 	std::string uploadDir = "." + location->get_upload_location();
@@ -126,7 +132,7 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				size_t filenameEnd = part.find("\"", filenameStart);
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
-				filename = Utils::sanitizeFilename(filename);
+				filename = Utils::sanitizeFilename(filename) + "_" + Utils::generateTimestamp();
 
 				Log::log("Filename to save: " + filename, DEBUG);
 
@@ -321,9 +327,10 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	{
 		Log::log("Processing form submission", INFO);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body());
-		std::cout << "New message from " << Utils::url_decoder(formData["name"]) << " =\n" << Utils::url_decoder(formData["message"]) << std::endl;
+		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
+			std::cout << it->first << ": " << it->second << std::endl;
 		Log::log("Form submission processed successfully", INFO);
-		std::string body = "form submitted successfully";
+		std::string body = "Form submitted successfully";
 		response << "HTTP/1.1 201 OK\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
@@ -355,6 +362,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 	case IMAGE_JPEG:
 	case IMAGE_PNG:
 	{
+		Log::log("Processing png", DEBUG);
 		std::string body = req.get_request_body(); // TODO: Do something with the body? Save as file?
 		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
 		break;
