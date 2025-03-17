@@ -328,12 +328,12 @@ void RequestParser::_parse_header_content_language(Request& req, std::string& he
 
 void RequestParser::_parse_header_content_length(Request& req, std::string& header_val)
 {
-	// if (req._content_length != UNINITIALIZED)  // already initialized
-	// 	throw RequestException(CODE_400);
+	if (req._content_length != UNINITIALIZED)  // already initialized
+		throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
-	if (req._content_length > MAX_CONTENT_LENGTH)
-		throw RequestException(CODE_400);
+	// if (req._content_length > MAX_CONTENT_LENGTH)
+	// 	throw RequestException(CODE_400);
 }
 
 void RequestParser::_parse_header_content_location(Request& req, std::string& header_val)
@@ -534,7 +534,10 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 		throw RequestException(CODE_400);
 }
 
-/* Continues reading through everything (robustly) until CRLF or EOF */
+/**
+ * Continues reading through everything (robustly) until CRLF or EOF 
+ * Finally, if _content_length is UNINITIALIZED, set it to 0 for the arithmetics later on
+*/
 void RequestParser::parse_headers(Request& req, std::istringstream& stream, std::string& line)
 {
 	if (!std::getline(stream, line))
@@ -542,7 +545,9 @@ void RequestParser::parse_headers(Request& req, std::istringstream& stream, std:
 
 	while (!is_empty_crlf(line) && !stream.eof())
 		parse_header_line(req, stream, line);
-	// std::cout << "FOUND CRLF" << std::endl;
+
+	if (req._content_length == UNINITIALIZED)
+		req._content_length = 0;
 }
 
 void RequestParser::parse_header_line(Request& req, std::istringstream& stream, std::string& line)

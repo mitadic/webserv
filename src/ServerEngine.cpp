@@ -258,7 +258,6 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		}
 		for (ssize_t i = 0; i < nbytes; i++)
 			reqs[idx].append_byte_to_body(buf[i]);
-		std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
 	}
 	else
 	{
@@ -280,6 +279,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 			try {
 				reqs[idx].parse();
+				// is there a cgi? -> add it to pfds
 			}
 			catch (RequestException& e) {
 				initiate_error_response(pfds_it, idx, e.code());
@@ -287,23 +287,12 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 				Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
 				return;
 			}
-			// is there a redirection? -> redirect
-			// is there a cgi? -> add it to pfds
-
-			// std::string appended(buf + crlf_begin + 4, buf + nbytes);
-			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
 		}
-		// std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
-		// return;
 	}
 	update_client_activity_timestamp(meta_it);
 
 	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
 	{
-		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
-		// std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
-		// std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
-		// std::cout << "----BODY-END----" << std::endl;
 		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
 		// 	;
 		// TODO: parse headers, determine if we need to read the body as well
@@ -383,11 +372,11 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			}
 		}
 		else if (reqs[idx].should_close_early())
+		{
 			forget_client(pfds_it, meta_it);
+		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
-
-		// pfds_vector_modified = true;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
 	}
 }
 
