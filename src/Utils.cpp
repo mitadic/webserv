@@ -15,7 +15,7 @@
 #include "Request.hpp"
 #include "Location.hpp"
 
-std::vector<std::string> Utils::split(const std::string& str, char delim)
+std::vector<std::string> Utils::split(const std::string &str, char delim)
 {
 	std::vector<std::string> tokens;
 	std::string token;
@@ -27,32 +27,34 @@ std::vector<std::string> Utils::split(const std::string& str, char delim)
 	return tokens;
 }
 
-std::vector<std::string> Utils::split(const std::string& str, const std::string& delim)
+std::vector<std::string> Utils::split(const std::string &str, const std::string &delim)
 {
 	std::vector<std::string> tokens;
 	size_t startPos = 0;
 	size_t delimPos;
 
-	while ((delimPos = str.find(delim, startPos)) != std::string::npos) {
+	while ((delimPos = str.find(delim, startPos)) != std::string::npos)
+	{
 		tokens.push_back(str.substr(startPos, delimPos - startPos));
 		startPos = delimPos + delim.length();
 	}
 
 	// Add the last token after the last delimiter
-	if (startPos < str.length()) {
+	if (startPos < str.length())
+	{
 		tokens.push_back(str.substr(startPos));
 	}
 
 	return tokens;
 }
 
-bool Utils::fileExists (const std::string& file)
+bool Utils::fileExists(const std::string &file)
 {
-	return (access((file).c_str(), F_OK) != -1);
+	return (access(file.c_str(), F_OK) != -1);
 }
 
 // stat returns 0 on success, and -1 on failure (e.g., if the file does not exist)
-bool Utils::isDirectory(const std::string& path)
+bool Utils::isDirectory(const std::string &path)
 {
 	struct stat info;
 	if (stat(path.c_str(), &info) != 0)
@@ -62,14 +64,14 @@ bool Utils::isDirectory(const std::string& path)
 
 std::vector<std::string> Utils::listDirectory(std::string filePath)
 {
-	DIR* dir = opendir(filePath.c_str());
+	DIR *dir = opendir(filePath.c_str());
 	if (!dir)
 	{
 		throw std::runtime_error("Error opening directory: " + filePath);
 	}
 
 	std::vector<std::string> files;
-	struct dirent* ent;
+	struct dirent *ent;
 	while ((ent = readdir(dir)) != NULL)
 	{
 		files.push_back(ent->d_name);
@@ -79,7 +81,7 @@ std::vector<std::string> Utils::listDirectory(std::string filePath)
 	return files;
 }
 
-std::string Utils::readFile(const std::string& file)
+std::string Utils::readFile(const std::string &file)
 {
 	std::ifstream read_file(file.c_str(), std::ios::binary | std::ios::ate);
 	if (!read_file)
@@ -101,9 +103,9 @@ std::string Utils::readFile(const std::string& file)
 
 // Find the server block that corresponds to the request based on port and host
 // TODO: If no server block is found, return an error ?
-const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<ServerBlock>& server_blocks)
+const ServerBlock *Utils::getServerBlock(const Request &req, const std::vector<ServerBlock> &server_blocks)
 {
-	const ServerBlock* matchingServer = NULL;
+	const ServerBlock *matchingServer = NULL;
 
 	for (size_t i = 0; i < server_blocks.size(); ++i)
 	{
@@ -122,9 +124,9 @@ const ServerBlock* Utils::getServerBlock(const Request& req, const std::vector<S
 
 // Find the corresponding location in the server block based on the uri
 // Locations are sorted by length, so the first match is the longest match
-const Location* Utils::getLocation(const Request& req, const ServerBlock* server)
+const Location *Utils::getLocation(const Request &req, const ServerBlock *server)
 {
-	const std::vector<Location>& locations = server->get_locations();
+	const std::vector<Location> &locations = server->get_locations();
 
 	for (size_t i = 0; i < server->get_locations().size(); ++i)
 	{
@@ -137,12 +139,11 @@ const Location* Utils::getLocation(const Request& req, const ServerBlock* server
 	}
 
 	Log::log("No matching location found", ERROR);
+	Log::log(req.get_request_str(), DEBUG);
 	return NULL;
 }
 
-
-
-std::string Utils::sanitizeFilename(const std::string& filename)
+std::string Utils::sanitizeFilename(const std::string &filename)
 {
 	std::string sanitized;
 	for (size_t i = 0; i < filename.size(); ++i)
@@ -157,7 +158,7 @@ std::string Utils::sanitizeFilename(const std::string& filename)
 }
 
 // ensure the uri does not travel up above the root directory
-bool Utils::uriIsSafe(const std::string& uri)
+bool Utils::uriIsSafe(const std::string &uri)
 {
 	std::istringstream stream(uri);
 	std::string segment;
@@ -189,4 +190,57 @@ std::string Utils::host_to_str(const in_addr_t num)
 			ss << ".";
 	}
 	return ss.str();
+}
+
+// URL decode
+std::string Utils::url_decoder(const std::string &value)
+{
+	std::ostringstream decoded_str;
+	decoded_str.fill('0');
+	decoded_str << std::hex;
+
+	for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i)
+	{
+		std::string::value_type c = (*i);
+
+		if (c == '%')
+		{
+			// Get the next two characters
+			std::string::value_type c1 = *(++i);
+			std::string::value_type c0 = *(++i);
+
+			// Convert hex to integer
+			int num = 0;
+			std::istringstream ss;
+			ss.str(std::string() + c1 + c0);
+			ss >> std::hex >> num;
+
+			decoded_str << static_cast<char>(num);
+		}
+		else if (c == '+')
+		{
+			decoded_str << ' ';
+		}
+		else
+		{
+			decoded_str << c;
+		}
+	}
+
+	return decoded_str.str();
+}
+
+std::string Utils::generateTimestamp()
+{
+	std::time_t t = std::time(NULL);
+	std::tm *now = std::localtime(&t);
+	std::stringstream timestamp;
+	timestamp << (now->tm_year + 1900) << '-'
+			  << (now->tm_mon + 1) << '-'
+			  << now->tm_mday << '_'
+			  << now->tm_hour << ':'
+			  << now->tm_min << ':'
+			  << now->tm_sec;
+
+	return timestamp.str();
 }
