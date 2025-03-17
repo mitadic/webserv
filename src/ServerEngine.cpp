@@ -262,7 +262,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		// for (ssize_t i = 0; i < nbytes; i++)
 		// 	std::cout << buf[i];
 		// std::cout << std::endl;
-		std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
+		// std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
 	}
 	else
 	{
@@ -292,7 +292,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 			// std::string appended(buf + crlf_begin + 4, buf + nbytes);
 			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
 		}
-		std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
+		// std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
 		// return;
 	}
 	update_client_activity_timestamp(meta_it);
@@ -300,9 +300,9 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
 	{
 		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
-		std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
-		std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
-		std::cout << "----BODY-END----" << std::endl; 
+		// std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
+		// std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
+		// std::cout << "----BODY-END----" << std::endl;
 		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
 		// 	;
 		// TODO: parse headers, determine if we need to read the body as well

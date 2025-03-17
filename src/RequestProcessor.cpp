@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/16 21:48:27 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/17 11:40:21 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,9 +134,15 @@ void parseMultipartFormData(const Request &req, const Location *location)
 				size_t filenameEnd = part.find("\"", filenameStart);
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
-				filename = Utils::sanitizeFilename(filename) + "_" + Utils::generateTimestamp();
+				filename = Utils::sanitizeFilename(filename);
+				size_t filename_end = filename.find_last_of('.');
+				std::string new_filename;
+				if (filename_end != std::string::npos)
+					new_filename = filename.substr(0, filename_end);
+				 new_filename += "_" + Utils::generateTimestamp();
+				 new_filename += filename.substr(filename_end);
 
-				Log::log("Filename to save: " + filename, DEBUG);
+				Log::log("Filename to save: " + new_filename, DEBUG);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)
@@ -149,7 +155,7 @@ void parseMultipartFormData(const Request &req, const Location *location)
 					ss << "File content size: " << fileContent.size();
 					Log::log(ss.str(), DEBUG);
 
-					std::string filePath = uploadDir + "/" + filename;
+					std::string filePath = uploadDir + "/" + new_filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 
 					Log::log("Saving file to: " + filePath, DEBUG);
