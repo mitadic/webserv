@@ -220,6 +220,76 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 }
 
 
+/* Process hangup (0) or error (-1) */
+void ServerEngine::process_read_failure(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const ssize_t& nbytes)
+{
+	if (nbytes == 0)
+	{
+		std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
+		forget_client(pfds_it, meta_it);
+	}
+	else if (nbytes == -1)
+	{
+		std::perror("recv");
+		initiate_error_response(pfds_it, idx, CODE_503);
+	}
+}
+
+/* Read headers, add any buf spillover to body, and parse and validate the headers before proceeding */
+int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int& idx, const char* buf, const ssize_t& nbytes)
+{
+	ssize_t the_trail_from_prev = 0;
+	if (reqs[idx].get_request_str().size() >= 3)
+		the_trail_from_prev = 3;
+	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev;
+
+	// this_buffer == 3 tailing chars of request_str (if applicable) + current buf, to catch broken CRLFCRLF
+	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start);
+	this_buffer += buf;
+	size_t crlf_begin = this_buffer.find("\r\n\r\n");
+	if (crlf_begin == std::string::npos)
+	{
+		reqs[idx].append_to_request_str(buf);
+	}
+	else
+	{
+		reqs[idx].switch_to_reading_body();
+		std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
+		reqs[idx].append_to_request_str(buf_as_str);
+		for (ssize_t i = crlf_begin + 4; i < nbytes + the_trail_from_prev; i++)	// 3: tailsize; 4: rnrn size
+			reqs[idx].append_byte_to_body(buf[i - the_trail_from_prev]);
+
+		try {
+			reqs[idx].parse();
+			// is there a cgi? -> add it to pfds
+		}
+		catch (RequestException& e) {
+			initiate_error_response(pfds_it, idx, e.code());
+			reqs[idx].flag_that_we_should_close_early();
+			Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/* Read body */
+int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
+{
+	size_t body_size = reqs[idx].get_request_body_raw().size();
+	size_t content_length = reqs[idx].get_content_length();
+	if (content_length > meta_it->second.max_client_body || body_size > content_length)
+	{
+		initiate_error_response(pfds_it, idx, CODE_413);
+		reqs[idx].flag_that_we_should_close_early();
+		Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+		return 1;
+	}
+	for (ssize_t i = 0; i < nbytes; i++)
+		reqs[idx].append_byte_to_body(buf[i]);
+	return 0;
+}
+
 /* Once it reads CRLF CRLF it begings parsing the headers and then reads body if applicable, then processes the request */
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
@@ -230,64 +300,20 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	memset(buf, 0, BUF_SZ + 1);
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 
-	if (nbytes <= 0)  // hangup or error
+	if (nbytes <= 0)
 	{
-		if (nbytes == 0)
-		{
-			std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
-			forget_client(pfds_it, meta_it);
-		}
-		else if (nbytes == -1)
-		{
-			std::perror("recv");
-			initiate_error_response(pfds_it, idx, CODE_503);
-		}
+		process_read_failure(pfds_it, meta_it, idx, nbytes);
 		return;
 	}
-
-	if (reqs[idx].done_reading_headers())  // read body
+	if (reqs[idx].done_reading_headers())
 	{
-		size_t body_size = reqs[idx].get_request_body_raw().size();
-		size_t content_length = reqs[idx].get_content_length();
-		if (content_length > meta_it->second.max_client_body || body_size > content_length)
-		{
-			initiate_error_response(pfds_it, idx, CODE_413);
-			reqs[idx].flag_that_we_should_close_early();
-			Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+		if (read_body(pfds_it, meta_it, idx, buf, nbytes) != OK)
 			return;
-		}
-		for (ssize_t i = 0; i < nbytes; i++)
-			reqs[idx].append_byte_to_body(buf[i]);
 	}
 	else
 	{
-		std::string this_buffer(buf);
-		// TODO: optimize with substring and .rfind()
-		// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
-		size_t crlf_begin = this_buffer.find("\r\n\r\n");
-		if (crlf_begin == std::string::npos)
-		{
-			reqs[idx].append_to_request_str(buf);
-		}
-		else
-		{
-			reqs[idx].switch_to_reading_body();
-			std::string buf_as_str(buf + 0, buf + crlf_begin + 4);
-			reqs[idx].append_to_request_str(buf_as_str);
-			for (ssize_t i = crlf_begin + 4; i < nbytes; i++)
-				reqs[idx].append_byte_to_body(buf[i]);
-
-			try {
-				reqs[idx].parse();
-				// is there a cgi? -> add it to pfds
-			}
-			catch (RequestException& e) {
-				initiate_error_response(pfds_it, idx, e.code());
-				reqs[idx].flag_that_we_should_close_early();
-				Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
-				return;
-			}
-		}
+		if (read_headers(pfds_it, idx, buf, nbytes) != OK)
+			return;
 	}
 	update_client_activity_timestamp(meta_it);
 

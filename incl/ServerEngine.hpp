@@ -53,6 +53,9 @@ public:
 
 	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
+	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
+	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
