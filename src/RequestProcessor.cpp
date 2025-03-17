@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/16 17:29:41 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/17 11:40:21 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "RequestProcessor.hpp"
-#include "Request.hpp"  // safe in .cpp, won't cause circular imports
+#include "Request.hpp" // safe in .cpp, won't cause circular imports
 #include "Location.hpp"
 #include "ServerBlock.hpp"
 
@@ -19,7 +19,7 @@
 
 // ------- GET METHOD FUNCTIONS ------------
 
-std::string defineMime(const std::string& file)
+std::string defineMime(const std::string &file)
 {
 	size_t pos = file.find_last_of('.');
 	if (pos == std::string::npos || pos == file.length() - 1)
@@ -50,16 +50,16 @@ std::string defineMime(const std::string& file)
 		return "application/octet-stream";
 }
 
-std::string createContentString(const std::string& file, const std::string& mimeType)
+std::string createContentString(const std::string &file, const std::string &mimeType)
 {
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				<< "Content-Type: " << mimeType << "\r\n"
-				<< "Content-Length: " << body.size() << "\r\n"
-				<< "\r\n"
-				<< body;
+			 << "Content-Type: " << mimeType << "\r\n"
+			 << "Content-Length: " << body.size() << "\r\n"
+			 << "\r\n"
+			 << body;
 
 	return response.str();
 }
@@ -67,12 +67,12 @@ std::string createContentString(const std::string& file, const std::string& mime
 // -----------POST METHOD FUNCTIONS ------------
 
 // Parse the form data and return a map of key-value pairs
-std::map<std::string, std::string> parseForm(const std::string& form)
+std::map<std::string, std::string> parseForm(const std::string &form)
 {
 	std::map<std::string, std::string> formData;
 	std::vector<std::string> pairs = Utils::split(form, '&');
 
-	//TODO: Add URL Decoder?
+	// TODO: Add URL Decoder?
 
 	for (std::vector<std::string>::const_iterator it = pairs.begin(); it != pairs.end(); ++it)
 	{
@@ -85,7 +85,7 @@ std::map<std::string, std::string> parseForm(const std::string& form)
 }
 
 // Find boundary from the request params
-std::string findBoundary(const Request& req)
+std::string findBoundary(const Request &req)
 {
 	std::vector<std::string> contentTypeParams = req.get_content_type_params();
 	for (std::vector<std::string>::const_iterator it = contentTypeParams.begin(); it != contentTypeParams.end(); ++it)
@@ -93,6 +93,7 @@ std::string findBoundary(const Request& req)
 		if (it->find("boundary=") != std::string::npos)
 			return it->substr(it->find("boundary=") + 9);
 	}
+	Log::log("Boundary not found in header", ERROR);
 	throw RequestException(CODE_400); // Bad Request
 }
 
@@ -102,12 +103,12 @@ std::string findBoundary(const Request& req)
 // - sanitize the filename to prevent directory traversal attacks
 // - save the files to the server in the upload directory
 // -- if the file can't be saved, throw 500 error page
-void parseMultipartFormData(const Request& req, const Location* location)
+void parseMultipartFormData(const Request &req, const Location *location)
 {
 	std::string boundary = "--" + findBoundary(req);
 	Log::log("Boundary: " + boundary, DEBUG);
-	std::string request_body_str = req.get_request_body_as_str();
 
+	std::string request_body_str = req.get_request_body_as_str();
 	if (request_body_str.find(boundary) == std::string::npos)
 	{
 		Log::log("Boundary not found in request body", ERROR);
@@ -115,14 +116,14 @@ void parseMultipartFormData(const Request& req, const Location* location)
 	}
 
 	std::vector<std::string> parts = Utils::split(request_body_str, boundary);
-
 	std::string uploadDir = "." + location->get_upload_location();
 
 	for (std::vector<std::string>::const_iterator it = parts.begin(); it != parts.end(); ++it)
 	{
-		std::string part = *it;
+		const std::string& part = *it;
 		if (part.empty() || part == "--\r\n")
 			continue;
+
 		size_t dispositionStart = part.find("Content-Disposition: form-data;");
 		if (dispositionStart != std::string::npos)
 		{
@@ -133,9 +134,15 @@ void parseMultipartFormData(const Request& req, const Location* location)
 				size_t filenameEnd = part.find("\"", filenameStart);
 				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
 
-				filename = Utils::sanitizeFilename(filename) + "_" + Utils::generateTimestamp();
+				filename = Utils::sanitizeFilename(filename);
+				size_t filename_end = filename.find_last_of('.');
+				std::string new_filename;
+				if (filename_end != std::string::npos)
+					new_filename = filename.substr(0, filename_end);
+				 new_filename += "_" + Utils::generateTimestamp();
+				 new_filename += filename.substr(filename_end);
 
-				Log::log("Filename to save: " + filename, DEBUG);
+				Log::log("Filename to save: " + new_filename, DEBUG);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)
@@ -144,20 +151,23 @@ void parseMultipartFormData(const Request& req, const Location* location)
 					size_t contentEnd = part.rfind("\r\n");
 					std::string fileContent = part.substr(contentStart, contentEnd - contentStart);
 
-					Log::log("File content: " + fileContent, DEBUG);
+					std::ostringstream ss;
+					ss << "File content size: " << fileContent.size();
+					Log::log(ss.str(), DEBUG);
 
-					std::string filePath = uploadDir + "/" + filename;
+					std::string filePath = uploadDir + "/" + new_filename;
 					std::ofstream file(filePath.c_str(), std::ios::binary);
 
 					Log::log("Saving file to: " + filePath, DEBUG);
 
 					if (file.is_open())
 					{
-						file << fileContent;
+						file.write(fileContent.c_str(), fileContent.size());
 						file.close();
 					}
 					else
 					{
+						Log::log("Error saving file", ERROR);
 						throw RequestException(CODE_500); // Internal Server Error
 					}
 					Log::log("File saved successfully", INFO);
@@ -172,48 +182,47 @@ void parseMultipartFormData(const Request& req, const Location* location)
 // - if the location has a redirect directive with a status code, return that status code and Location header
 // -- for status codes 301 and 302, check if the method is DELETE and throw 405 error page
 // - if the location has no redirect directive, return the result of the method processing
-std::string RequestProcessor::handleMethod(const Request& req, const std::vector<ServerBlock>& server_blocks)
+std::string RequestProcessor::handleMethod(const Request &req, const std::vector<ServerBlock> &server_blocks)
 {
-	const ServerBlock* matchingServer = Utils::getServerBlock(req, server_blocks);
-	const Location* matchingLocation = Utils::getLocation(req, matchingServer);
+	const ServerBlock *matchingServer = Utils::getServerBlock(req, server_blocks);
+	const Location *matchingLocation = Utils::getLocation(req, matchingServer);
 
 	if (!matchingLocation->get_redirect().second.empty())
 	{
 		// the browser or Postman handle redirection loops, no need to check manually
 		Log::log("Redirect directive found", DEBUG);
 		int response_code = matchingLocation->get_redirect().first;
-		if ((response_code == 301 || response_code == 302)
-			&& req.get_method() == DELETE)
+		if ((response_code == 301 || response_code == 302) && req.get_method() == DELETE)
 			throw RequestException(CODE_405); // Method Not Allowed
 		Log::log("Redirecting to: " + matchingLocation->get_redirect().second, WARNING);
 		std::ostringstream response;
 		response << "HTTP/1.1 "
-					<< status_messages[match_code(response_code)] << "\r\n"
-					<< "Location: " << matchingLocation->get_redirect().second << "\r\n"
-					<< "\r\n";
+				 << status_messages[match_code(response_code)] << "\r\n"
+				 << "Location: " << matchingLocation->get_redirect().second << "\r\n"
+				 << "\r\n";
 		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
 	}
 
 	switch (req.get_method())
 	{
-		case GET:
-		{
-			Log::log("GET request: " + req.get_request_uri(), INFO);
-			return processGet(req, matchingLocation);
-		}
-		case POST:
-		{
-			Log::log("POST request: " + req.get_request_uri(), INFO);
-			return processPost(req, matchingLocation);
-		}
-		case DELETE:
-		{
-			Log::log("DELETE request: " + req.get_request_uri(), INFO);
-			return processDelete(req, matchingLocation);
-		}
-		default:
-			throw RequestException(CODE_405); // Method Not Allowed
+	case GET:
+	{
+		Log::log("GET request: " + req.get_request_uri(), INFO);
+		return processGet(req, matchingLocation);
+	}
+	case POST:
+	{
+		Log::log("POST request: " + req.get_request_uri(), INFO);
+		return processPost(req, matchingLocation);
+	}
+	case DELETE:
+	{
+		Log::log("DELETE request: " + req.get_request_uri(), INFO);
+		return processDelete(req, matchingLocation);
+	}
+	default:
+		throw RequestException(CODE_405); // Method Not Allowed
 	}
 }
 
@@ -229,7 +238,7 @@ std::string RequestProcessor::handleMethod(const Request& req, const std::vector
 // - if autoindex is off, return 403 error page
 // if it's a file, return the file content if it's an accepted type
 // - if it's not an accepted type, return 406 error page
-std::string RequestProcessor::processGet(const Request& req, const Location* location)
+std::string RequestProcessor::processGet(const Request &req, const Location *location)
 {
 	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
@@ -249,11 +258,11 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 					Log::log("Showing directory listing", INFO);
 					std::ostringstream response;
 					response << "HTTP/1.1 200 OK\r\n"
-								<< "Content-Type: text/html\r\n"
-								<< "\r\n"
-								<< "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"
-								<< "<h1>Index of " << req.get_request_uri() << "</h1>"
-								<< "<ul>";
+							 << "Content-Type: text/html\r\n"
+							 << "\r\n"
+							 << "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"
+							 << "<h1>Index of " << req.get_request_uri() << "</h1>"
+							 << "<ul>";
 
 					std::vector<std::string> files = Utils::listDirectory(filePath);
 					for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it)
@@ -278,7 +287,7 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 			bool matchFound = false;
 			for (std::vector<std::string>::const_iterator it = acceptHeader.begin(); it != acceptHeader.end(); ++it)
 			{
-				const std::string& acceptedType = *it;
+				const std::string &acceptedType = *it;
 				if (acceptedType == mimeType || acceptedType == "*/*" ||
 					(acceptedType.find("/*") != std::string::npos && acceptedType.substr(0, acceptedType.find("/")) == mimeType.substr(0, mimeType.find("/"))))
 				{
@@ -309,7 +318,7 @@ std::string RequestProcessor::processGet(const Request& req, const Location* loc
 // - If it’s application/x-www-form-urlencoded, process it as form data.
 // If the request is for uploading a file, make sure uploads are allowed in the location
 // - if not, throw error page
-std::string RequestProcessor::processPost(const Request& req, const Location* location)
+std::string RequestProcessor::processPost(const Request &req, const Location *location)
 {
 	if (!location->is_post())
 		throw RequestException(CODE_405); // Method Not Allowed
@@ -333,10 +342,10 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 		Log::log("Form submission processed successfully", INFO);
 		std::string body = "Form submitted successfully";
 		response << "HTTP/1.1 201 OK\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
+				 << "Content-Type: text/plain" << "\r\n"
+				 << "Content-Length: " << body.size() << "\r\n"
+				 << "\r\n"
+				 << body;
 		break;
 	}
 	case MULTIPART_FORM_DATA: // file uploads
@@ -347,10 +356,10 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 		parseMultipartFormData(req, location);
 		std::string body = "file uploaded successfully";
 		response << "HTTP/1.1 201 OK\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
+				 << "Content-Type: text/plain" << "\r\n"
+				 << "Content-Length: " << body.size() << "\r\n"
+				 << "\r\n"
+				 << body;
 		break;
 	}
 	case TEXT_PLAIN:
@@ -386,7 +395,7 @@ std::string RequestProcessor::processPost(const Request& req, const Location* lo
 // if it's a directory, return 403 error page (Forbidden)
 // if deletion is successful, return 204 No Content
 // if deletion fails, return 500 error page (Internal Server Error)
-std::string RequestProcessor::processDelete(const Request& req, const Location* location)
+std::string RequestProcessor::processDelete(const Request &req, const Location *location)
 {
 
 	if (!location->is_del())
@@ -403,15 +412,10 @@ std::string RequestProcessor::processDelete(const Request& req, const Location* 
 		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
 
 	else if (std::remove(filePath.c_str()) != 0)
-			throw RequestException(CODE_500);
+		throw RequestException(CODE_500);
 
 	Log::log("File deleted successfully", INFO);
 	std::ostringstream response;
 	response << "HTTP/1.1 204 No Content\r\n\r\n";
 	return response.str();
 }
-
-
-
-
-
