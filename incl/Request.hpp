@@ -59,6 +59,7 @@ public:
 	bool timed_out();
 	bool should_await_reconnection();
 	bool should_keep_alive();
+	bool should_close_early();
 
 	// void set_port(const uint16_t&);
 	// void set_host(const in_addr_t&);
@@ -72,6 +73,7 @@ public:
 	void append_to_cgi_output(const std::string& s);
 	void increment_total_sent_by(const int& num);
 	void flag_the_timeout();
+	void flag_that_we_should_close_early();
 
 	CgiHandler  cgi;
 
@@ -88,6 +90,7 @@ private:
 	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	bool		_done_reading_headers;
+	bool		_should_close_early;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
 	std::vector<std::string> _content_type_params;
 	int			_client_fd;

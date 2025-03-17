@@ -12,6 +12,7 @@ Request::Request() :
 	_content_length(0),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
+	_should_close_early(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
@@ -35,6 +36,7 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_content_length(0),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
+	_should_close_early(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
@@ -60,6 +62,7 @@ Request::Request(const Request& oth) : cgi()
 	_content_length = oth._content_length;
 	_flagged_as_chunked = oth._flagged_as_chunked;
 	_done_reading_headers = oth._done_reading_headers;
+	_should_close_early = oth._should_close_early;
 	_timed_out = oth._timed_out;
 	_await_reconnection = oth._await_reconnection;
 	_keep_alive = oth._keep_alive;
@@ -127,8 +130,14 @@ bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
 /* See if finished reading the headers */
 bool Request::done_reading_headers() { return _done_reading_headers; }
 
+/* See if anything has indicated to close connection early */
+bool Request::should_close_early() { return _should_close_early; }
+
 /* Flip the attribute to indicate that we're now reading body */
 void Request::switch_to_reading_body() { _done_reading_headers = true; }
+
+/* Flip the attribute to indicate that we should close the connection early */
+void Request::flag_that_we_should_close_early() { _should_close_early = true; }
 
 /* If a request has timed out, then ServerEngine can handle it accordingly */
 bool Request::timed_out() { return _timed_out; }
