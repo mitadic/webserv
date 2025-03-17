@@ -328,8 +328,8 @@ void RequestParser::_parse_header_content_language(Request& req, std::string& he
 
 void RequestParser::_parse_header_content_length(Request& req, std::string& header_val)
 {
-	if (req._content_length != UNINITIALIZED)  // already initialized
-		throw RequestException(CODE_400);
+	// if (req._content_length != UNINITIALIZED)  // already initialized
+	// 	throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
 	if (req._content_length > MAX_CONTENT_LENGTH)
@@ -566,22 +566,27 @@ void RequestParser::parse_header_line(Request& req, std::istringstream& stream, 
 /* If not EOF, continues reading until req._content_length */
 void RequestParser::parse_body(Request& req, std::istringstream& stream, std::string& line)
 {
-	if (req._content_length <= 0)
-		return;
+	(void)req;
+	(void)stream;
+	(void)line;
 
-	std::ostringstream oss;
-	oss << req._content_length;
-	Log::log("Parsing the body with content-length: " + oss.str(), DEBUG);
+	// if (req._content_length <= 0)
+	// 	return;
 
-	while (std::getline(stream, line))
-	{
-		std::cout << "." << std::endl;
-		if (req._request_body.size() > static_cast<size_t>(req._content_length))
-			throw RequestException(CODE_400);
-		req._request_body += line;
-		req._request_body += '\n';
-	}
-	Log::log("Parsed Request body: " + req._request_body, WARNING);
+	// std::ostringstream oss;
+	// oss << req._content_length;
+	// Log::log("Parsing the body with content-length: " + oss.str(), DEBUG);
+
+	// while (std::getline(stream, line))
+	// {
+	// 	std::cout << "." << std::endl;
+	// 	if (req._request_body.size() > static_cast<size_t>(req._content_length))
+	// 		throw RequestException(CODE_400);
+	// 	req._request_body += line;
+	// 	req._request_body += '\n';
+	// }
+	// Log::log("Parsed Request body: " + req._request_body, WARNING);
+
 	// incorrectly flagging for error when eof() ? temp disabled
 	// check_stream_for_errors(stream);
 }
