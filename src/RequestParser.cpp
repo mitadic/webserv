@@ -328,8 +328,8 @@ void RequestParser::_parse_header_content_language(Request& req, std::string& he
 
 void RequestParser::_parse_header_content_length(Request& req, std::string& header_val)
 {
-	if (req._content_length != UNINITIALIZED)  // already initialized
-		throw RequestException(CODE_400);
+	// if (req._content_length != UNINITIALIZED)  // already initialized
+	// 	throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
 	if (req._content_length > MAX_CONTENT_LENGTH)

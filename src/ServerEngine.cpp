@@ -252,6 +252,10 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 	if (reqs[idx].done_reading_headers())
 	{
+		size_t body_size = reqs[idx].get_request_body_raw().size();
+		size_t content_length = reqs[idx].get_content_length();
+		if (body_size > content_length)
+			initiate_error_response(pfds_it, idx, CODE_413);
 		for (ssize_t i = 0; i < nbytes; i++)
 			reqs[idx].append_byte_to_body(buf[i]);
 		// std::cout << "DEBUG MANUAL done_reading_headers() block, appended:" << std::endl;
@@ -263,6 +267,8 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	else
 	{
 		std::string this_buffer(buf);
+		// TODO: optimize with substring and .rfind()
+		// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
 		size_t crlf_begin = this_buffer.find("\r\n\r\n");
 		if (crlf_begin == std::string::npos)
 		{
@@ -278,7 +284,12 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 			reqs[idx].append_to_request_str(buf_as_str);
 			for (ssize_t i = crlf_begin + 4; i < nbytes; i++)
 				reqs[idx].append_byte_to_body(buf[i]);
-			std::string appended(buf + crlf_begin + 4, buf + nbytes);
+
+			reqs[idx].parse();
+			// is there a redirection? -> redirect
+			// is there a cgi? -> add it to pfds
+
+			// std::string appended(buf + crlf_begin + 4, buf + nbytes);
 			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
 		}
 		std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
@@ -286,10 +297,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	}
 	update_client_activity_timestamp(meta_it);
 
-
-	// TODO: optimize with substring and .rfind()
-	// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
-	if (nbytes < BUF_SZ)
+	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
 	{
 		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
 		std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
@@ -426,9 +434,6 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	RequestProcessor processor;
 	std::string result;
 
-	req.parse();
-	// is there a redirection? -> redirect
-	// is there a cgi? -> add it to pfds
 	result = processor.handleMethod(req, server_blocks);
 	req.set_response(result);
 	pfds_it->events = POLLOUT;  // get ready for writing
