@@ -7,9 +7,9 @@ Request::Request() :
 	_response(""),
 	_port(80),  // default for when unspecified
 	_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
-	_response_status(CODE_200),
+	_response_status(status_code_values[CODE_200]),
 	_total_sent(0),
-	_content_length(0),
+	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
 	_should_close_early(false),
@@ -31,9 +31,9 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_response(""),
 	_port(port),
 	_host(host),
-	_response_status(CODE_200),
+	_response_status(status_code_values[CODE_200]),
 	_total_sent(0),
-	_content_length(0),
+	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
 	_should_close_early(false),
