@@ -9,7 +9,7 @@ Request::Request() :
 	_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
 	_response_status(CODE_200),
 	_total_sent(0),
-	_content_length(UNINITIALIZED),
+	_content_length(0),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
 	_content_type_idx(UNINITIALIZED),
@@ -32,7 +32,7 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_host(host),
 	_response_status(CODE_200),
 	_total_sent(0),
-	_content_length(UNINITIALIZED),
+	_content_length(0),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
 	_content_type_idx(UNINITIALIZED),

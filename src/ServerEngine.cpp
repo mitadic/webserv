@@ -254,7 +254,11 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	{
 		for (ssize_t i = 0; i < nbytes; i++)
 			reqs[idx].append_byte_to_body(buf[i]);
-		std::cout << "DEBUG MANUAL done_reading_headers() block" << std::endl;
+		// std::cout << "DEBUG MANUAL done_reading_headers() block, appended:" << std::endl;
+		// for (ssize_t i = 0; i < nbytes; i++)
+		// 	std::cout << buf[i];
+		// std::cout << std::endl;
+		std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
 	}
 	else
 	{
@@ -269,11 +273,16 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 			reqs[idx].switch_to_reading_body();
 			// buf[crlf_begin + 4] = 0;
 			std::string buf_as_str(buf + 0, buf + crlf_begin + 4);
-			std::cout << "DEBUG MANUAL buf_as_str:" << std::endl << buf_as_str;
+			// std::cout << "DEBUG MANUAL entire buf:" << std::endl << buf;
+			// std::cout << "DEBUG MANUAL buf_as_str:" << std::endl << buf_as_str;
 			reqs[idx].append_to_request_str(buf_as_str);
 			for (ssize_t i = crlf_begin + 4; i < nbytes; i++)
 				reqs[idx].append_byte_to_body(buf[i]);
+			std::string appended(buf + crlf_begin + 4, buf + nbytes);
+			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
 		}
+		std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
+		// return;
 	}
 	update_client_activity_timestamp(meta_it);
 
@@ -282,7 +291,10 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
 	if (nbytes < BUF_SZ)
 	{
-		std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block" << std::endl;
+		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
+		std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
+		std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
+		std::cout << "----BODY-END----" << std::endl; 
 		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
 		// 	;
 		// TODO: parse headers, determine if we need to read the body as well
