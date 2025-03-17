@@ -7,7 +7,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
   </head>
   <body>
 	<a href="index.html" class="btn backhome">Back to homepage</a>
@@ -17,7 +17,7 @@
 		<h1>Contact Us</h1>
 		<h2>Leave us a message:</h2>
 		<div class="contact-form">
-			<form action="/" method="post">
+			<form id="contactForm" action="/contact.html" method="post">
 				<label for="name">Your Name:</label>
 				<input type="text" id="name" name="name" required>
 				<label for="message">Your Message:</label>
@@ -26,6 +26,34 @@
 			</form>
 		</div>
 	</div>
+	<script>
+        const form = document.getElementById("contactForm");
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const formData = new URLSearchParams();
+			for (const [key, value] of new FormData(form)) {
+				formData.append(key, value);
+			}
+            try {
+                const response = await fetch(form.action, {
+                    method: form.method,
+					headers:{
+						"Content-Type":"application/x-www-form-urlencoded"
+					},
+                    body: formData.toString()
+                });
+
+                if (response.ok) {
+                    window.location.href = '/success.html';
+                } else {
+                    alert("Failed to send message. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred. Please try again.");
+            }
+        });
+    </script>
     <!-- Footer -->
     <footer>
       <p>© 2025 aarponen / mitadic / pbencze</p>

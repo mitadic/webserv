@@ -20,7 +20,6 @@ class Request {
 	friend class RequestParser;
 
 public:
-    Request();
 	Request(in_addr_t, uint16_t);
     ~Request();
 	Request(const Request&);
@@ -31,7 +30,8 @@ public:
 	void	validate_self();
 
 	const std::string& get_request_str() const;
-	const std::string& get_request_body() const;
+	const std::string get_request_body_as_str() const;
+	const std::vector<unsigned char>& get_request_body_raw() const;
 	const std::string& get_response() const;
 	const std::string& get_request_uri() const;
 	const std::string& get_cgi_job_id() const;
@@ -53,6 +53,8 @@ public:
 	const std::vector<std::string>& get_accepted_types() const;
 
 	bool is_flagged_as_chunked();
+	bool done_reading_headers();
+	void switch_to_reading_body();
 
 	bool timed_out();
 	bool should_await_reconnection();
@@ -63,6 +65,7 @@ public:
 	void append_to_request_str(const std::string& s);
 	void set_response(const std::string& s);
 	void append_to_response(const std::string& s);
+	void append_byte_to_body(const unsigned char& c);
 	void set_response_status(const int& code);
 	void set_total_sent(const int& num);
 	void set_cgi_status(const int& status);
@@ -73,8 +76,10 @@ public:
 	CgiHandler  cgi;
 
 private:
+	Request();
+	
 	std::string _request_str;
-	std::string	_request_body;
+	std::vector<unsigned char>	_request_body;
 	std::string _response;
 	uint16_t	_port;
 	in_addr_t	_host;
@@ -82,6 +87,7 @@ private:
 	int			_total_sent;
 	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
+	bool		_done_reading_headers;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
 	std::vector<std::string> _content_type_params;
 	int			_client_fd;

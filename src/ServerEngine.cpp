@@ -71,6 +71,7 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.sockaddr = socket_addr;
 	info.host = sb.get_host();
 	info.port = sb.get_port();
+	info.max_client_body = sb.get_max_client_body();
 	pfd_info_map[sockfd] = info;
 
 	std::ostringstream ss; ss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
@@ -126,6 +127,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.type = CLIENT_CONNECTION_SOCKET;
 	info.host = meta.host;
 	info.port = meta.port;
+	info.max_client_body = meta.max_client_body;
 	info.reqs_idx = UNINITIALIZED;
 	info.last_active = time(NULL);
 	info.had_at_least_one_req_processed = false;
@@ -175,7 +177,7 @@ void ServerEngine::print_pfds()
 void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	char	buf[BUF_SZ];
-	int		nbytes;
+	ssize_t	nbytes;
 
 	memset(buf, 0, BUF_SZ);
 	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
@@ -223,30 +225,84 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 {
 	int		idx = meta_it->second.reqs_idx;
 	char	buf[BUF_SZ + 1];
-	int		nbytes;
+	ssize_t	nbytes;
+	uint32_t total_read;
 
 	memset(buf, 0, BUF_SZ + 1);
 
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
-	if (nbytes <= 0)  // hangup or error
+	total_read = nbytes + reqs[idx].get_request_str().size();
+
+	if (nbytes <= 0 || total_read > meta_it->second.max_client_body)  // hangup or error or sb disallows read size
 	{
 		if (nbytes == 0)
 		{
 			std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
 			forget_client(pfds_it, meta_it);
 		}
-		else
+		else if (nbytes == -1)
 		{
 			std::perror("recv");
 			initiate_error_response(pfds_it, idx, CODE_503);
 		}
+		else
+			initiate_error_response(pfds_it, idx, CODE_413);
 		return;
 	}
-	reqs[idx].append_to_request_str(buf);
-	update_client_activity_timestamp(meta_it);
-	// TODO: optimize with substring and .rfind()
-	if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
+
+	if (reqs[idx].done_reading_headers())
 	{
+		size_t body_size = reqs[idx].get_request_body_raw().size();
+		size_t content_length = reqs[idx].get_content_length();
+		if (body_size > content_length)
+			initiate_error_response(pfds_it, idx, CODE_413);
+		for (ssize_t i = 0; i < nbytes; i++)
+			reqs[idx].append_byte_to_body(buf[i]);
+		// std::cout << "DEBUG MANUAL done_reading_headers() block, appended:" << std::endl;
+		// for (ssize_t i = 0; i < nbytes; i++)
+		// 	std::cout << buf[i];
+		// std::cout << std::endl;
+		// std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
+	}
+	else
+	{
+		std::string this_buffer(buf);
+		// TODO: optimize with substring and .rfind()
+		// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
+		size_t crlf_begin = this_buffer.find("\r\n\r\n");
+		if (crlf_begin == std::string::npos)
+		{
+			reqs[idx].append_to_request_str(buf);
+		}
+		else
+		{
+			reqs[idx].switch_to_reading_body();
+			// buf[crlf_begin + 4] = 0;
+			std::string buf_as_str(buf + 0, buf + crlf_begin + 4);
+			// std::cout << "DEBUG MANUAL entire buf:" << std::endl << buf;
+			// std::cout << "DEBUG MANUAL buf_as_str:" << std::endl << buf_as_str;
+			reqs[idx].append_to_request_str(buf_as_str);
+			for (ssize_t i = crlf_begin + 4; i < nbytes; i++)
+				reqs[idx].append_byte_to_body(buf[i]);
+
+			reqs[idx].parse();
+			// is there a redirection? -> redirect
+			// is there a cgi? -> add it to pfds
+
+			// std::string appended(buf + crlf_begin + 4, buf + nbytes);
+			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
+		}
+		// std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
+		// return;
+	}
+	update_client_activity_timestamp(meta_it);
+
+	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
+	{
+		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
+		// std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
+		// std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
+		// std::cout << "----BODY-END----" << std::endl;
 		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
 		// 	;
 		// TODO: parse headers, determine if we need to read the body as well
@@ -378,9 +434,6 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 	RequestProcessor processor;
 	std::string result;
 
-	req.parse();
-	// is there a redirection? -> redirect
-	// is there a cgi? -> add it to pfds
 	result = processor.handleMethod(req, server_blocks);
 	req.set_response(result);
 	pfds_it->events = POLLOUT;  // get ready for writing
