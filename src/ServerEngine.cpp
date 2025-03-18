@@ -319,9 +319,6 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
 	{
-		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
-		// 	;
-		// TODO: parse headers, determine if we need to read the body as well
 		try
 		{
 			process_request(pfds_it, reqs[idx]);

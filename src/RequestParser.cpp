@@ -308,6 +308,12 @@ void RequestParser::_parse_header_user_agent(Request& req, std::string& header_v
 	(void)header_val;
 }
 
+void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
+{
+	(void)req;
+	(void)header_val;
+}
+
 void RequestParser::_parse_header_allow(Request& req, std::string& header_val)
 {
 	(void)req;
@@ -440,6 +446,7 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 		&RequestParser::_parse_header_referer,
 		&RequestParser::_parse_header_te,
 		&RequestParser::_parse_header_user_agent,
+		&RequestParser::_parse_header_cookie,
 		&RequestParser::_parse_header_allow,
 		&RequestParser::_parse_header_content_encoding,
 		&RequestParser::_parse_header_content_language,

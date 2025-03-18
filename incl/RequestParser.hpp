@@ -53,6 +53,7 @@ private:
 	void	_parse_header_referer(Request&, std::string&);
 	void	_parse_header_te(Request&, std::string&);
 	void	_parse_header_user_agent(Request&, std::string&);
+	void	_parse_header_cookie(Request&, std::string&);
 
 	void	_parse_header_allow(Request&, std::string&);
 	void	_parse_header_content_encoding(Request&, std::string&);
