@@ -203,6 +203,7 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 	}
 }
 
+/* Does not rm the meta, just resets the reqs_idx to UNINITIALIZED */
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
     int idx = meta_it->second.reqs_idx;
@@ -397,6 +398,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		else if (reqs[idx].should_close_early())
 		{
 			forget_client(pfds_it, meta_it);
+			reqs.erase(reqs.begin() + idx);
 		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
