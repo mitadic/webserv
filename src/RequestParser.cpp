@@ -315,10 +315,9 @@ void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 	{
 		trim_lws(*it);
 		std::vector<std::string> k_and_v = split(*it, "=");
-		if (k_and_v.size() != 2)
+		if (k_and_v.size() != 2 || !req._cookie.empty())
 			throw RequestException(CODE_400);
-		if (k_and_v[0] == "sessionid" && req._cookie != k_and_v[1])
-			throw RequestException(CODE_401);
+		req._cookie = k_and_v[1];
 	}
 }
 

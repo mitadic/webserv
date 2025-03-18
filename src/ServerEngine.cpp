@@ -265,6 +265,7 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int
 			// is there a cgi? -> add it to pfds
 		}
 		catch (RequestException& e) {
+			Log::log(e.what(), ERROR);
 			initiate_error_response(pfds_it, idx, e.code());
 			reqs[idx].flag_that_we_should_close_early();
 			Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
@@ -447,7 +448,7 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 }
 
 /** 
- * (1) If user has a cookie and is naming a legal cgi extension in the URI, look for a matching cookie and a completed CGI to set response.
+ * (1) Match-making: If user has a cookie and is naming a legal cgi extension in the URI, look for a matching cookie and a completed CGI to set response.
  * (2) Else, handle method as usual to set response
  * (3) Finally, set events to POLLOUT
  */
@@ -455,6 +456,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 {
 	RequestProcessor processor;
 	bool found_finished_cgi = false;
+	std::string set_cookie_string;
 
 	if (!req.get_cookie().empty() && req.get_cgi_status() != NOT_CGI)  // cgi_status currently set in Request Line parsing
 	{
@@ -463,16 +465,27 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Reque
 			if (it->get_cgi_status() == AWAIT_CLIENT_RECONNECT && it->get_cookie() == req.get_cookie())
 			{
 				found_finished_cgi = true;
-				req.set_response(it->get_cgi_output());
+				req.set_response(it->get_cgi_output());  // barebones, no status or HTTP v
 				reqs.erase(it);
 				break;
 			}
 		}
 	}
-	else
+
+	if (req.get_cookie().empty())
+	{
 		req.set_cookie(static_cast< std::ostringstream& >(std::ostringstream() << std::dec << time(NULL)).str());
+		set_cookie_string = "Set-Cookie: sessionid=" + req.get_cookie() + "\r\n";
+	}
+
 	if (!found_finished_cgi)
-		req.set_response(processor.handleMethod(req, server_blocks));
+	{
+		std::string response;
+		response = processor.handleMethod(req, server_blocks);
+		if (set_cookie_string.size())
+			response.insert(response.find("\r\n") + 2, set_cookie_string);
+		req.set_response(response);
+	}
 
 	pfds_it->events = POLLOUT;  // get ready for writing
 }

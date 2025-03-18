@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/17 11:40:21 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/18 21:53:34 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,7 +178,7 @@ void parseMultipartFormData(const Request &req, const Location *location)
 }
 
 // ------- METHODS --------------
-// Handle redicetion
+// Handle redirection
 // - if the location has a redirect directive with a status code, return that status code and Location header
 // -- for status codes 301 and 302, check if the method is DELETE and throw 405 error page
 // - if the location has no redirect directive, return the result of the method processing
@@ -203,6 +203,11 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
 	}
+
+	// if (req.get_cgi_status() == EXECUTE)
+	// {
+	// 	req.get_cookie();
+	// }
 
 	switch (req.get_method())
 	{
