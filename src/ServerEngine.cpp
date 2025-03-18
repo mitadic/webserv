@@ -397,8 +397,8 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		}
 		else if (reqs[idx].should_close_early())
 		{
-			forget_client(pfds_it, meta_it);
 			reqs.erase(reqs.begin() + idx);
+			forget_client(pfds_it, meta_it);
 		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
@@ -446,13 +446,34 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 	}
 }
 
+/** 
+ * (1) If user has a cookie and is naming a legal cgi extension in the URI, look for a matching cookie and a completed CGI to set response.
+ * (2) Else, handle method as usual to set response
+ * (3) Finally, set events to POLLOUT
+ */
 void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Request& req)
 {
 	RequestProcessor processor;
-	std::string result;
+	bool found_finished_cgi = false;
 
-	result = processor.handleMethod(req, server_blocks);
-	req.set_response(result);
+	if (!req.get_cookie().empty() && req.get_cgi_status() != NOT_CGI)  // cgi_status currently set in Request Line parsing
+	{
+		for (std::vector<Request>::iterator it = reqs.begin(); it != reqs.end(); it++)
+		{
+			if (it->get_cgi_status() == AWAIT_CLIENT_RECONNECT && it->get_cookie() == req.get_cookie())
+			{
+				found_finished_cgi = true;
+				req.set_response(it->get_cgi_output());
+				reqs.erase(it);
+				break;
+			}
+		}
+	}
+	else
+		req.set_cookie(static_cast< std::ostringstream& >(std::ostringstream() << std::dec << time(NULL)).str());
+	if (!found_finished_cgi)
+		req.set_response(processor.handleMethod(req, server_blocks));
+
 	pfds_it->events = POLLOUT;  // get ready for writing
 }
 
