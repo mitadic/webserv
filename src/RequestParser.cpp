@@ -310,8 +310,16 @@ void RequestParser::_parse_header_user_agent(Request& req, std::string& header_v
 
 void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 {
-	(void)req;
-	(void)header_val;
+	std::vector<std::string> kv_pairs = split(header_val, ",;");
+	for (std::vector<std::string>::iterator it = kv_pairs.begin(); it != kv_pairs.end(); it++)
+	{
+		trim_lws(*it);
+		std::vector<std::string> k_and_v = split(*it, "=");
+		if (k_and_v.size() != 2)
+			throw RequestException(CODE_400);
+		if (k_and_v[0] == "sessionid" && req._cookie != k_and_v[1])
+			throw RequestException(CODE_401);
+	}
 }
 
 void RequestParser::_parse_header_allow(Request& req, std::string& header_val)

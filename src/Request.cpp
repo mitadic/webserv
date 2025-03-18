@@ -188,6 +188,15 @@ void Request::increment_total_sent_by(const int& num) { _total_sent += num; }
 /* Set _timed_out to 'true' */
 void Request::flag_the_timeout() { _timed_out = true; }
 
+const std::string& Request::get_cookie() const
+{
+	return _cookie;
+}
+
+void Request::set_cookie(const std::string& cookie)
+{
+	_cookie = cookie;
+}
 
 /*
 Verify existence of: (1) host, (2) content_length if method is POST.

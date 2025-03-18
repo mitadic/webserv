@@ -75,6 +75,9 @@ public:
 	void flag_the_timeout();
 	void flag_that_we_should_close_early();
 
+	const std::string& get_cookie() const;
+	void set_cookie(const std::string&);
+
 	CgiHandler  cgi;
 
 private:
@@ -104,6 +107,8 @@ private:
 	int			_major_http_v;
 	int			_minor_http_v;
 	std::string _request_uri;
+
+	std::string _cookie;
 
 	int			_cgi_status;
 	std::string _cgi_job_id;
