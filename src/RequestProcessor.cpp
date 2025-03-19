@@ -6,7 +6,7 @@
 /*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/18 21:53:34 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/18 23:30:45 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -203,11 +203,6 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
 	}
-
-	// if (req.get_cgi_status() == EXECUTE)
-	// {
-	// 	req.get_cookie();
-	// }
 
 	switch (req.get_method())
 	{

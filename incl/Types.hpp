@@ -19,13 +19,14 @@ enum e_retval {
 #define LISTENER_SOCKET 101
 #define CGI_PIPE 102  // indirectly mapped to a request through Cgi, which itself is part of a Request
 
+/* Request-related info */
 enum e_cgi_status
 {
 	NOT_CGI = 200,
 	EXECUTE,
 	READ_PIPE,
 	FORMULATE_RESPONSE,
-	AWAIT_CLIENT_RECONNECT
+	AWAIT_CLIENT_RECONNECT  // won't be needing your services
 };
 
 /** Initialized and pushed_back for each client_fd

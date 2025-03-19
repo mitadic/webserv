@@ -30,6 +30,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 50000
+#define CGI_TIMEOUT 2000
 #define BUF_SZ 256
 
 
@@ -61,7 +62,7 @@ public:
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 
-	void	process_request(std::vector<pollfd>::iterator&, Request&);
+	void	process_request(std::vector<pollfd>::iterator&, const int&);
 
 	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
 

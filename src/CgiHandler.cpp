@@ -21,6 +21,10 @@ CgiHandler::CgiHandler()
 
 CgiHandler::~CgiHandler() {}
 
+/** pushes_back new:
+ * - pipe_fd to the pfds vector
+ * - pfd_info to the pfd_info_map (with type CGI_PIPE)
+*/
 void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
 	if (pipe(pipe_fds) < 0)
@@ -61,6 +65,8 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 			perror("waitpid");
 			return; // placeholder
 		}
+
+		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT
 
 		struct pollfd fd;
 		fd.fd = pipe_fds[0]; // read end (bc we read)

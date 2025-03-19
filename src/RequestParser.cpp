@@ -528,7 +528,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 	}
 	req._request_uri = tokens[1];
 	// update:
-	if (req._request_uri.find(".py"))
+	if (req._request_uri.find(".py") != std::string::npos)
 		req._cgi_status = EXECUTE;
 
 	size_t dot = 0;
