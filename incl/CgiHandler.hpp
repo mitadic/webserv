@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/20 15:52:52 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/20 18:00:10 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ class CgiHandler {
 		int pipe_fds[2];
 
 		std::string deduce_extension(const Request& req, const Location& loc) const;
-		void CgiHandler::identify_pathinfo_and_querystring(const std::string& s);
+		void identify_pathinfo_and_querystring(const std::string& s);
+		void handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx);
 
 	private:
 		CgiHandler();
@@ -50,7 +51,6 @@ class CgiHandler {
 		char **_envp; // contains meta-variables e.g. PATH_INFO, QUERY_STRING
 		// TODO current working directory should be set to the directory containing the script; not sure where it is stored ?
 
-		void handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx);
 		void set_env_variables(const Request& req, const Location& loc, int method);
 
 };
@@ -61,22 +61,22 @@ class CgiHandler {
  * @example PATH_INFO extracted from the HTTP request line
  * @note not sure yet how much of this we will need
  */
-const char *cgi_envp_keys[] = {
-	"AUTH_TYPE", // probably unused
-	"CONTENT_LENGTH", // default: NULL or unset; size of message body
-	"CONTENT_TYPE", // type of message body
-	"GATEWAY_INTERFACE", // default: "CGI/1.1"
-	"PATH_INFO", // default: NULL; path in the request line after the script itself and before the query string
-	"PATH_TRANSLATED", // default: NULL; only exists if there is PATH_INFO; this will be: root + path + path-info
-	"QUERY_STRING", // default: "";
-	"REMOTE_ADDR", // default: ipv4 address of the client
-	"REMOTE_HOST", // default: NULL
-	"REMOTE_IDENT",
-	"REMOTE_USER",
-	"REQUEST_METHOD", // default: "GET" or "POST"
-	"SCRIPT_NAME", // URI path before the path info segment
-	"SERVER_NAME", // host
-	"SERVER_PORT", // port
-	"SERVER_PROTOCOL", // HTTP/1.1
-	"SERVER_SOFTWARE" // e.g. "webserv"
-};
+// const char *cgi_envp_keys[] = {
+// 	"AUTH_TYPE", // probably unused
+// 	"CONTENT_LENGTH", // default: NULL or unset; size of message body
+// 	"CONTENT_TYPE", // type of message body
+// 	"GATEWAY_INTERFACE", // default: "CGI/1.1"
+// 	"PATH_INFO", // default: NULL; path in the request line after the script itself and before the query string
+// 	"PATH_TRANSLATED", // default: NULL; only exists if there is PATH_INFO; this will be: root + path + path-info
+// 	"QUERY_STRING", // default: "";
+// 	"REMOTE_ADDR", // default: ipv4 address of the client
+// 	"REMOTE_HOST", // default: NULL
+// 	"REMOTE_IDENT",
+// 	"REMOTE_USER",
+// 	"REQUEST_METHOD", // default: "GET" or "POST"
+// 	"SCRIPT_NAME", // URI path before the path info segment
+// 	"SERVER_NAME", // host
+// 	"SERVER_PORT", // port
+// 	"SERVER_PROTOCOL", // HTTP/1.1
+// 	"SERVER_SOFTWARE" // e.g. "webserv"
+// };

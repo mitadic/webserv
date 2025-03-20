@@ -2,9 +2,7 @@
 #include "RequestParser.hpp"  // it's ok we're not including this in Request.hpp and it works due to fwd decl
 
 Request::Request() :
-	cgi(),
-	_request_str(""),
-	_response(""),
+	cgi(NULL),
 	_port(80),  // default for when unspecified
 	_host(0x00000000),  // set to 0.0.0.0 bc a client may never request that?
 	_response_status(status_code_values[CODE_200]),
@@ -26,9 +24,7 @@ Request::Request() :
 
 /* Parametrized constructor for when accepting client */
 Request::Request(in_addr_t host, uint16_t port) :
-	cgi(),
-	_request_str(""),
-	_response(""),
+	cgi(NULL),
 	_port(port),
 	_host(host),
 	_response_status(status_code_values[CODE_200]),
@@ -48,10 +44,16 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_cgi_status(NOT_CGI)
 {}
 
-Request::~Request() {}
+Request::~Request() {
+	if (cgi)
+		delete cgi;
+}
 
-Request::Request(const Request& oth) : cgi()
+Request::Request(const Request& oth)
 {
+	if (cgi)
+		delete cgi;
+	cgi = new CgiHandler(*oth.cgi);  // uses CgiHandler copy constructor
 	_request_str = oth._request_str;
 	_response = oth._response;
 	_response_status = oth._response_status;
@@ -73,26 +75,8 @@ Request::Request(const Request& oth) : cgi()
 	_cgi_status = oth._cgi_status;
 }
 
-void Request::reset()
-{
-	_request_str.clear();
-	_response.clear();
-	_response_status = CODE_200;
-	_total_sent = 0;
-	_method = UNINITIALIZED;
-	_cgi_status = NOT_CGI;
-	_cgi_output.clear();
-}
-
-void Request::reset_client()
-{
-	reset();
-	_client_fd = UNINITIALIZED;
-}
-
-
 const std::string& Request::get_request_str() const { return _request_str; }
-const std::string Request::get_request_body_as_str() const { 
+const std::string Request::get_request_body_as_str() const {
 	std::string body_as_str;
 	for (std::vector<unsigned char>::const_iterator it = _request_body.begin(); it != _request_body.end(); it++)
 		body_as_str += *it;

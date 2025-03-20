@@ -30,6 +30,7 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 }
 
 CgiHandler::CgiHandler(const CgiHandler & oth) {
+	(void)oth;
 	// TODO
 	return ;
 }
@@ -46,8 +47,6 @@ CgiHandler::~CgiHandler() {
 	}
 }
 
-CgiHandler::~CgiHandler() {}
-
 std::string CgiHandler::deduce_extension(const Request& req, const Location& loc) const
 {
 	std::string uri = req.get_request_uri();
@@ -57,6 +56,7 @@ std::string CgiHandler::deduce_extension(const Request& req, const Location& loc
 		if (req.get_request_uri().find(*it))
 			return (*it);
 	}
+	return "";
 }
 
 void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
@@ -80,7 +80,7 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 static char **vector_to_2d_array(std::vector<std::string> v)
 {
 	char **env = new char* [v.size()];
-	for (int i = 0; i < v.size(); i++)
+	for (size_t i = 0; i < v.size(); i++)
 	{
 		env[i] = new char [v[i].size() + 1];
 		std::strcpy(env[i], v[i].c_str());
@@ -97,7 +97,7 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	else if (method == POST)
 	{
 		env_vector.push_back("REQUEST_METHOD=POST");
-		env_vector.push_back("CONTENT_LENGTH=" + req.get_content_length()); // TODO transform into string
+		// env_vector.push_back("CONTENT_LENGTH=" + req.get_content_length()); // TODO transform into string
 		env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
 	}
 	if (!_pathinfo.empty())
@@ -105,12 +105,12 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 		env_vector.push_back("PATH_INFO=" + _pathinfo); // TODO extract path info
 		env_vector.push_back("PATH_TRANSLATED=" + (loc.get_root() + _pathname + _pathinfo));
 	}
-	if (!_querystring.empty());
+	if (!_querystring.empty())
 		env_vector.push_back("QUERY_STRING=" + _querystring);
 	env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1)); // TODO extract URI path before the path info segment
-	env_vector.push_back("SERVER_NAME=" + req.get_host());
-	env_vector.push_back("SERVER_PORT=" + req.get_port());  // TODO transform into string
+	// env_vector.push_back("SERVER_NAME=" + req.get_host());
+	// env_vector.push_back("SERVER_PORT=" + req.get_port());  // TODO transform into string
 	env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	env_vector.push_back("SERVER_SOFTWARE=Webserv");
 
@@ -140,12 +140,14 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 
 	if (pid == 0)
 	{
+		// actually it first needs to read the message body from stdin
 		close(pipe_fds[0]);  // close the end not used in child right away
 		dup2(pipe_fds[1], STDOUT_FILENO);
 		close(pipe_fds[1]);
-		execve("/usr/bin/python3", argv, NULL);
-		perror("execve");
-		return;
+		execve(_interpreter.c_str(), _argv, _envp); // path is /usr/bin/python3
+		std::ostringstream oss; oss << "execve: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw CgiException();
 	}
 	else
 	{
@@ -161,8 +163,9 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 		w = waitpid(pid, &wstatus, 0);
 		if (w < 0)
 		{
-			perror("waitpid");
-			return; // placeholder
+			std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+			Log::log(oss.str(), WARNING);
+			throw CgiException();
 		}
 
 		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT

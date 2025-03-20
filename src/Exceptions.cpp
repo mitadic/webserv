@@ -14,3 +14,5 @@ const char* RequestException::what() const throw()
 {
 	return status_messages[error_code];
 }
+
+CgiException::CgiException() {};

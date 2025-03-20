@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:08 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/18 21:53:13 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/20 17:49:26 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #define MAX_REDIRECTS 5
 
 class Request;
+class CgiHandler;
 
 class RequestProcessor
 {
@@ -35,5 +36,6 @@ class RequestProcessor
 		std::string processGet(const Request& req, const Location* location);
 		std::string processPost(const Request& req,  const Location* location);
 		std::string processDelete(const Request& req, const Location* location);
+		bool detect_cgi(const Request& req, const Location* location, int method);
 	};
 

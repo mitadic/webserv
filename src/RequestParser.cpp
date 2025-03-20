@@ -527,9 +527,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 		prev = tokens[1][i];
 	}
 	req._request_uri = tokens[1];
-	// update:
-	if (req._request_uri.find(".py") != std::string::npos)
-		req._cgi_status = EXECUTE;
+	// cgi detection occurs in process_request() now
 
 	size_t dot = 0;
 	if (tokens[2] == "undefined")  // seen this in Mozilla
@@ -552,7 +550,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 }
 
 /**
- * Continues reading through everything (robustly) until CRLF or EOF 
+ * Continues reading through everything (robustly) until CRLF or EOF
  * Finally, if _content_length is UNINITIALIZED, set it to 0 for the arithmetics later on
 */
 void RequestParser::parse_headers(Request& req, std::istringstream& stream, std::string& line)

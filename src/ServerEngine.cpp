@@ -286,7 +286,7 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 	{
 		Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
 		reqs[idx].flag_that_we_should_close_early();
-		initiate_error_response(pfds_it, idx, CODE_413);		
+		initiate_error_response(pfds_it, idx, CODE_413);
 		return 1;
 	}
 	for (ssize_t i = 0; i < nbytes; i++)
@@ -421,7 +421,7 @@ void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, s
 				 << "\r\n"
 				 << reqs[idx].get_cgi_output();
 	reqs[idx].set_response(response.str());
-	
+
 	// locate client pfd to set to POLLOUT
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
 	{
@@ -449,7 +449,7 @@ void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_
 
 /**
  * If connection without requests (telnet) -> 408
- * Else forget_client() silently, without a response 
+ * Else forget_client() silently, without a response
  */
 void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
@@ -491,18 +491,29 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 
 	std::string response;
 
+	response = processor.handleMethod(reqs[req_idx], server_blocks);
 	if (reqs[req_idx].get_cgi_status() == EXECUTE)
 	{
-		reqs[req_idx].cgi.handle_cgi(pfds, pfd_info_map, req_idx);
+		Log::log("CGI-handling", DEBUG);
+		try
+		{
+			// TODO handle CGI timeout
+			reqs[req_idx].cgi->handle_cgi(pfds, pfd_info_map, req_idx);
+
+		} catch (CgiException & e)
+		{
+			std::ostringstream oss; oss << "CGI handling failed: " << e.what();
+			Log::log(oss.str(), DEBUG);
+			// TODO handle error
+		}
 		pfds_vector_modified = true;
-		reqs[req_idx].set_cgi_status(READ_PIPE);  // seems unnecessary bc the meta info IS_CGI suffices
 	}
 	else
 	{
-		response = processor.handleMethod(reqs[req_idx], server_blocks);
 		if (!set_cookie_string.empty())
 			response.insert(response.find("\r\n") + 2, set_cookie_string);
 		reqs[req_idx].set_response(response);
+
 		pfds_it->events = POLLOUT;  // get ready for writing
 	}
 }
