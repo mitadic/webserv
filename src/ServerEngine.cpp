@@ -142,8 +142,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 /**
  * (1) close the client_fd
  * (2) remove the pfd from vector
- * (3) remove the req from vector
- * (4) remove the mapping of the fd and the reqs_idx
+ * (3) remove the mapping of the fd and the reqs_idx
  * Finally, set the flag that pfd vector has been modified
  */
 void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
@@ -152,7 +151,6 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 	if (close(pfds_it->fd) == -1)
 		perror("close");
 	pfds.erase(pfds_it);
-	reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
 	pfd_info_map.erase(meta_it);
 	pfds_vector_modified = true;
 }
@@ -393,11 +391,13 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		{
 			std::ostringstream oss; oss << "timeout: client on socket " << pfds_it->fd << ", closing connection";
 			Log::log(oss.str(), DEBUG);
+			// reqs.erase(reqs.begin() + idx); // here as well? Why not?
 			forget_client(pfds_it, meta_it);
 		}
 		else if (reqs[idx].should_close_early())
 		{
 			Log::log("Comply with \'should_close_early\', forget client and their req", DEBUG);
+			reqs.erase(reqs.begin() + idx);
 			forget_client(pfds_it, meta_it);
 		}
 		else
