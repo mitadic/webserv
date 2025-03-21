@@ -1,7 +1,8 @@
 
 #include "ServerBlock.hpp"
-#include "Config.hpp"
 #include "Location.hpp"
+#include "Config.hpp"
+#include "Utils.hpp"
 #include "Log.hpp"
 
 ServerBlock::ServerBlock() :
@@ -128,7 +129,7 @@ std::ostream &operator<<(std::ostream &os, const ServerBlock &server_block)
 {
 	os << "ServerBlock:" << std::endl;
 	os << "  port: " << server_block.get_port() << std::endl;
-	os << "  host: " << Config::ft_inet_ntoa(server_block.get_host()) << std::endl;
+	os << "  host: " << Utils::ft_inet_ntoa(server_block.get_host()) << std::endl;
 	os << "  max_client_body: " << server_block.get_max_client_body() << std::endl;
 	os << "  error_pages: " << std::endl;
 	for (std::map<int, std::string>::const_iterator it = server_block.get_error_pages().begin(); it != server_block.get_error_pages().end(); ++it)

@@ -2,6 +2,7 @@
 #include "Exceptions.hpp"
 #include "Location.hpp"
 #include "Request.hpp"
+#include "Utils.hpp"
 
 CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 
@@ -18,7 +19,7 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 
 	// TODO add checks for valid request uri (maybe already in request parsing?)
 	size_t pos = uri.find(deduce_extension(req, loc));
-	_pathname = uri.substr(0, pos + _extension.length());
+	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
 	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
 
 	_argv = new char*[3];
@@ -37,13 +38,17 @@ CgiHandler::CgiHandler(const CgiHandler & oth) {
 
 CgiHandler::~CgiHandler() {
 	if (_argv)
+	{
 		delete [] _argv;
+		_argv = NULL;
+	}
 	if (_envp)
 	{
 		int i = -1;
 		while (_envp[++i])
-			delete _envp[i];
+			delete [] _envp[i];
 		delete [] _envp;
+		_envp = NULL;
 	}
 }
 
@@ -67,8 +72,8 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 	size_t qm_pos = s.find("?");
 	if (qm_pos != std::string::npos)
 	{
-		_querystring = s.substr(qm_pos);
-		_pathinfo = s.substr(0, qm_pos);
+		_querystring = s.substr(qm_pos + 1);
+		_pathinfo = "." + s.substr(0, qm_pos);
 	}
 	else
 		_pathinfo = s.substr(0);
@@ -77,9 +82,10 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 	// throw error if larger than 2?
 }
 
-static char **vector_to_2d_array(std::vector<std::string> v)
+static char **vector_to_2d_array(const std::vector<std::string>& v)
 {
-	char **env = new char* [v.size()];
+	char **env = new char* [v.size() + 1];
+	env[v.size()] = NULL;
 	for (size_t i = 0; i < v.size(); i++)
 	{
 		env[i] = new char [v[i].size() + 1];
@@ -91,30 +97,32 @@ static char **vector_to_2d_array(std::vector<std::string> v)
 void CgiHandler::set_env_variables(const Request& req, const Location& loc, int method)
 {
 	std::vector<std::string> env_vector;
+	std::ostringstream oss;
+	(void)loc; // TODO maybe remove
 
 	if (method == GET)
 		env_vector.push_back("REQUEST_METHOD=GET");
 	else if (method == POST)
 	{
 		env_vector.push_back("REQUEST_METHOD=POST");
-		// env_vector.push_back("CONTENT_LENGTH=" + req.get_content_length()); // TODO transform into string
+		oss << "CONTENT_LENGTH=" << req.get_content_length(); env_vector.push_back(oss.str());
 		env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
 	}
 	if (!_pathinfo.empty())
 	{
-		env_vector.push_back("PATH_INFO=" + _pathinfo); // TODO extract path info
-		env_vector.push_back("PATH_TRANSLATED=" + (loc.get_root() + _pathname + _pathinfo));
+		env_vector.push_back("PATH_INFO=" + _pathinfo);
+		env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
 	}
 	if (!_querystring.empty())
 		env_vector.push_back("QUERY_STRING=" + _querystring);
 	env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1)); // TODO extract URI path before the path info segment
-	// env_vector.push_back("SERVER_NAME=" + req.get_host());
-	// env_vector.push_back("SERVER_PORT=" + req.get_port());  // TODO transform into string
+	env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1));
+	oss.clear(); oss << "SERVER_PORT=" << req.get_port(); env_vector.push_back(oss.str());
+	env_vector.push_back("SERVER_NAME=" + Utils::ft_inet_ntoa(req.get_host()));
 	env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	env_vector.push_back("SERVER_SOFTWARE=Webserv");
 
-	_envp = vector_to_2d_array(env_vector); // TODO
+	_envp = vector_to_2d_array(env_vector);
 }
 
 /** pushes_back new:

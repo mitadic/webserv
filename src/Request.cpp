@@ -49,11 +49,10 @@ Request::~Request() {
 		delete cgi;
 }
 
-Request::Request(const Request& oth)
+Request::Request(const Request& oth) : cgi(NULL)
 {
-	if (cgi)
-		delete cgi;
-	cgi = new CgiHandler(*oth.cgi);  // uses CgiHandler copy constructor
+	if (oth.cgi)
+		this->cgi = new CgiHandler(*(oth.cgi));  // uses CgiHandler copy constructor
 	_request_str = oth._request_str;
 	_response = oth._response;
 	_response_status = oth._response_status;

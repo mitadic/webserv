@@ -33,7 +33,6 @@ namespace Config {
 	std::string	trim(const std::string & str);
 	int			has_only_digits(char *str);
 	in_addr_t	ft_inet(const std::string& host);
-	std::string	ft_inet_ntoa(in_addr_t ip);
 };
 
 #endif

@@ -22,21 +22,6 @@ in_addr_t   Config::ft_inet(const std::string& host)
     return (ip); //does not convert from host byte to network byte order, so we gain readability and uniform handling in listeners setup
 }
 
-std::string Config::ft_inet_ntoa(in_addr_t ip)
-{
-    std::string host;
-
-    for (int i = 3; i >= 0; --i)
-    {
-        std::stringstream ss;
-        ss << ((ip >> (i * 8)) & 255);
-        host += ss.str();
-        if (i > 0)
-            host += ".";
-    }
-    return (host);
-}
-
 int Config::has_only_digits(char *str)
 {
     while (str && *str)

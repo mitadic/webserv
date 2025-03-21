@@ -34,7 +34,7 @@ all: $(NAME)
 $(NAME): $(addprefix $(OBJ_DIR),$(OBJ))
 	$(CXX) $(FLAGS) $(addprefix $(OBJ_DIR),$(OBJ)) -o $(NAME)
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
+$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp $(I_DIR)*
 	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
 	$(CXX) $(FLAGS) -I$(I_DIR) -c $< -o $@
 

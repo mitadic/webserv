@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/20 18:00:10 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/03/21 10:46:23 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 #include <cstdlib>
 #include <sys/wait.h> // For waitpid()
 
-#define WHICH_PHP "usr/bin/php"
-#define WHICH_PY "usr/bin/py"
-#define WHICH_SH "usr/bin/sh"
+#define WHICH_PHP "/usr/bin/php"
+#define WHICH_PY "/usr/bin/python3"
+#define WHICH_SH "/usr/bin/sh"
 
 #define UNINITIALIZED -1
 
