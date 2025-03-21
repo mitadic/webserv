@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/18 23:30:45 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/21 13:09:59 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

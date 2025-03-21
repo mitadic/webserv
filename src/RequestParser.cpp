@@ -310,14 +310,16 @@ void RequestParser::_parse_header_user_agent(Request& req, std::string& header_v
 
 void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 {
+	Log::log("Cookie header identified in the request: " + header_val, DEBUG);
 	std::vector<std::string> kv_pairs = split(header_val, ",;");
 	for (std::vector<std::string>::iterator it = kv_pairs.begin(); it != kv_pairs.end(); it++)
 	{
 		trim_lws(*it);
 		std::vector<std::string> k_and_v = split(*it, "=");
-		if (k_and_v.size() != 2 || !req._cookie.empty())
+		std::cout << k_and_v[0] << " : " << k_and_v[1] << std::endl;
+		if (k_and_v.size() != 2 || !req._cookies.empty())
 			throw RequestException(CODE_400);
-		req._cookie = k_and_v[1];
+		req._cookies[k_and_v[0]] = k_and_v[1];
 	}
 }
 
@@ -552,7 +554,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 }
 
 /**
- * Continues reading through everything (robustly) until CRLF or EOF 
+ * Continues reading through everything (robustly) until CRLF or EOF
  * Finally, if _content_length is UNINITIALIZED, set it to 0 for the arithmetics later on
 */
 void RequestParser::parse_headers(Request& req, std::istringstream& stream, std::string& line)
@@ -561,7 +563,10 @@ void RequestParser::parse_headers(Request& req, std::istringstream& stream, std:
 		check_stream_for_errors_or_eof(stream);
 
 	while (!is_empty_crlf(line) && !stream.eof())
+	{
+		// Log::log("Parsing header line: " + line, DEBUG);
 		parse_header_line(req, stream, line);
+	}
 
 	if (req._content_length == UNINITIALIZED)
 		req._content_length = 0;

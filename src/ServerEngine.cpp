@@ -286,7 +286,7 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 	{
 		Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
 		reqs[idx].flag_that_we_should_close_early();
-		initiate_error_response(pfds_it, idx, CODE_413);		
+		initiate_error_response(pfds_it, idx, CODE_413);
 		return 1;
 	}
 	for (ssize_t i = 0; i < nbytes; i++)
@@ -421,7 +421,7 @@ void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, s
 				 << "\r\n"
 				 << reqs[idx].get_cgi_output();
 	reqs[idx].set_response(response.str());
-	
+
 	// locate client pfd to set to POLLOUT
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
 	{
@@ -449,7 +449,7 @@ void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_
 
 /**
  * If connection without requests (telnet) -> 408
- * Else forget_client() silently, without a response 
+ * Else forget_client() silently, without a response
  */
 void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
@@ -482,11 +482,17 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	RequestProcessor processor;
 	std::string set_cookie_string;
 
-	if (reqs[req_idx].get_cookie().empty())  // there was no Cookie header, do Set-Cookie
+	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, do Set-Cookie
 	{
 		Log::log("Set-Cookie", DEBUG);
-		reqs[req_idx].set_cookie(static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
-		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookie() + "\r\n";
+		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
+		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "\r\n";
+		// for (size_t i = 1; i < reqs[req_idx].get_cookie().size(); i++)
+		// 	set_cookie_string +=  reqs[req_idx].get_cookie()[i] + "\r\n";
+	}
+	else
+	{
+		Log::log("Cookie found", DEBUG);
 	}
 
 	std::string response;
@@ -501,7 +507,12 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	{
 		response = processor.handleMethod(reqs[req_idx], server_blocks);
 		if (!set_cookie_string.empty())
-			response.insert(response.find("\r\n") + 2, set_cookie_string);
+		{	std::string cookie_response = "Set-Cookie: ";
+			for (std::map<std::string, std::string>::const_iterator it = reqs[req_idx].get_cookies().begin(); it != reqs[req_idx].get_cookies().end(); ++it)
+				cookie_response += it->first + "=" + it->second + "; ";
+			cookie_response += "\r\n";
+			response.insert(response.find("\r\n") + 2, cookie_response);
+		}
 		reqs[req_idx].set_response(response);
 		pfds_it->events = POLLOUT;  // get ready for writing
 	}

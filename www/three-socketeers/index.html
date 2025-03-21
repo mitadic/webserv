@@ -10,11 +10,19 @@
 		<link rel="stylesheet" href="/css/styles.css">
 	</head>
 	<body>
+		<div class="greeting" id="greeting"></div>
+
 		<!-- //  Logo & Welcome text  //-->
 		<div class="container">
 			<div class="logo"></div>
 			<h1> Welcome!</h1>
 			<h2> Three Socketeers at your service.</h2>
+
+			<!-- //  Name input form  //-->
+			<form id="nameForm">
+				<input type="text" id="username" placeholder="Enter your name" required>
+				<button type="submit" class="btn">Submit</button>
+			</form>
 
 			<!-- //  Navigation buttons  // -->
 		 	<ul class="button-list">
@@ -29,5 +37,40 @@
 		 <footer>
 			<p>© 2025 aarponen / mitadic / pbencze </p>
 		 </footer>
+
+		<script>
+			// Function to set a cookie
+			function setCookie(name, value) {
+				document.cookie = `${name}=${value};`;
+			}
+
+			// Function to get a cookie
+			function getCookie(name) {
+				const cookies = document.cookie.split(';');
+				for (let i = 0; i < cookies.length; i++) {
+					const cookie = cookies[i].trim();
+					if (cookie.startsWith(name + '=')) {
+						return cookie.substring(name.length + 1);
+					}
+				}
+				return null;
+			}
+
+			// Display greeting if the name is stored in cookies
+			const greetingElement = document.getElementById('greeting');
+			const storedName = getCookie('username');
+			if (storedName) {
+				greetingElement.textContent = `Hello, ${storedName}!`;
+			}
+
+			// Handle form submission
+			document.getElementById('nameForm').addEventListener('submit', function (e) {
+				e.preventDefault();
+				const username = document.getElementById('username').value;
+				setCookie('username', username);
+				greetingElement.textContent = `Hello, ${username}!`;
+				document.getElementById('nameForm').reset();
+			});
+		</script>
 	</body>
 </html>
