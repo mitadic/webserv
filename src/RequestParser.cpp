@@ -317,7 +317,7 @@ void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 		trim_lws(*it);
 		std::vector<std::string> k_and_v = split(*it, "=");
 		std::cout << k_and_v[0] << " : " << k_and_v[1] << std::endl;
-		if (k_and_v.size() != 2 || !req._cookies.empty())
+		if (k_and_v.size() != 2 ) // || !req._cookies.empty()
 			throw RequestException(CODE_400);
 		req._cookies[k_and_v[0]] = k_and_v[1];
 	}

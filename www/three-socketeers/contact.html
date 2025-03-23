@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/styles.css">
   </head>
   <body>
+	<div class="greeting" id="greeting"></div>
 	<a href="index.html" class="btn backhome">Back to homepage</a>
     <!-- Contact form-->
 	<div class="container">
@@ -54,6 +55,27 @@
             }
         });
     </script>
+	<script>
+
+		// Function to get a cookie
+		function getCookie(name) {
+			const cookies = document.cookie.split(';');
+			for (let i = 0; i < cookies.length; i++) {
+				const cookie = cookies[i].trim();
+				if (cookie.startsWith(name + '=')) {
+					return cookie.substring(name.length + 1);
+				}
+			}
+			return null;
+		}
+
+		// Display greeting if the name is stored in cookies
+		const greetingElement = document.getElementById('greeting');
+		const storedName = getCookie('username');
+		if (storedName) {
+			greetingElement.textContent = `Hello, ${storedName}!`;
+		}
+	</script>
     <!-- Footer -->
     <footer>
       <p>© 2025 aarponen / mitadic / pbencze</p>
