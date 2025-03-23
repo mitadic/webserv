@@ -529,9 +529,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 		prev = tokens[1][i];
 	}
 	req._request_uri = tokens[1];
-	// update:
-	if (req._request_uri.find(".py") != std::string::npos)
-		req._cgi_status = EXECUTE;
+	// cgi detection occurs in process_request() now
 
 	size_t dot = 0;
 	if (tokens[2] == "undefined")  // seen this in Mozilla

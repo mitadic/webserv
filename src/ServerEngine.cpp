@@ -52,7 +52,7 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
-		std::ostringstream oss; oss << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
+		std::ostringstream oss; oss << "Failed to bind to host " << Utils::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
 			<< ". Errno: " << errno << ". Error: " << strerror(errno) << ".";
 		Log::log(oss.str(), ERROR);
 		close(sockfd);
@@ -497,15 +497,25 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 
 	std::string response;
 
+	response = processor.handleMethod(reqs[req_idx], server_blocks);
 	if (reqs[req_idx].get_cgi_status() == EXECUTE)
 	{
-		reqs[req_idx].cgi.handle_cgi(pfds, pfd_info_map, req_idx);
+		Log::log("CGI-handling", DEBUG);
+		try
+		{
+			// TODO handle CGI timeout
+			reqs[req_idx].cgi->handle_cgi(pfds, pfd_info_map, req_idx);
+
+		} catch (CgiException & e)
+		{
+			std::ostringstream oss; oss << "CGI handling failed: " << e.what();
+			Log::log(oss.str(), DEBUG);
+			// TODO handle error
+		}
 		pfds_vector_modified = true;
-		reqs[req_idx].set_cgi_status(READ_PIPE);  // seems unnecessary bc the meta info IS_CGI suffices
 	}
 	else
 	{
-		response = processor.handleMethod(reqs[req_idx], server_blocks);
 		if (!set_cookie_string.empty())
 		{	std::string cookie_response = "Set-Cookie: ";
 			for (std::map<std::string, std::string>::const_iterator it = reqs[req_idx].get_cookies().begin(); it != reqs[req_idx].get_cookies().end(); ++it)
@@ -514,6 +524,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 			response.insert(response.find("\r\n") + 2, cookie_response);
 		}
 		reqs[req_idx].set_response(response);
+
 		pfds_it->events = POLLOUT;  // get ready for writing
 	}
 }

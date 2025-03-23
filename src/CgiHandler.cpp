@@ -1,25 +1,129 @@
 #include "CgiHandler.hpp"
+#include "Exceptions.hpp"
+#include "Location.hpp"
+#include "Request.hpp"
+#include "Utils.hpp"
 
-CgiHandler::CgiHandler()
-{
-	// request = REQUEST_BODY;
-	path = CGI_PATH;
-	if (IS_GET)
+CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
+
+	std::string uri = req.get_request_uri();
+
+	_client_fd = req.get_client_fd();
+	_extension = deduce_extension(req, loc);
+	if (_extension == ".py")
+		_interpreter = WHICH_PY;
+	else if (_extension == ".php")
+		_interpreter =  WHICH_PHP;
+	if (_extension == ".sh")
+		_interpreter = WHICH_SH;
+
+	// TODO add checks for valid request uri (maybe already in request parsing?)
+	size_t pos = uri.find(deduce_extension(req, loc));
+	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
+	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
+
+	_argv = new char*[3];
+	_argv[0] = const_cast<char *>(_interpreter.c_str()); // check later if cons_cast is ok
+	_argv[1] = const_cast<char *>(_pathname.c_str());
+	_argv[2] = NULL;
+
+	set_env_variables(req, loc, method);
+}
+
+CgiHandler::CgiHandler(const CgiHandler & oth) {
+	(void)oth;
+	// TODO
+	return ;
+}
+
+CgiHandler::~CgiHandler() {
+	if (_argv)
 	{
-		argv[0] = const_cast<char *>(PRG_NAME);
-		argv[1] = const_cast<char *>(path.c_str());
-		argv[2] = 0;
+		delete [] _argv;
+		_argv = NULL;
 	}
-	else if (IS_POST)
+	if (_envp)
 	{
-		argv[0] = const_cast<char *>(PRG_NAME);
-		argv[1] = const_cast<char *>(path.c_str());
-		argv[2] = const_cast<char *>(REQUEST_BODY);
-		argv[3] = 0;
+		int i = -1;
+		while (_envp[++i])
+			delete [] _envp[i];
+		delete [] _envp;
+		_envp = NULL;
 	}
 }
 
-CgiHandler::~CgiHandler() {}
+std::string CgiHandler::deduce_extension(const Request& req, const Location& loc) const
+{
+	std::string uri = req.get_request_uri();
+	std::vector<std::string>::const_iterator it;
+	for (it = loc.get_cgi_extensions().begin(); it != loc.get_cgi_extensions().end(); it++)
+	{
+		if (req.get_request_uri().find(*it))
+			return (*it);
+	}
+	return "";
+}
+
+void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
+{
+	if (s.empty())
+		return;
+
+	size_t qm_pos = s.find("?");
+	if (qm_pos != std::string::npos)
+	{
+		_querystring = s.substr(qm_pos + 1);
+		_pathinfo = "." + s.substr(0, qm_pos);
+	}
+	else
+		_pathinfo = s.substr(0);
+	// check allowed syntax
+	// check allowed syntax
+	// throw error if larger than 2?
+}
+
+static char **vector_to_2d_array(const std::vector<std::string>& v)
+{
+	char **env = new char* [v.size() + 1];
+	env[v.size()] = NULL;
+	for (size_t i = 0; i < v.size(); i++)
+	{
+		env[i] = new char [v[i].size() + 1];
+		std::strcpy(env[i], v[i].c_str());
+	}
+	return (env);
+}
+
+void CgiHandler::set_env_variables(const Request& req, const Location& loc, int method)
+{
+	std::vector<std::string> env_vector;
+	std::ostringstream oss;
+	(void)loc; // TODO maybe remove
+
+	if (method == GET)
+		env_vector.push_back("REQUEST_METHOD=GET");
+	else if (method == POST)
+	{
+		env_vector.push_back("REQUEST_METHOD=POST");
+		oss << "CONTENT_LENGTH=" << req.get_content_length(); env_vector.push_back(oss.str());
+		env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
+	}
+	if (!_pathinfo.empty())
+	{
+		env_vector.push_back("PATH_INFO=" + _pathinfo);
+		env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
+	}
+	if (!_querystring.empty())
+		env_vector.push_back("QUERY_STRING=" + _querystring);
+	env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1));
+	oss.clear(); oss << "SERVER_PORT=" << req.get_port(); env_vector.push_back(oss.str());
+	env_vector.push_back("SERVER_NAME=" + Utils::ft_inet_ntoa(req.get_host()));
+	env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
+	env_vector.push_back("SERVER_SOFTWARE=Webserv");
+
+	_envp = vector_to_2d_array(env_vector);
+}
 
 /** pushes_back new:
  * - pipe_fd to the pfds vector
@@ -29,25 +133,29 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 {
 	if (pipe(pipe_fds) < 0)
 	{
-		perror("pipe");
-		return;
+		std::ostringstream oss; oss << "pipe: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw CgiException();
 	}
 
 	pid_t pid = fork(); //create child
 	if (pid < 0)
 	{
-		perror("fork");
-		return;
+		std::ostringstream oss; oss << "fork: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw CgiException();
 	}
 
 	if (pid == 0)
 	{
+		// actually it first needs to read the message body from stdin
 		close(pipe_fds[0]);  // close the end not used in child right away
 		dup2(pipe_fds[1], STDOUT_FILENO);
 		close(pipe_fds[1]);
-		execve("/usr/bin/python3", argv, NULL);
-		perror("execve");
-		return;
+		execve(_interpreter.c_str(), _argv, _envp); // path is /usr/bin/python3
+		std::ostringstream oss; oss << "execve: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw CgiException();
 	}
 	else
 	{
@@ -56,14 +164,16 @@ void CgiHandler::handle_cgi(std::vector<struct pollfd>& pfds, std::map<int, pfd_
 
 		if (close(pipe_fds[1]) < 0)  // close the end used in child before waiting on child
 		{
-			perror("close");
-			return;
+			std::ostringstream oss; oss << "close: " << std::strerror(errno);
+			Log::log(oss.str(), WARNING);
+			throw CgiException();
 		}
 		w = waitpid(pid, &wstatus, 0);
 		if (w < 0)
 		{
-			perror("waitpid");
-			return; // placeholder
+			std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+			Log::log(oss.str(), WARNING);
+			throw CgiException();
 		}
 
 		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT

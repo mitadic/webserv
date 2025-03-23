@@ -5,15 +5,17 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/21 13:09:59 by aarponen         ###   ########.fr       */
+/*   Created: Invalid date        by                   #+#    #+#             */
+/*   Updated: 2025/03/23 19:35:02 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "RequestProcessor.hpp"
 #include "Request.hpp" // safe in .cpp, won't cause circular imports
 #include "Location.hpp"
 #include "ServerBlock.hpp"
+#include "CgiHandler.hpp"
 
 // ------- Helper functions ------------
 
@@ -177,6 +179,45 @@ void parseMultipartFormData(const Request &req, const Location *location)
 	}
 }
 
+/**
+ * @brief Detects if the request-URI cotains a CGI-script
+ * based on the following syntax:
+ * [location path]/[filename].[extension]/[PATH_INFO]?[QUERY_STRING]
+ * @details @returns false if the location does not allow cgis or if
+ * it does not allow the specific extension; throws an exception if
+ * the method is DELETE
+ * if the extension is accepted in the location block,
+ * creates a cgi object with the necessary parameters to be passed to
+ * the cgi handling function and execve, @returns true
+ */
+bool RequestProcessor::detect_cgi(const Request& req, const Location* location, int method)
+{
+	if ((!location->is_get() && method == GET)
+		|| (!location->is_post() && method == POST)
+		|| (!location->is_del() && method == DELETE))
+		throw RequestException(CODE_405);
+	if (location->get_cgi_extensions().empty())
+		return false; // check this case
+	else
+	{
+		std::vector<std::string>::const_iterator it;
+		for (it = location->get_cgi_extensions().begin(); it != location->get_cgi_extensions().end(); it++)
+		{
+			if (req.get_request_uri().find(*it))
+			{
+				// optional:  throw exception on unallowed syntax
+				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object
+				const_cast<Request&>(req).set_cgi_status(EXECUTE);
+				if (method == DELETE)
+					throw RequestException(CODE_405); //delete not allowed on cgi
+				return true;
+			}
+		}
+	}
+	return false;
+
+}
+
 // ------- METHODS --------------
 // Handle redirection
 // - if the location has a redirect directive with a status code, return that status code and Location header
@@ -202,6 +243,12 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 				 << "\r\n";
 		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
+	}
+
+	if (detect_cgi(req, matchingLocation, req.get_method()))
+	{
+		Log::log("CGI detected", INFO);
+		return (""); // returning empty string if cgi is detected for now
 	}
 
 	switch (req.get_method())

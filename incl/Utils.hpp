@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/16 10:31:43 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/21 10:58:26 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,4 +46,6 @@ namespace Utils
 	std::string url_decoder(const std::string &value);
 
 	std::string generateTimestamp();
+
+	std::string	ft_inet_ntoa(in_addr_t ip);
 }

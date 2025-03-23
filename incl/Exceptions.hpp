@@ -14,4 +14,11 @@ class RequestException : public std::exception {
 
         int code() const throw();
         const char* what() const throw();
-    };
+};
+
+class CgiException : public std::exception {
+	public:
+		CgiException();
+		// CgiException(std::string message);
+		// const char* what() const throw();
+};

@@ -24,8 +24,6 @@ public:
     ~Request();
 	Request(const Request&);
 
-	void	reset();
-	void	reset_client();
 	void	parse();
 	void	validate_self();
 
@@ -78,7 +76,7 @@ public:
 	const std::map<std::string, std::string>& get_cookies() const;
 	void set_cookies(const std::string&);
 
-	CgiHandler  cgi;
+	CgiHandler  *cgi;
 
 private:
 	Request();

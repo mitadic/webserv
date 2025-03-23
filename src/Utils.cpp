@@ -244,3 +244,18 @@ std::string Utils::generateTimestamp()
 
 	return timestamp.str();
 }
+
+std::string Utils::ft_inet_ntoa(in_addr_t ip)
+{
+    std::string host;
+
+    for (int i = 3; i >= 0; --i)
+    {
+        std::stringstream ss;
+        ss << ((ip >> (i * 8)) & 255);
+        host += ss.str();
+        if (i > 0)
+            host += ".";
+    }
+    return (host);
+}
