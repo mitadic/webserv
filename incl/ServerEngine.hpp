@@ -30,6 +30,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 50000
+#define CGI_TIMEOUT (CONNECTION_TIMEOUT / 2)
 #define BUF_SZ 256
 
 
@@ -53,12 +54,15 @@ public:
 
 	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
+	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
+	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 
-	void	process_request(std::vector<pollfd>::iterator&, Request&);
+	void	process_request(std::vector<pollfd>::iterator&, const int&);
 
 	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
 

@@ -24,8 +24,6 @@ public:
     ~Request();
 	Request(const Request&);
 
-	void	reset();
-	void	reset_client();
 	void	parse();
 	void	validate_self();
 
@@ -59,6 +57,7 @@ public:
 	bool timed_out();
 	bool should_await_reconnection();
 	bool should_keep_alive();
+	bool should_close_early();
 
 	// void set_port(const uint16_t&);
 	// void set_host(const in_addr_t&);
@@ -72,12 +71,16 @@ public:
 	void append_to_cgi_output(const std::string& s);
 	void increment_total_sent_by(const int& num);
 	void flag_the_timeout();
+	void flag_that_we_should_close_early();
 
-	CgiHandler  cgi;
+	const std::map<std::string, std::string>& get_cookies() const;
+	void set_cookies(const std::string&);
+
+	CgiHandler  *cgi;
 
 private:
 	Request();
-	
+
 	std::string _request_str;
 	std::vector<unsigned char>	_request_body;
 	std::string _response;
@@ -88,6 +91,7 @@ private:
 	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	bool		_done_reading_headers;
+	bool		_should_close_early;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
 	std::vector<std::string> _content_type_params;
 	int			_client_fd;
@@ -101,6 +105,8 @@ private:
 	int			_major_http_v;
 	int			_minor_http_v;
 	std::string _request_uri;
+
+	std::map<std::string, std::string> _cookies;
 
 	int			_cgi_status;
 	std::string _cgi_job_id;

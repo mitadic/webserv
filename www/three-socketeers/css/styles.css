@@ -118,6 +118,14 @@ button[type="submit"] {
 	cursor: pointer;
 }
 
+.greeting {
+	position: center;
+	margin-top: 10px;
+	color: #46add8;
+	font-family: "Markazi Text", serif;
+	font-size: 2rem;
+}
+
 
 /* ABOUT
 ----------------------------------------------*/

@@ -39,8 +39,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	int reuse = 1;
 	if (sockfd == -1 || !make_non_blocking(sockfd) || setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
 	{
-		std::ostringstream ss; ss << "Failed to create listening socket. Errno: " << errno;
-		Log::log(ss.str(), ERROR);
+		std::ostringstream oss; oss << "Failed to create listening socket. Errno: " << errno;
+		Log::log(oss.str(), ERROR);
 		return (1);
 	}
 	sockaddr_in socket_addr;
@@ -52,9 +52,9 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	if (bind(sockfd, (struct sockaddr*)&socket_addr, sizeof(socket_addr)) == -1)
 	{
 		// optional: remove serverblock that failed to bind from server_blocks to spare search time later?
-		std::ostringstream ss; ss << "Failed to bind to host " << Config::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
+		std::ostringstream oss; oss << "Failed to bind to host " << Utils::ft_inet_ntoa(sb.get_host()) << ":" << sb.get_port()
 			<< ". Errno: " << errno << ". Error: " << strerror(errno) << ".";
-		Log::log(ss.str(), ERROR);
+		Log::log(oss.str(), ERROR);
 		close(sockfd);
 		return (1);
 	}
@@ -74,8 +74,8 @@ int ServerEngine::setup_listening_socket(const ServerBlock& sb)
 	info.max_client_body = sb.get_max_client_body();
 	pfd_info_map[sockfd] = info;
 
-	std::ostringstream ss; ss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
-	Log::log(ss.str(), DEBUG);
+	std::ostringstream oss; oss << "Set up listener_fd no. " << sockfd << " on " << Utils::host_to_str(sb.get_host()) << ":" << sb.get_port();
+	Log::log(oss.str(), DEBUG);
 
 	return (0);
 }
@@ -142,8 +142,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 /**
  * (1) close the client_fd
  * (2) remove the pfd from vector
- * (3) remove the req from vector
- * (4) remove the mapping of the fd and the reqs_idx
+ * (3) remove the mapping of the fd and the reqs_idx
  * Finally, set the flag that pfd vector has been modified
  */
 void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
@@ -172,7 +171,6 @@ void ServerEngine::print_pfds()
 		it++;
 	}
 }
-
 
 void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
@@ -203,6 +201,7 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 	}
 }
 
+/* Does not rm the meta, just resets the reqs_idx to UNINITIALIZED */
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
     int idx = meta_it->second.reqs_idx;
@@ -212,6 +211,9 @@ void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterato
     meta_it->second.reqs_idx = UNINITIALIZED;
     meta_it->second.had_at_least_one_req_processed = true;
     pfds_it->events = POLLIN;
+
+	std::ostringstream oss; oss << "client_fd " << pfds_it->fd << " liberated for new requests";
+	Log::log(oss.str(), DEBUG);
 }
 
 void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::iterator& meta_it)
@@ -220,95 +222,110 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 }
 
 
+/* Process hangup (0) or error (-1) */
+void ServerEngine::process_read_failure(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const ssize_t& nbytes)
+{
+	if (nbytes == 0)
+	{
+		std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown";
+		Log::log(oss.str(), DEBUG);
+		forget_client(pfds_it, meta_it);
+	}
+	else if (nbytes == -1)
+	{
+		std::perror("recv");
+		initiate_error_response(pfds_it, idx, CODE_503);
+	}
+}
+
+/* Read headers, add any buf spillover to body, and parse and validate the headers before proceeding */
+int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int& idx, const char* buf, const ssize_t& nbytes)
+{
+	ssize_t the_trail_from_prev = 0;
+	if (reqs[idx].get_request_str().size() >= 3)
+		the_trail_from_prev = 3;
+	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev;
+
+	// this_buffer == 3 tailing chars of request_str (if applicable) + current buf, to catch broken CRLFCRLF
+	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start);
+	this_buffer += buf;
+	size_t crlf_begin = this_buffer.find("\r\n\r\n");
+	if (crlf_begin == std::string::npos)
+	{
+		reqs[idx].append_to_request_str(buf);
+	}
+	else
+	{
+		reqs[idx].switch_to_reading_body();
+		std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
+		reqs[idx].append_to_request_str(buf_as_str);
+		for (ssize_t i = crlf_begin + 4; i < nbytes + the_trail_from_prev; i++)	// 3: tailsize; 4: rnrn size
+			reqs[idx].append_byte_to_body(buf[i - the_trail_from_prev]);
+
+		try {
+			reqs[idx].parse();
+			// is there a cgi? -> add it to pfds
+		}
+		catch (RequestException& e) {
+			Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
+			Log::log(static_cast<std::ostringstream&>(std::ostringstream() << "Corruption reason: " << e.what()).str(), DEBUG);
+			reqs[idx].flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, idx, e.code());
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/* Read body */
+int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
+{
+	size_t body_size = reqs[idx].get_request_body_raw().size();
+	size_t content_length = reqs[idx].get_content_length();
+	if (content_length > meta_it->second.max_client_body || body_size > content_length)
+	{
+		Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+		reqs[idx].flag_that_we_should_close_early();
+		initiate_error_response(pfds_it, idx, CODE_413);
+		return 1;
+	}
+	for (ssize_t i = 0; i < nbytes; i++)
+		reqs[idx].append_byte_to_body(buf[i]);
+	return 0;
+}
+
 /* Once it reads CRLF CRLF it begings parsing the headers and then reads body if applicable, then processes the request */
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int		idx = meta_it->second.reqs_idx;
 	char	buf[BUF_SZ + 1];
 	ssize_t	nbytes;
-	uint32_t total_read;
 
 	memset(buf, 0, BUF_SZ + 1);
-
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
-	total_read = nbytes + reqs[idx].get_request_str().size();
 
-	if (nbytes <= 0 || total_read > meta_it->second.max_client_body)  // hangup or error or sb disallows read size
+	if (nbytes <= 0)
 	{
-		if (nbytes == 0)
-		{
-			std::cout << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown\n";
-			forget_client(pfds_it, meta_it);
-		}
-		else if (nbytes == -1)
-		{
-			std::perror("recv");
-			initiate_error_response(pfds_it, idx, CODE_503);
-		}
-		else
-			initiate_error_response(pfds_it, idx, CODE_413);
+		process_read_failure(pfds_it, meta_it, idx, nbytes);
 		return;
 	}
-
 	if (reqs[idx].done_reading_headers())
 	{
-		size_t body_size = reqs[idx].get_request_body_raw().size();
-		size_t content_length = reqs[idx].get_content_length();
-		if (body_size > content_length)
-			initiate_error_response(pfds_it, idx, CODE_413);
-		for (ssize_t i = 0; i < nbytes; i++)
-			reqs[idx].append_byte_to_body(buf[i]);
-		// std::cout << "DEBUG MANUAL done_reading_headers() block, appended:" << std::endl;
-		// for (ssize_t i = 0; i < nbytes; i++)
-		// 	std::cout << buf[i];
-		// std::cout << std::endl;
-		// std::cout << "DEBUG MANUAL nbytes from reading_body: " << nbytes << std::endl;
+		if (read_body(pfds_it, meta_it, idx, buf, nbytes) != OK)
+			return;
 	}
 	else
 	{
-		std::string this_buffer(buf);
-		// TODO: optimize with substring and .rfind()
-		// if (reqs[idx].get_request_str().find("\r\n\r\n") != std::string::npos)
-		size_t crlf_begin = this_buffer.find("\r\n\r\n");
-		if (crlf_begin == std::string::npos)
-		{
-			reqs[idx].append_to_request_str(buf);
-		}
-		else
-		{
-			reqs[idx].switch_to_reading_body();
-			// buf[crlf_begin + 4] = 0;
-			std::string buf_as_str(buf + 0, buf + crlf_begin + 4);
-			// std::cout << "DEBUG MANUAL entire buf:" << std::endl << buf;
-			// std::cout << "DEBUG MANUAL buf_as_str:" << std::endl << buf_as_str;
-			reqs[idx].append_to_request_str(buf_as_str);
-			for (ssize_t i = crlf_begin + 4; i < nbytes; i++)
-				reqs[idx].append_byte_to_body(buf[i]);
-
-			reqs[idx].parse();
-			// is there a redirection? -> redirect
-			// is there a cgi? -> add it to pfds
-
-			// std::string appended(buf + crlf_begin + 4, buf + nbytes);
-			// std::cout << "DEBUG MANUAL appended to body:" << std::endl << appended << std::endl;
-		}
-		// std::cout << "DEBUG MANUAL nbytes: " << nbytes << std::endl;
-		// return;
+		if (read_headers(pfds_it, idx, buf, nbytes) != OK)
+			return;
 	}
 	update_client_activity_timestamp(meta_it);
 
 	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
 	{
-		// std::cout << "DEBUG MANUAL entered nbytes < BUF_SZ block. nbytes: " << nbytes << ".buf:" << std::endl << buf << std::endl;
-		// std::cout << "REQUEST:" << std::endl << reqs[idx].get_request_str() << std::endl;
-		// std::cout << "BODY:" << std::endl << reqs[idx].get_request_body_as_str() << std::endl;
-		// std::cout << "----BODY-END----" << std::endl;
-		// while (recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT) > 0)  // NO god no
-		// 	;
-		// TODO: parse headers, determine if we need to read the body as well
 		try
 		{
-			process_request(pfds_it, reqs[idx]);
+			process_request(pfds_it, idx);
 		}
 		catch (std::exception& e)
 		{
@@ -372,19 +389,19 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	{
 		if (reqs[idx].timed_out())
 		{
-			std::cout << "timeout: client on socket " << pfds_it->fd << ", closing connection\n";
-			close(pfds_it->fd);
-			pfds.erase(pfds_it);
-			if (!reqs[idx].should_await_reconnection())
-			{
-				reqs.erase(reqs.begin() + idx);
-				pfd_info_map.erase(meta_it);
-			}
+			std::ostringstream oss; oss << "timeout: client on socket " << pfds_it->fd << ", closing connection";
+			Log::log(oss.str(), DEBUG);
+			// reqs.erase(reqs.begin() + idx); // here as well? Why not?
+			forget_client(pfds_it, meta_it);
+		}
+		else if (reqs[idx].should_close_early())
+		{
+			Log::log("Comply with \'should_close_early\', forget client and their req", DEBUG);
+			reqs.erase(reqs.begin() + idx);
+			forget_client(pfds_it, meta_it);
 		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
-
-		// pfds_vector_modified = true;  // will reset to pfds.begin()  --> ahh this was preventing other PFDs being reached!
 	}
 }
 
@@ -392,21 +409,48 @@ void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, s
 {
 	int idx = meta_it->second.reqs_idx;
 
-	std::cout << "Processing EOF on pipe, close" << std::endl;
+	Log::log("Processing EOF on pipe, close pipe_fd", DEBUG);
 	close(pfds_it->fd);
 	pfds.erase(pfds_it);
-	// do not erase pfd_info_map, it's staying
+	pfd_info_map.erase(meta_it);
 
-	reqs[idx].set_cgi_status(AWAIT_CLIENT_RECONNECT);
-	pfds_vector_modified = true;
+	std::ostringstream response;
+	response << "HTTP/1.1 200 OK\r\n"
+				 << "Content-Type: text/plain" << "\r\n"
+				 << "Content-Length: " << reqs[idx].get_cgi_output().size() << "\r\n"
+				 << "\r\n"
+				 << reqs[idx].get_cgi_output();
+	reqs[idx].set_response(response.str());
+
+	// locate client pfd to set to POLLOUT
+	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
+	{
+		if (it_met->second.type == CLIENT_CONNECTION_SOCKET && it_met->second.reqs_idx == idx)
+		{
+			for (std::vector<pollfd>::iterator it_pfd = pfds.begin(); it_pfd != pfds.end(); it_pfd++)
+			{
+				if (it_pfd->fd == it_met->first)
+				{
+					it_pfd->events = POLLOUT;
+					pfds_vector_modified = true;
+					return;
+				}
+			}
+		}
+	}
 }
 
 void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	std::cout << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown\n";
+	std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown";
+	Log::log(oss.str(), DEBUG);
 	forget_client(pfds_it, meta_it);
 }
 
+/**
+ * If connection without requests (telnet) -> 408
+ * Else forget_client() silently, without a response
+ */
 void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int idx = meta_it->second.reqs_idx;
@@ -419,26 +463,73 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 			forget_client(pfds_it, meta_it);
 			return ;
 		}
-		std::cout << "Client connection " << pfds_it->fd << " has timed out, responding 408." << std::endl;
-		initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+		else
+		{
+			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, responding 408.";
+			Log::log(oss.str(), DEBUG);
+			initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+		}
 		reqs[idx].flag_the_timeout();
-		pfds_vector_modified = true;  // needed here? Cause I suspect it might block actually
+		pfds_vector_modified = true;
 	}
 	catch (RequestException& e) {
 		std::cout << e.what() << std::endl;
 	}
 }
 
-void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Request& req)
+void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const int& req_idx)
 {
 	RequestProcessor processor;
-	std::string result;
+	std::string set_cookie_string;
 
-	result = processor.handleMethod(req, server_blocks);
-	req.set_response(result);
-	pfds_it->events = POLLOUT;  // get ready for writing
+	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, do Set-Cookie
+	{
+		Log::log("Set-Cookie", DEBUG);
+		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
+		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "\r\n";
+		// for (size_t i = 1; i < reqs[req_idx].get_cookie().size(); i++)
+		// 	set_cookie_string +=  reqs[req_idx].get_cookie()[i] + "\r\n";
+	}
+	else
+	{
+		Log::log("Cookie found", DEBUG);
+	}
+
+	std::string response;
+
+	response = processor.handleMethod(reqs[req_idx], server_blocks);
+	if (reqs[req_idx].get_cgi_status() == EXECUTE)
+	{
+		Log::log("CGI-handling", DEBUG);
+		try
+		{
+			// TODO handle CGI timeout
+			reqs[req_idx].cgi->handle_cgi(pfds, pfd_info_map, req_idx);
+
+		} catch (CgiException & e)
+		{
+			std::ostringstream oss; oss << "CGI handling failed: " << e.what();
+			Log::log(oss.str(), DEBUG);
+			// TODO handle error
+		}
+		pfds_vector_modified = true;
+	}
+	else
+	{
+		if (!set_cookie_string.empty())
+		{	std::string cookie_response = "Set-Cookie: ";
+			for (std::map<std::string, std::string>::const_iterator it = reqs[req_idx].get_cookies().begin(); it != reqs[req_idx].get_cookies().end(); ++it)
+				cookie_response += it->first + "=" + it->second + "; ";
+			cookie_response += "\r\n";
+			response.insert(response.find("\r\n") + 2, cookie_response);
+		}
+		reqs[req_idx].set_response(response);
+
+		pfds_it->events = POLLOUT;  // get ready for writing
+	}
 }
 
+/* Wait, is this unneeded because POLL itself stops blocking when timeout? */
 bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
 {
 	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)
@@ -542,7 +633,7 @@ void ServerEngine::run()
 					std::cout << "POLLERR | POLLNVAL" << std::endl;
 					forget_client(pfds_it, meta_it);
 				}
-				else if (is_client_and_timed_out(pfd_meta))  // no flag AND is client
+				else if (is_client_and_timed_out(pfd_meta))  // no flag AND is client == has to be timeout??
 					process_connection_timeout(pfds_it, meta_it);
 
 				if (pfds_vector_modified)
@@ -565,6 +656,6 @@ void ServerEngine::run()
 		if (close(pfds[i].fd) == -1)
 			Log::log(strerror(errno), ERROR);
 	}
-	std::ostringstream ss; ss << "Closed " << i << " pfds before exiting";
-	Log::log(ss.str(), DEBUG);
+	std::ostringstream oss; oss << "Closed " << i << " pfds before exiting";
+	Log::log(oss.str(), DEBUG);
 }

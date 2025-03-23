@@ -189,6 +189,7 @@ const char *http_request_legal_headers[HTTP_REQUEST_LEGAL_HEADERS_N] =
 	"Referer",				// absoluteURI
 	"TE",					// 1#(transfer-coding [ ";" "q" "=" qvalue ]) (may also include extension parameters)
 	"User-Agent",			// 1*( product | comment )
+	"Cookie",
 
 	// entity
 	"Allow",				// 1#( method )
