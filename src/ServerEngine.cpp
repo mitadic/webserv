@@ -480,17 +480,17 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const int& req_idx)
 {
 	RequestProcessor processor;
-	std::string set_cookie_string;
+	std::string set_session_id;
 
-	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, create Set-Cookie
+	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id
 	{
-		Log::log("Set-Cookie for session", DEBUG);
+		Log::log("Setting session id cookie", WARNING);
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
-		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "; Path=/; HttpOnly; Secure; SameSite=Strict"+ "\r\n";
+		set_session_id = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().begin()->second + "\r\n";
 	}
 	else
 	{
-		Log::log("Cookies found", DEBUG);
+		Log::log("Session id cookie found.", WARNING);
 	}
 
 	std::string response;
@@ -514,13 +514,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	}
 	else
 	{
-		if (!set_cookie_string.empty())
-		{	std::string cookie_response = "Set-Cookie: ";
-			for (std::map<std::string, std::string>::const_iterator it = reqs[req_idx].get_cookies().begin(); it != reqs[req_idx].get_cookies().end(); ++it)
-				cookie_response += it->first + "=" + it->second + "; ";
-			cookie_response += "\r\n";
-			response.insert(response.find("\r\n") + 2, cookie_response);
-		}
+		if (!set_session_id.empty())
+			response.insert(response.find("\r\n") + 2, set_session_id);
 		reqs[req_idx].set_response(response);
 
 		pfds_it->events = POLLOUT;  // get ready for writing

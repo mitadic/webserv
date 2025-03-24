@@ -177,7 +177,6 @@ const std::map<std::string, std::string> &Request::get_cookies() const
 
 void Request::set_cookies(const std::string &cookie)
 {
-	Log::log("Cookie header: " + cookie, DEBUG);
 	std::istringstream stream(cookie);
 	std::string single_cookie_key;
 	std::string single_cookie_value;
