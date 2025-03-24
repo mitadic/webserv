@@ -309,7 +309,7 @@ void RequestParser::_parse_header_user_agent(Request &req, std::string &header_v
 
 void RequestParser::_parse_header_cookie(Request &req, std::string &header_val)
 {
-	Log::log("Cookie header identified in the request: " + header_val, DEBUG);
+	// Log::log("Cookie header identified in the request: " + header_val, DEBUG);
 	std::vector<std::string> kv_pairs = split(header_val, ",;");
 	for (std::vector<std::string>::iterator it = kv_pairs.begin(); it != kv_pairs.end(); it++)
 	{
@@ -317,18 +317,8 @@ void RequestParser::_parse_header_cookie(Request &req, std::string &header_val)
 		std::vector<std::string> k_and_v = split(*it, "=");
 		if (k_and_v.size() != 2)
 			throw RequestException(CODE_400);
-
-		const std::string &key = k_and_v[0];
-		const std::string &value = k_and_v[1];
-
-		// Check for duplicate cookies
-		if (req._cookies.find(key) != req._cookies.end())
-		{
-			Log::log("Duplicate cookie ignored: " + key, WARNING);
-			continue;
-		}
-
-		req._cookies[key] = value;
+		req._cookies[k_and_v[0]] = k_and_v[1];
+		// Log::log("Cookie added: " + k_and_v[0] + " : " + k_and_v[1], DEBUG);
 	}
 }
 

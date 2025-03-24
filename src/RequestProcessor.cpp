@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/23 21:35:39 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/24 17:05:32 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,15 +66,63 @@ std::string createContentString(const std::string &file, const std::string &mime
 	return response.str();
 }
 
+void logPageVisit(const Request &req)
+{
+	std::ofstream logFile("logs/page_visits.log", std::ios_base::app);
+	std::map<std::string, std::string> cookies = req.get_cookies();
+	std::string name;
+	if (cookies.find("username") != cookies.end())
+		name = cookies.at("username");
+	else
+		name = "unknown";
+	if (logFile.is_open())
+	{
+		logFile << Utils::generateTimestamp()
+				<< " | Session ID: " << std::setw(10) << std::left << req.get_cookies().at("sessionid")
+				<< " | Name: " << std::setw(10) << std::left << name
+				<< " | Page: " << req.get_request_uri()
+				<< std::endl;
+		logFile.close();
+	}
+	else
+		std::cerr << "Unable to open log file." << std::endl;
+}
+
 // -----------POST METHOD FUNCTIONS ------------
+
+void logFormSubmission(const Request &req, std::map<std::string, std::string> formData)
+{
+	std::ofstream logFile("logs/form_submissions.log", std::ios_base::app);
+	std::map<std::string, std::string> cookies = req.get_cookies();
+	std::string name;
+	if (cookies.find("username") != cookies.end())
+		name = cookies.at("username");
+	else
+		name = "unknown";
+	std::string data;
+	for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
+	{
+		data += "\n" + it->first + ": " + it->second;
+	}
+	if (logFile.is_open())
+	{
+		logFile << Utils::generateTimestamp()
+				<< " | Session ID: " << std::setw(10) << std::left << req.get_cookies().at("sessionid")
+				<< " | Name: " << name
+				<< " | Form data: " << std::setw(10) << std::left << data
+				<< std::endl;
+		logFile.close();
+	}
+	else
+		std::cerr << "Unable to open log file." << std::endl;
+}
+
 
 // Parse the form data and return a map of key-value pairs
 std::map<std::string, std::string> parseForm(const std::string &form)
 {
 	std::map<std::string, std::string> formData;
 	std::vector<std::string> pairs = Utils::split(form, '&');
-
-	// TODO: Add URL Decoder?
 
 	for (std::vector<std::string>::const_iterator it = pairs.begin(); it != pairs.end(); ++it)
 	{
@@ -178,6 +226,8 @@ void parseMultipartFormData(const Request &req, const Location *location)
 		}
 	}
 }
+
+
 
 /**
  * @brief Detects if the request-URI cotains a CGI-script
@@ -346,6 +396,7 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 				throw RequestException(CODE_406); // Not Acceptable
 		}
 
+		logPageVisit(req);
 		return createContentString(filePath, mimeType);
 	}
 	else
@@ -386,6 +437,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body_as_str());
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
 			std::cout << it->first << ": " << it->second << std::endl;
+		logFormSubmission(req, formData);
 		Log::log("Form submission processed successfully", INFO);
 		std::string body = "Form submitted successfully";
 		response << "HTTP/1.1 201 OK\r\n"
