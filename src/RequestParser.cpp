@@ -310,16 +310,16 @@ void RequestParser::_parse_header_user_agent(Request& req, std::string& header_v
 
 void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 {
-	Log::log("Cookie header identified in the request: " + header_val, DEBUG);
+	// Log::log("Cookie header identified in the request: " + header_val, DEBUG);
 	std::vector<std::string> kv_pairs = split(header_val, ",;");
 	for (std::vector<std::string>::iterator it = kv_pairs.begin(); it != kv_pairs.end(); it++)
 	{
 		trim_lws(*it);
 		std::vector<std::string> k_and_v = split(*it, "=");
-		std::cout << k_and_v[0] << " : " << k_and_v[1] << std::endl;
 		if (k_and_v.size() != 2 ) // || !req._cookies.empty()
 			throw RequestException(CODE_400);
 		req._cookies[k_and_v[0]] = k_and_v[1];
+		// Log::log("Cookie added: " + k_and_v[0] + " : " + k_and_v[1], DEBUG);
 	}
 }
 

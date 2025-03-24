@@ -235,13 +235,12 @@ std::string Utils::generateTimestamp()
 	std::time_t t = std::time(NULL);
 	std::tm *now = std::localtime(&t);
 	std::stringstream timestamp;
-	timestamp << (now->tm_year + 1900) << '-'
-			  << (now->tm_mon + 1) << '-'
-			  << now->tm_mday << '_'
-			  << now->tm_hour << ':'
-			  << now->tm_min << ':'
-			  << now->tm_sec;
-
+	timestamp << std::setfill('0') << std::setw(4) << (now->tm_year + 1900) << '-'
+			  << std::setfill('0') << std::setw(2) << (now->tm_mon + 1) << '-'
+			  << std::setfill('0') << std::setw(2) << now->tm_mday << '_'
+			  << std::setfill('0') << std::setw(2) << now->tm_hour << ':'
+			  << std::setfill('0') << std::setw(2) << now->tm_min << ':'
+			  << std::setfill('0') << std::setw(2) << now->tm_sec;
 	return timestamp.str();
 }
 

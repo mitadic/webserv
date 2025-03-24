@@ -484,7 +484,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 
 	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, create Set-Cookie
 	{
-		Log::log("Set-Cookie for session", DEBUG);
+		Log::log("Setting cookies for session", DEBUG);
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
 		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "; Path=/; HttpOnly; Secure; SameSite=Strict"+ "\r\n";
 	}
