@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/24 17:05:32 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/24 19:43:21 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,8 @@ std::string createContentString(const std::string &file, const std::string &mime
 
 void logPageVisit(const Request &req)
 {
+	if (req.get_request_uri().find(".html") == std::string::npos)
+		return;
 	std::ofstream logFile("logs/page_visits.log", std::ios_base::app);
 	std::map<std::string, std::string> cookies = req.get_cookies();
 	std::string name;
@@ -134,6 +136,35 @@ std::map<std::string, std::string> parseForm(const std::string &form)
 	return formData;
 }
 
+void logUpload(const Request &req, std::string original_filename, std::string filename, std::string new_filename, bool success)
+{
+	std::ofstream logFile("logs/files.log", std::ios_base::app);
+	std::map<std::string, std::string> cookies = req.get_cookies();
+	std::string name;
+	if (cookies.find("username") != cookies.end())
+		name = cookies.at("username");
+	else
+		name = "unknown";
+	std::string status = success ? "SUCCESS" : "REQUESTED";
+	if (logFile.is_open())
+	{
+		logFile << Utils::generateTimestamp()
+				<< " | Session ID: " << std::setw(10) << std::left << req.get_cookies().at("sessionid")
+				<< " | Name: " << std::setw(10) << std::left << name
+				<< " | UPLOAD"
+				<< " | Status: " << std::setw(10) << std::left << status
+				<< " | File: " << "original= " << original_filename
+				<< ", sanitized= " << filename
+				<< ", saved= " << new_filename
+
+				<< std::endl;
+		logFile.close();
+	}
+	else
+		std::cerr << "Unable to open log file." << std::endl;
+}
+
+
 // Find boundary from the request params
 std::string findBoundary(const Request &req)
 {
@@ -146,6 +177,8 @@ std::string findBoundary(const Request &req)
 	Log::log("Boundary not found in header", ERROR);
 	throw RequestException(CODE_400); // Bad Request
 }
+
+
 
 // For file uploads:
 // - split the request body into parts per boundary
@@ -182,9 +215,15 @@ void parseMultipartFormData(const Request &req, const Location *location)
 			{
 				filenameStart += 10;
 				size_t filenameEnd = part.find("\"", filenameStart);
-				std::string filename = part.substr(filenameStart, filenameEnd - filenameStart);
+				if (filenameEnd == std::string::npos)
+				{
+					Log::log("Filename end quote not found in part", ERROR);
+					throw RequestException(CODE_400); // Bad Request
+				}
 
-				filename = Utils::sanitizeFilename(filename);
+				std::string original_filename = part.substr(filenameStart, filenameEnd - filenameStart);
+
+				std::string filename = Utils::sanitizeFilename(original_filename);
 				size_t filename_end = filename.find_last_of('.');
 				std::string new_filename;
 				if (filename_end != std::string::npos)
@@ -193,6 +232,8 @@ void parseMultipartFormData(const Request &req, const Location *location)
 				 new_filename += filename.substr(filename_end);
 
 				Log::log("Filename to save: " + new_filename, DEBUG);
+				bool success = false;
+				logUpload(req, original_filename, filename, new_filename, success);
 
 				size_t contentStart = part.find("\r\n\r\n", filenameEnd);
 				if (contentStart != std::string::npos)
@@ -221,52 +262,44 @@ void parseMultipartFormData(const Request &req, const Location *location)
 						throw RequestException(CODE_500); // Internal Server Error
 					}
 					Log::log("File saved successfully", INFO);
+					success = true;
+					logUpload(req, original_filename, filename, new_filename, success);
 				}
 			}
 		}
 	}
 }
 
+// -----------DELETE METHOD FUNCTIONS ------------
 
-
-/**
- * @brief Detects if the request-URI cotains a CGI-script
- * based on the following syntax:
- * [location path]/[filename].[extension]/[PATH_INFO]?[QUERY_STRING]
- * @details @returns false if the location does not allow cgis or if
- * it does not allow the specific extension; throws an exception if
- * the method is DELETE
- * if the extension is accepted in the location block,
- * creates a cgi object with the necessary parameters to be passed to
- * the cgi handling function and execve, @returns true
- */
-bool RequestProcessor::detect_cgi(const Request& req, const Location* location, int method)
+void logDelete(const Request &req, const std::string &filename, bool success)
 {
-	if ((!location->is_get() && method == GET)
-		|| (!location->is_post() && method == POST)
-		|| (!location->is_del() && method == DELETE))
-		throw RequestException(CODE_405);
-	if (location->get_cgi_extensions().empty())
-		return false; // check this case
+	std::ofstream logFile("logs/files.log", std::ios_base::app);
+	std::map<std::string, std::string> cookies = req.get_cookies();
+	std::string name;
+	if (cookies.find("username") != cookies.end())
+		name = cookies.at("username");
 	else
+		name = "unknown";
+	std::string status = success ? "SUCCESS" : "REQUESTED";
+	if (logFile.is_open())
 	{
-		std::vector<std::string>::const_iterator it;
-		for (it = location->get_cgi_extensions().begin(); it != location->get_cgi_extensions().end(); it++)
-		{
-			if (req.get_request_uri().find(*it))
-			{
-				// optional:  throw exception on unallowed syntax
-				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object
-				const_cast<Request&>(req).set_cgi_status(EXECUTE);
-				if (method == DELETE)
-					throw RequestException(CODE_405); //delete not allowed on cgi
-				return true;
-			}
-		}
+		logFile << Utils::generateTimestamp()
+				<< " | Session ID: " << std::setw(10) << std::left << req.get_cookies().at("sessionid")
+				<< " | Name: " << std::setw(10) << std::left << name
+				<< " | DELETE"
+				<< " | Status: " << std::setw(10) << std::left << status
+				<< " | File: " << filename
+				<< std::endl;
+		logFile.close();
 	}
-	return false;
-
+	else
+		std::cerr << "Unable to open log file." << std::endl;
 }
+
+
+// ------- RequestProcessor class ------------
+
 
 // ------- METHODS --------------
 // Handle redirection
@@ -321,6 +354,48 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 	default:
 		throw RequestException(CODE_405); // Method Not Allowed
 	}
+}
+
+
+// ------------CGI HANDLER------------
+
+/**
+ * @brief Detects if the request-URI cotains a CGI-script
+ * based on the following syntax:
+ * [location path]/[filename].[extension]/[PATH_INFO]?[QUERY_STRING]
+ * @details @returns false if the location does not allow cgis or if
+ * it does not allow the specific extension; throws an exception if
+ * the method is DELETE
+ * if the extension is accepted in the location block,
+ * creates a cgi object with the necessary parameters to be passed to
+ * the cgi handling function and execve, @returns true
+ */
+bool RequestProcessor::detect_cgi(const Request& req, const Location* location, int method)
+{
+	if ((!location->is_get() && method == GET)
+		|| (!location->is_post() && method == POST)
+		|| (!location->is_del() && method == DELETE))
+		throw RequestException(CODE_405);
+	if (location->get_cgi_extensions().empty())
+		return false; // check this case
+	else
+	{
+		std::vector<std::string>::const_iterator it;
+		for (it = location->get_cgi_extensions().begin(); it != location->get_cgi_extensions().end(); it++)
+		{
+			if (req.get_request_uri().find(*it))
+			{
+				// optional:  throw exception on unallowed syntax
+				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object
+				const_cast<Request&>(req).set_cgi_status(EXECUTE);
+				if (method == DELETE)
+					throw RequestException(CODE_405); //delete not allowed on cgi
+				return true;
+			}
+		}
+	}
+	return false;
+
 }
 
 // -------------- GET method ------------------------
@@ -501,8 +576,10 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 		throw RequestException(CODE_405);
 
 	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+	bool success = false;
+	logDelete(req, req.get_request_uri(), success);
 
-	Log::log("Attempting to deleting file: " + filePath, WARNING);
+	Log::log("Attempting to delete file: " + filePath, WARNING);
 
 	if (!Utils::fileExists(filePath))
 		throw RequestException(CODE_404);
@@ -514,6 +591,8 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 		throw RequestException(CODE_500);
 
 	Log::log("File deleted successfully", INFO);
+	success = true;
+	logDelete(req, req.get_request_uri(), success);
 	std::ostringstream response;
 	response << "HTTP/1.1 204 No Content\r\n\r\n";
 	return response.str();
