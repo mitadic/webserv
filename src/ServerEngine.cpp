@@ -484,14 +484,14 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 
 	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id
 	{
-		Log::log("Setting cookies for session", DEBUG);
+		Log::log("-- Setting cookies for session -- ", WARNING);
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
 		set_session_id = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().begin()->second + "\r\n";
 	}
-	else
-	{
-		Log::log("Session id cookie found.", WARNING);
-	}
+	// else
+	// {
+	// 	Log::log("Cookies found.", DEBUG);
+	// }
 
 	std::string response;
 
