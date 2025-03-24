@@ -39,9 +39,9 @@
 		 </footer>
 
 		<script>
-			// Function to set a cookie
+			// Function to set a cookie with additional attributes for safety
 			function setCookie(name, value) {
-				document.cookie = `${name}=${value};`;
+				document.cookie = `${name}=${value}; path=/; Secure;`;
 			}
 
 			// Function to get a cookie

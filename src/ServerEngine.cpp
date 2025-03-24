@@ -482,17 +482,15 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	RequestProcessor processor;
 	std::string set_cookie_string;
 
-	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, do Set-Cookie
+	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header, create Set-Cookie
 	{
-		Log::log("Set-Cookie", DEBUG);
+		Log::log("Set-Cookie for session", DEBUG);
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
-		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "\r\n";
-		// for (size_t i = 1; i < reqs[req_idx].get_cookie().size(); i++)
-		// 	set_cookie_string +=  reqs[req_idx].get_cookie()[i] + "\r\n";
+		set_cookie_string = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().at("sessionid") + "; Path=/; HttpOnly; Secure; SameSite=Strict"+ "\r\n";
 	}
 	else
 	{
-		Log::log("Cookie found", DEBUG);
+		Log::log("Cookies found", DEBUG);
 	}
 
 	std::string response;
