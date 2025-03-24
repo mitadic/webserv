@@ -1,24 +1,23 @@
 #include "RequestParser.hpp"
 
-
 RequestParser::RequestParser() {}
 
 RequestParser::~RequestParser() {};
 
-RequestParser::RequestParser(const RequestParser& oth)
+RequestParser::RequestParser(const RequestParser &oth)
 {
 	(void)oth;
 }
 
 // ###############################################
 
-void RequestParser::_parse_header_cache_control(Request& req, std::string& header_val)
+void RequestParser::_parse_header_cache_control(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_connection(Request& req, std::string& header_val)
+void RequestParser::_parse_header_connection(Request &req, std::string &header_val)
 {
 	std::vector<std::string> values = split(header_val, ",");
 
@@ -34,65 +33,65 @@ void RequestParser::_parse_header_connection(Request& req, std::string& header_v
 	}
 }
 
-void RequestParser::_parse_header_date(Request& req, std::string& header_val)
+void RequestParser::_parse_header_date(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_pragma(Request& req, std::string& header_val)
+void RequestParser::_parse_header_pragma(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_trailer(Request& req, std::string& header_val)
+void RequestParser::_parse_header_trailer(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_transfer_encoding(Request& req, std::string& header_val)
+void RequestParser::_parse_header_transfer_encoding(Request &req, std::string &header_val)
 {
 	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
 		trim_lws(*it);
 		if (req._flagged_as_chunked == true)
-			throw RequestException(CODE_400);  // no transfer-encodings allowed once "chunked" has been set
+			throw RequestException(CODE_400); // no transfer-encodings allowed once "chunked" has been set
 		if (*it == "chunked")
 			req._flagged_as_chunked = true;
 		else
 		{
-			;  // placeholder
+			; // placeholder
 		}
 	}
 }
 
-void RequestParser::_parse_header_upgrade(Request& req, std::string& header_val)
+void RequestParser::_parse_header_upgrade(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_via(Request& req, std::string& header_val)
+void RequestParser::_parse_header_via(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_warning(Request& req, std::string& header_val)
+void RequestParser::_parse_header_warning(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
+void RequestParser::_parse_header_accept(Request &req, std::string &header_val)
 {
 	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
-		std::vector<std::string> specs = split(*it, ";");  // or use HTTP_SEPARATORS?
+		std::vector<std::string> specs = split(*it, ";"); // or use HTTP_SEPARATORS?
 		trim_lws(specs[0]);
 		if (specs[0].find_first_of("/") == std::string::npos ||
 			specs[0].find_first_of("/") != specs[0].find_last_of("/") ||
@@ -104,7 +103,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 		for (std::vector<std::string>::iterator it_j = specs.begin() + 1; it_j != specs.end(); it_j++)
 		{
 			trim_lws(*it_j);
-			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=')  // Flag: make it case-insensitive
+			if ((*it_j).size() < 3 || (*it_j)[0] != 'q' || (*it_j)[1] != '=') // Flag: make it case-insensitive
 				continue;
 			std::string q_value_string = (*it_j).substr(2);
 			// if (contains_non_digits(q_value_string))
@@ -113,7 +112,7 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 			char *endptr;
 			quality_factor = std::strtof((*it_j).substr(2).c_str(), &endptr);
 			if (endptr == q_value_string.c_str() || *endptr != '\0' ||
-				 quality_factor < 0.0f || quality_factor > 1.0f)
+				quality_factor < 0.0f || quality_factor > 1.0f)
 				throw RequestException(CODE_400);
 		}
 
@@ -134,7 +133,6 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 		// 		break;
 		// 	}
 		// }
-
 	}
 
 	// 	A more elaborate example is
@@ -161,37 +159,37 @@ void RequestParser::_parse_header_accept(Request& req, std::string& header_val)
 	//        4) */*
 }
 
-void RequestParser::_parse_header_accept_charset(Request& req, std::string& header_val)
+void RequestParser::_parse_header_accept_charset(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_accept_encoding(Request& req, std::string& header_val)
+void RequestParser::_parse_header_accept_encoding(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_accept_language(Request& req, std::string& header_val)
+void RequestParser::_parse_header_accept_language(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_authorization(Request& req, std::string& header_val)
+void RequestParser::_parse_header_authorization(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_expect(Request& req, std::string& header_val)
+void RequestParser::_parse_header_expect(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_from(Request& req, std::string& header_val)
+void RequestParser::_parse_header_from(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
@@ -201,7 +199,7 @@ void RequestParser::_parse_header_from(Request& req, std::string& header_val)
  * Host is a must-have and can't have repeat occurrences, so I'm a-throwin' exceptions
  * Notably, perhaps paradoxically, this is meant to confirm that the header has the info matching to the REALITY of the connection established on the SB
  */
-void RequestParser::_parse_header_host(Request& req, std::string& header_val)
+void RequestParser::_parse_header_host(Request &req, std::string &header_val)
 {
 	// if (req._host)  // has already been set to something for this request. Not client, this request
 	// 	throw RequestException(CODE_400);
@@ -243,72 +241,73 @@ void RequestParser::_parse_header_host(Request& req, std::string& header_val)
 	// validate whether "valid host IP" (non-private) later
 }
 
-void RequestParser::_parse_header_if_match(Request& req, std::string& header_val)
+void RequestParser::_parse_header_if_match(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_if_modified_since(Request& req, std::string& header_val)
+void RequestParser::_parse_header_if_modified_since(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_if_none_match(Request& req, std::string& header_val)
+void RequestParser::_parse_header_if_none_match(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_if_range(Request& req, std::string& header_val)
-{	(void)req;
-	(void)header_val;
-}
-
-void RequestParser::_parse_header_unmodified_since(Request& req, std::string& header_val)
+void RequestParser::_parse_header_if_range(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_max_forwards(Request& req, std::string& header_val)
+void RequestParser::_parse_header_unmodified_since(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_proxy_authorization(Request& req, std::string& header_val)
+void RequestParser::_parse_header_max_forwards(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_range(Request& req, std::string& header_val)
+void RequestParser::_parse_header_proxy_authorization(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_referer(Request& req, std::string& header_val)
+void RequestParser::_parse_header_range(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_te(Request& req, std::string& header_val)
+void RequestParser::_parse_header_referer(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_user_agent(Request& req, std::string& header_val)
+void RequestParser::_parse_header_te(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
+void RequestParser::_parse_header_user_agent(Request &req, std::string &header_val)
+{
+	(void)req;
+	(void)header_val;
+}
+
+void RequestParser::_parse_header_cookie(Request &req, std::string &header_val)
 {
 	Log::log("Cookie header identified in the request: " + header_val, DEBUG);
 	std::vector<std::string> kv_pairs = split(header_val, ",;");
@@ -316,34 +315,44 @@ void RequestParser::_parse_header_cookie(Request& req, std::string& header_val)
 	{
 		trim_lws(*it);
 		std::vector<std::string> k_and_v = split(*it, "=");
-		std::cout << k_and_v[0] << " : " << k_and_v[1] << std::endl;
-		if (k_and_v.size() != 2 ) // || !req._cookies.empty()
+		if (k_and_v.size() != 2)
 			throw RequestException(CODE_400);
-		req._cookies[k_and_v[0]] = k_and_v[1];
+
+		const std::string &key = k_and_v[0];
+		const std::string &value = k_and_v[1];
+
+		// Check for duplicate cookies
+		if (req._cookies.find(key) != req._cookies.end())
+		{
+			Log::log("Duplicate cookie ignored: " + key, WARNING);
+			continue;
+		}
+
+		req._cookies[key] = value;
 	}
 }
 
-void RequestParser::_parse_header_allow(Request& req, std::string& header_val)
+void RequestParser::_parse_header_allow(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_encoding(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_encoding(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_language(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_language(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_length(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_length(Request &req, std::string &header_val)
 {
-	if (req._content_length != UNINITIALIZED)  // already initialized
+	if (req._content_length != UNINITIALIZED) // already initialized
 		throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
@@ -351,25 +360,25 @@ void RequestParser::_parse_header_content_length(Request& req, std::string& head
 	// 	throw RequestException(CODE_400);
 }
 
-void RequestParser::_parse_header_content_location(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_location(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_md5(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_md5(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_range(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_range(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_content_type(Request& req, std::string& header_val)
+void RequestParser::_parse_header_content_type(Request &req, std::string &header_val)
 {
 	if (req._content_type_idx != UNINITIALIZED)
 		throw RequestException(CODE_400);
@@ -392,13 +401,13 @@ void RequestParser::_parse_header_content_type(Request& req, std::string& header
 	throw RequestException(CODE_415);
 }
 
-void RequestParser::_parse_header_expires(Request& req, std::string& header_val)
+void RequestParser::_parse_header_expires(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
 }
 
-void RequestParser::_parse_header_last_modified(Request& req, std::string& header_val)
+void RequestParser::_parse_header_last_modified(Request &req, std::string &header_val)
 {
 	(void)req;
 	(void)header_val;
@@ -406,10 +415,8 @@ void RequestParser::_parse_header_last_modified(Request& req, std::string& heade
 
 // ###############################################
 
-
-
 /* Early return if UNRECOGNIZED_HEADER. Else substr() the value trimmed away from leading LWS or trailing '\r' */
-void RequestParser::dispatch_header_parser(Request& req, const int header_idx, std::string& header_val)
+void RequestParser::dispatch_header_parser(Request &req, const int header_idx, std::string &header_val)
 {
 	if (header_idx == UNRECOGNIZED_HEADER)
 	{
@@ -421,12 +428,12 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 	if (is_empty_crlf(header_val))
 		return;
 	size_t start = header_val.find_first_not_of(LWS_CHARS);
-	size_t end = header_val.size();  // not the index, we actually need the size for the substr math
+	size_t end = header_val.size(); // not the index, we actually need the size for the substr math
 	if (*(header_val.rbegin()) == '\r')
 		end--;
 	std::string trimmed_val = header_val.substr(start, end - start);
 
-	void (RequestParser::*header_parsers[HTTP_REQUEST_LEGAL_HEADERS_N])(Request&, std::string&) = {
+	void (RequestParser::*header_parsers[HTTP_REQUEST_LEGAL_HEADERS_N])(Request &, std::string &) = {
 		&RequestParser::_parse_header_cache_control,
 		&RequestParser::_parse_header_connection,
 		&RequestParser::_parse_header_date,
@@ -465,11 +472,9 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 		&RequestParser::_parse_header_content_range,
 		&RequestParser::_parse_header_content_type,
 		&RequestParser::_parse_header_expires,
-		&RequestParser::_parse_header_last_modified
-	};
+		&RequestParser::_parse_header_last_modified};
 	(this->*header_parsers[header_idx])(req, trimmed_val);
 }
-
 
 // "GET /about.html HTTP/1.1
 // Host: localhost:9991
@@ -481,7 +486,6 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 // Connection: keep-alive
 // "
 
-
 // Request       = Request-Line
 //                         *(( general-header
 //                          | request-header
@@ -489,9 +493,7 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 //                         CRLF
 //                         [ message-body ]
 
-
 // Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
-
 
 // message-header = field-name ":" [ field-value ]
 //        field-name     = token
@@ -501,8 +503,7 @@ void RequestParser::dispatch_header_parser(Request& req, const int header_idx, s
 //                         of token, separators, and quoted-string>
 // Note: LWS == linear white space
 
-
-void RequestParser::parse_request_line(Request& req, std::string& line)
+void RequestParser::parse_request_line(Request &req, std::string &line)
 {
 	std::vector<std::string> tokens = split(line, " ");
 	if (tokens.size() != 3)
@@ -532,7 +533,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 	// cgi detection occurs in process_request() now
 
 	size_t dot = 0;
-	if (tokens[2] == "undefined")  // seen this in Mozilla
+	if (tokens[2] == "undefined") // seen this in Mozilla
 	{
 		req._major_http_v = 1;
 		req._minor_http_v = 1;
@@ -541,7 +542,7 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 	if (tokens[2].substr(0, 5) != "HTTP/")
 		throw RequestException(CODE_400);
 	dot = tokens[2].find_first_of(".", 5);
-	if (dot == std::string::npos || dot == 5)  // no '.' or begins with '.'
+	if (dot == std::string::npos || dot == 5) // no '.' or begins with '.'
 		throw RequestException(CODE_400);
 	std::string num = tokens[2].substr(5, dot - 5);
 	if (set_http_v(num, req._major_http_v) != OK)
@@ -554,8 +555,8 @@ void RequestParser::parse_request_line(Request& req, std::string& line)
 /**
  * Continues reading through everything (robustly) until CRLF or EOF
  * Finally, if _content_length is UNINITIALIZED, set it to 0 for the arithmetics later on
-*/
-void RequestParser::parse_headers(Request& req, std::istringstream& stream, std::string& line)
+ */
+void RequestParser::parse_headers(Request &req, std::istringstream &stream, std::string &line)
 {
 	if (!std::getline(stream, line))
 		check_stream_for_errors_or_eof(stream);
@@ -570,7 +571,7 @@ void RequestParser::parse_headers(Request& req, std::istringstream& stream, std:
 		req._content_length = 0;
 }
 
-void RequestParser::parse_header_line(Request& req, std::istringstream& stream, std::string& line)
+void RequestParser::parse_header_line(Request &req, std::istringstream &stream, std::string &line)
 {
 	size_t colon_pos = line.find_first_of(":");
 	size_t lws_pos = line.find_first_of(HTTP_SEPARATORS);
@@ -589,7 +590,7 @@ void RequestParser::parse_header_line(Request& req, std::istringstream& stream, 
 }
 
 /* If not EOF, continues reading until req._content_length */
-void RequestParser::parse_body(Request& req, std::istringstream& stream, std::string& line)
+void RequestParser::parse_body(Request &req, std::istringstream &stream, std::string &line)
 {
 	(void)req;
 	(void)stream;
