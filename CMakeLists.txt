@@ -7,6 +7,14 @@ project(WebservTest)
 # Enable testing
 enable_testing()
 
+# Add Google Test
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+# Add libcurl
+find_package(CURL REQUIRED)
+include_directories(${CURL_INCLUDE_DIRS})
+
 # Add the test executable
 add_executable(test_utils
     test/test_utils.cpp
@@ -25,9 +33,12 @@ add_executable(test_utils
     src/StatusCodes.cpp
     src/HttpHeaders.cpp
 )
-
 target_include_directories(test_utils PRIVATE ${CMAKE_SOURCE_DIR}/incl) # Add incl/ for test_utils
 target_link_libraries(test_utils gtest gtest_main pthread)
 
+add_executable(test_http test/test_http.cpp)
+target_link_libraries(test_http ${GTEST_LIBRARIES} gtest_main pthread curl)
+
 # Register the test targets with CTest
 add_test(NAME test_utils COMMAND test_utils)
+add_test(NAME test_http COMMAND test_http)

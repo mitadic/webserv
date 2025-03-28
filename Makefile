@@ -30,7 +30,8 @@ SRC		=	Config.cpp \
 			StatusCodes.cpp \
 			Utils.cpp
 
-TEST	=	test_utils.cpp
+TEST	=	test_utils.cpp \
+			test_http.cpp
 
 OBJ		=	$(SRC:cpp=o)
 SRC_FILES = $(addprefix $(SRC_DIR), $(SRC))
@@ -51,6 +52,7 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp $(I_DIR)*
 $(TEST_EXEC): $(TEST_SRC_FILES) CMakeLists.txt
 	@cmake -S . -B $(BUILD_DIR)
 	@cmake --build $(BUILD_DIR) --target test_utils
+	@cmake --build $(BUILD_DIR) --target test_http
 
 test: $(TEST_EXEC)
 	cd $(BUILD_DIR) && ctest
