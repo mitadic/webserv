@@ -172,6 +172,86 @@ void ServerEngine::print_pfds()
 	}
 }
 
+void ServerEngine::write_to_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	char	buf[BUF_SZ];
+	ssize_t	nbytes;
+
+	memset(buf, 0, BUF_SZ);
+	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
+	if (nbytes < 0)
+	{
+		std::perror("read(pipe_fd)");
+		// TODO: message the client instead of forgetting them
+		close(pfds_it->fd);
+		pfds.erase(pfds_it);
+		pfd_info_map.erase(meta_it);
+		pfds_vector_modified = true;
+		return;
+	}
+	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
+
+	////
+	size_t sz_to_send = BUF_SZ;
+	int idx = meta_it->second.reqs_idx;
+	int body_size = reqs[idx].get_content_length();
+	int sent_so_far = reqs[idx].get_total_sent();
+
+	if (body_size - sent_so_far < BUF_SZ) {
+		if (body_size - sent_so_far < 0)
+			std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
+		sz_to_send = body_size - sent_so_far;
+	}
+
+	if (sz_to_send)
+	{
+		std::string str_to_send = reqs[idx].get_request_body_as_str().substr(reqs[idx].get_total_sent());
+		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				std::cerr << "Socket buffer full or would block, retrying send()" << std::endl;
+				return;
+			}
+			else if (errno == EPIPE)
+			{
+				std::cerr << "Client closed connection (EPIPE), closing socket: " << pfds_it->fd << std::endl;
+				std::cout << reqs[idx].get_request_str() << std::endl;
+				forget_client(pfds_it, meta_it);  // Close the socket properly
+				return;
+			}
+			else
+			{
+				perror("send");  // LOG
+				std::cerr << "sz_to_send: " << sz_to_send << ", total size: " << response_size  << ", sent_so_far: " << sent_so_far << std::endl;
+				// TODO: depending on request attributes, handle removal differently?
+			}
+		}
+		reqs[idx].increment_total_sent_by(sz_to_send);
+		update_client_activity_timestamp(meta_it);
+	}
+	else  // sz_to_send == 0
+	{
+		reqs[idx].set_total_sent(0);  // reuse same attribute when writing to client
+
+		// locate the pipe_out's meta by req_idx, to locate pfd by fd, to set pipe_out pfd to POLLIN
+		for (std::map<int, pfd_info>::iterator pipe_out_meta_it = pfd_info_map.begin(); pipe_out_meta_it != pfd_info_map.end(); pipe_out_meta_it++)
+		{
+			if (pipe_out_meta_it->second.type == CGI_PIPE_OUT && pipe_out_meta_it->second.reqs_idx == meta_it->second.reqs_idx)
+			{
+				for (std::vector<pollfd>::iterator pipe_out_pfd_it = pfds.begin(); pipe_out_pfd_it != pfds.end(); pipe_out_pfd_it++)
+				{
+					if (pipe_out_meta_it->first == pipe_out_pfd_it->fd)
+					{
+						pipe_out_pfd_it->events = POLLIN;
+						return;
+					}
+				}
+			}
+		}
+	}
+}
+
 void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	char	buf[BUF_SZ];
@@ -501,8 +581,11 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 		Log::log("CGI-handling", DEBUG);
 		try
 		{
-			// TODO handle CGI timeout
-			reqs[req_idx].cgi->handle_cgi(pfds, pfd_info_map, req_idx);
+			if (reqs[req_idx].get_method() == GET)
+				// TODO handle CGI timeout
+				reqs[req_idx].cgi->setup_cgi_get(pfds, pfd_info_map, req_idx);
+			else
+				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
 
 		} catch (CgiException & e)
 		{
@@ -602,7 +685,7 @@ void ServerEngine::run()
 				}
 				else if (pfds_it->revents & POLLIN)
 				{
-					if (pfd_meta.type == CGI_PIPE)
+					if (pfd_meta.type == CGI_PIPE_OUT)
 						read_from_cgi_pipe(pfds_it, meta_it);
 					else
 					{
@@ -612,11 +695,14 @@ void ServerEngine::run()
 				}
 				else if (pfds_it->revents & POLLOUT)
 				{
-					write_to_client(pfds_it, meta_it);
+					if (pfd_meta.type == CGI_PIPE_IN)
+						write_to_cgi_pipe(pfds_it, meta_it);
+					else
+						write_to_client(pfds_it, meta_it);
 				}
 				else if (pfds_it->revents & POLLHUP)
 				{
-					if (pfd_meta.type == CGI_PIPE)
+					if (pfd_meta.type == CGI_PIPE_OUT)
 						process_eof_on_pipe(pfds_it, meta_it);
 					else
 						process_unorderly_hangup(pfds_it, meta_it);

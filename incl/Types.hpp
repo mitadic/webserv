@@ -17,7 +17,8 @@ enum e_retval {
 
 #define CLIENT_CONNECTION_SOCKET 100  // the only one that we directly map to a request
 #define LISTENER_SOCKET 101
-#define CGI_PIPE 102  // indirectly mapped to a request through Cgi, which itself is part of a Request
+#define CGI_PIPE_OUT 102  // indirectly mapped to a request through Cgi, which itself is part of a Request
+#define CGI_PIPE_IN 103
 
 /* Request-related info */
 enum e_cgi_status
