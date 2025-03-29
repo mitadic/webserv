@@ -6,7 +6,7 @@
 /*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/29 13:43:15 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/30 00:07:16 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class CgiHandler {
 		std::string _pathinfo;
 		std::string _querystring;
 		char **_argv; // argv[0] is the interpreter, argv[1] is the pathname, argv is terminated by NULL
+		std::vector<std::string> _env_vector;
 		char **_envp; // contains meta-variables e.g. PATH_INFO, QUERY_STRING
 		// TODO current working directory should be set to the directory containing the script; not sure where it is stored ?
 

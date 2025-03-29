@@ -4,6 +4,20 @@
 #include "Request.hpp"
 #include "Utils.hpp"
 
+/* CgiHandler helper function */
+static char **vector_to_2d_array(const std::vector<std::string>& v)
+{
+	char **env = new char* [v.size() + 1];
+	env[v.size()] = NULL;
+	for (size_t i = 0; i < v.size(); i++)
+	{
+		env[i] = new char [v[i].size() + 1];
+		std::strcpy(env[i], v[i].c_str());
+	}
+	return (env);
+}
+
+/* Parametrised constructor */
 CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 
 	std::string uri = req.get_request_uri();
@@ -30,9 +44,26 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	set_env_variables(req, loc, method);
 }
 
-CgiHandler::CgiHandler(const CgiHandler & oth) {
-	(void)oth;
-	// TODO
+/* Copy constructor TODO --> DONE */
+CgiHandler::CgiHandler(const CgiHandler & oth) :
+		_client_fd(oth._client_fd),
+		_extension(oth._extension),
+		_interpreter(oth._interpreter),
+		_pathname(oth._pathname),
+		_pathinfo(oth._pathinfo),
+		_querystring(oth._querystring),
+		_argv(NULL),
+		_env_vector(oth._env_vector),
+		_envp(NULL) {
+	if (oth._argv)
+	{
+		_argv = new char*[3];
+		_argv[0] = const_cast<char *>(_interpreter.c_str()); // check later if cons_cast is ok
+		_argv[1] = const_cast<char *>(_pathname.c_str());
+		_argv[2] = NULL;
+	}
+	if (oth._envp)
+		_envp = vector_to_2d_array(_env_vector);
 	return ;
 }
 
@@ -82,47 +113,34 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 	// throw error if larger than 2?
 }
 
-static char **vector_to_2d_array(const std::vector<std::string>& v)
-{
-	char **env = new char* [v.size() + 1];
-	env[v.size()] = NULL;
-	for (size_t i = 0; i < v.size(); i++)
-	{
-		env[i] = new char [v[i].size() + 1];
-		std::strcpy(env[i], v[i].c_str());
-	}
-	return (env);
-}
-
 void CgiHandler::set_env_variables(const Request& req, const Location& loc, int method)
 {
-	std::vector<std::string> env_vector;
 	std::ostringstream oss;
 	(void)loc; // TODO maybe remove
 
 	if (method == GET)
-		env_vector.push_back("REQUEST_METHOD=GET");
+		_env_vector.push_back("REQUEST_METHOD=GET");
 	else if (method == POST)
 	{
-		env_vector.push_back("REQUEST_METHOD=POST");
-		oss << "CONTENT_LENGTH=" << req.get_content_length(); env_vector.push_back(oss.str());
-		env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
+		_env_vector.push_back("REQUEST_METHOD=POST");
+		oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
+		_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
 	}
 	if (!_pathinfo.empty())
 	{
-		env_vector.push_back("PATH_INFO=" + _pathinfo);
-		env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
+		_env_vector.push_back("PATH_INFO=" + _pathinfo);
+		_env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
 	}
 	if (!_querystring.empty())
-		env_vector.push_back("QUERY_STRING=" + _querystring);
-	env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1));
-	oss.clear(); oss << "SERVER_PORT=" << req.get_port(); env_vector.push_back(oss.str());
-	env_vector.push_back("SERVER_NAME=" + Utils::ft_inet_ntoa(req.get_host()));
-	env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
-	env_vector.push_back("SERVER_SOFTWARE=Webserv");
+		_env_vector.push_back("QUERY_STRING=" + _querystring);
+	_env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	_env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1));
+	oss.clear(); oss << "SERVER_PORT=" << req.get_port(); _env_vector.push_back(oss.str());
+	_env_vector.push_back("SERVER_NAME=" + Utils::ft_inet_ntoa(req.get_host()));
+	_env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
+	_env_vector.push_back("SERVER_SOFTWARE=Webserv");
 
-	_envp = vector_to_2d_array(env_vector);
+	_envp = vector_to_2d_array(_env_vector);
 }
 
 /** pushes_back new:
@@ -168,7 +186,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 			Log::log(oss.str(), WARNING);
 			throw CgiException();
 		}
-		w = waitpid(pid, &wstatus, 0);
+		w = waitpid(pid, &wstatus, WNOHANG);
 		if (w < 0)
 		{
 			std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
