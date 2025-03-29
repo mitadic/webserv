@@ -42,3 +42,5 @@ target_link_libraries(test_http ${GTEST_LIBRARIES} gtest_main pthread curl)
 # Register the test targets with CTest
 add_test(NAME test_utils COMMAND test_utils)
 add_test(NAME test_http COMMAND test_http)
+
+set_tests_properties(test_http PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

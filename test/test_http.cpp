@@ -26,19 +26,12 @@ std::string performRequest(const std::string &url, const std::string &method, co
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
 	curl_slist *headers = nullptr;
 
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-	// Debugging: Log the request details
-	std::cerr << "Performing " << method << " request to " << url << std::endl;
-	if (!body.empty())
-	{
-		std::cerr << "Request body: " << body << std::endl;
-	}
-
 	if (method == "POST")
 	{
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
 		headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+		headers = curl_slist_append(headers, "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+		headers = curl_slist_append(headers, "Connection: keep-alive");
 
 		// Add Content-Length header
 		std::ostringstream content_length;
@@ -67,7 +60,7 @@ std::string performRequest(const std::string &url, const std::string &method, co
 }
 
 // Test GET request
-TEST(HTTPTests, TestGET)
+TEST(HTTPTests, TestGET_success)
 {
 	long response_code;
 	std::string response = performRequest("http://127.0.0.2:8080/index.html", "GET", "", &response_code);
@@ -77,7 +70,7 @@ TEST(HTTPTests, TestGET)
 }
 
 // Test DELETE request
-TEST(HTTPTests, TestDELETE)
+TEST(HTTPTests, TestDELETE_success)
 {
 	long response_code;
 
@@ -93,10 +86,10 @@ TEST(HTTPTests, TestDELETE)
 }
 
 // Test POST request
-TEST(HTTPTests, TestPOST)
+TEST(HTTPTests, TestPOST_contact_form_success)
 {
 	long response_code;
-	std::string body = "subject=Test&message=This+is+a+test+message";
+	std::string body = "subject=Alise&message=moikka";
 
 	// Add Content-Type header
 	std::string response = performRequest("http://127.0.0.2:8080/contact.html", "POST", body, &response_code);

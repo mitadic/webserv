@@ -55,7 +55,12 @@ $(TEST_EXEC): $(TEST_SRC_FILES) CMakeLists.txt
 	@cmake --build $(BUILD_DIR) --target test_http
 
 test: $(TEST_EXEC)
-	cd $(BUILD_DIR) && ctest
+	@echo "\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure
+	@echo "\033[1;34m[INFO]\033[0m Running Utils unit test..."
+	@$(BUILD_DIR)test_utils && echo "\033[1;32m[SUCCESS]\033[0m test_utils passed!" || echo "\033[1;31m[FAILURE]\033[0m test_utils failed!"
+	@echo "\033[1;34m[INFO]\033[0m Running HTTP tests with cURL..."
+	@$(BUILD_DIR)test_http && echo "\033[1;32m[SUCCESS]\033[0m test_http passed!" || echo "\033[1;31m[FAILURE]\033[0m test_http failed!"
 
 clean:
 	@if [ -d ./$(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
