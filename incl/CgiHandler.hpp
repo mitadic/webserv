@@ -6,7 +6,7 @@
 /*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/30 00:07:16 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/30 00:23:18 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <cstdlib>
 #include <sys/wait.h> // For waitpid()
 
-#define WHICH_PHP "/usr/bin/php"
+#define WHICH_PHP "/usr/bin/php-cgi"
 #define WHICH_PY "/usr/bin/python3"
 #define WHICH_SH "/usr/bin/sh"
 
