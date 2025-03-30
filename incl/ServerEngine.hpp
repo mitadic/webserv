@@ -52,16 +52,18 @@ public:
 	void	update_client_activity_timestamp(std::map<int, pfd_info>::iterator&);
 	void	remove_failed_blocks(std::vector<ServerBlock> &server_blocks, std::vector<int> &failed_indexes);
 
-	void	read_from_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	write_to_cgi_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	read_from_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	write_to_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	set_matching_cgi_pipe_out_to_pollin(std::map<int, pfd_info>::iterator&);
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
-	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
-	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
+	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 
 	void	process_request(std::vector<pollfd>::iterator&, const int&);
 

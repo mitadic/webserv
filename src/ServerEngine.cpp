@@ -172,87 +172,71 @@ void ServerEngine::print_pfds()
 	}
 }
 
-void ServerEngine::write_to_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	char	buf[BUF_SZ];
-	ssize_t	nbytes;
+	if (close(pfds_it->fd) < 0)
+		perror("close cgi_pipe_in");
+	pfds.erase(pfds_it);
+	pfd_info_map.erase(meta_it);
+	pfds_vector_modified = true;
+}
 
-	memset(buf, 0, BUF_SZ);
-	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
-	if (nbytes < 0)
+/* locate the pipe_out's meta by req_idx, in order to identify the peer cgi_pipe_out's pfd by fd, in order to set pipe_out pfd to POLLIN */
+void ServerEngine::set_matching_cgi_pipe_out_to_pollin(std::map<int, pfd_info>::iterator& meta_it)
+{
+	for (std::map<int, pfd_info>::iterator pipe_out_meta_it = pfd_info_map.begin(); pipe_out_meta_it != pfd_info_map.end(); pipe_out_meta_it++)
 	{
-		std::perror("read(pipe_fd)");
-		// TODO: message the client instead of forgetting them
-		close(pfds_it->fd);
-		pfds.erase(pfds_it);
-		pfd_info_map.erase(meta_it);
-		pfds_vector_modified = true;
-		return;
+		if (pipe_out_meta_it->second.type == CGI_PIPE_OUT && pipe_out_meta_it->second.reqs_idx == meta_it->second.reqs_idx)  // found the cgi_pipe_out
+		{
+			for (std::vector<pollfd>::iterator pipe_out_pfd_it = pfds.begin(); pipe_out_pfd_it != pfds.end(); pipe_out_pfd_it++)
+			{
+				if (pipe_out_meta_it->first == pipe_out_pfd_it->fd)
+				{
+					pipe_out_pfd_it->events = POLLIN;
+					return;
+				}
+			}
+		}
 	}
-	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
+	std::cerr << "Critical error identified: found no matching cgi_pipe_out after finishing writing to cgi_pipe_in" << std::endl;
+}
 
-	////
+void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
 	size_t sz_to_send = BUF_SZ;
 	int idx = meta_it->second.reqs_idx;
 	int body_size = reqs[idx].get_content_length();
 	int sent_so_far = reqs[idx].get_total_sent();
 
-	if (body_size - sent_so_far < BUF_SZ) {
+	if (body_size - sent_so_far < BUF_SZ)
+	{
 		if (body_size - sent_so_far < 0)
-			std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
+			std::cerr << "Critical error identified write()-ing to cgi_pipe_in: sz_to_send less than 0. sz_to_send: " << sz_to_send << ", body_size: " << body_size << std::endl;
 		sz_to_send = body_size - sent_so_far;
 	}
 
 	if (sz_to_send)
 	{
 		std::string str_to_send = reqs[idx].get_request_body_as_str().substr(reqs[idx].get_total_sent());
-		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
+		if (write(pfds_it->fd, str_to_send.c_str(), sz_to_send) == -1)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				std::cerr << "Socket buffer full or would block, retrying send()" << std::endl;
-				return;
-			}
-			else if (errno == EPIPE)
-			{
-				std::cerr << "Client closed connection (EPIPE), closing socket: " << pfds_it->fd << std::endl;
-				std::cout << reqs[idx].get_request_str() << std::endl;
-				forget_client(pfds_it, meta_it);  // Close the socket properly
-				return;
-			}
-			else
-			{
-				perror("send");  // LOG
-				std::cerr << "sz_to_send: " << sz_to_send << ", total size: " << response_size  << ", sent_so_far: " << sent_so_far << std::endl;
-				// TODO: depending on request attributes, handle removal differently?
-			}
+			perror("write() to cgi_pipe_in");  // LOG
+			std::cerr << "sz_to_send: " << sz_to_send << ", total size: " << body_size  << ", sent_so_far: " << sent_so_far << std::endl;
+			// TODO: handle removal
 		}
+		std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send << std::endl;
 		reqs[idx].increment_total_sent_by(sz_to_send);
 		update_client_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
-		reqs[idx].set_total_sent(0);  // reuse same attribute when writing to client
-
-		// locate the pipe_out's meta by req_idx, to locate pfd by fd, to set pipe_out pfd to POLLIN
-		for (std::map<int, pfd_info>::iterator pipe_out_meta_it = pfd_info_map.begin(); pipe_out_meta_it != pfd_info_map.end(); pipe_out_meta_it++)
-		{
-			if (pipe_out_meta_it->second.type == CGI_PIPE_OUT && pipe_out_meta_it->second.reqs_idx == meta_it->second.reqs_idx)
-			{
-				for (std::vector<pollfd>::iterator pipe_out_pfd_it = pfds.begin(); pipe_out_pfd_it != pfds.end(); pipe_out_pfd_it++)
-				{
-					if (pipe_out_meta_it->first == pipe_out_pfd_it->fd)
-					{
-						pipe_out_pfd_it->events = POLLIN;
-						return;
-					}
-				}
-			}
-		}
+		reqs[idx].set_total_sent(0);  // reset to reuse same attribute for when writing to client_fd
+		set_matching_cgi_pipe_out_to_pollin(meta_it);
+		discard_cgi_pipe_in(pfds_it, meta_it);
 	}
 }
 
-void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	char	buf[BUF_SZ];
 	ssize_t	nbytes;
@@ -263,7 +247,8 @@ void ServerEngine::read_from_cgi_pipe(std::vector<pollfd>::iterator& pfds_it, st
 	{
 		std::perror("read(pipe_fd)");
 		// TODO: message the client instead of forgetting them
-		close(pfds_it->fd);
+		if (close(pfds_it->fd) < 0)
+			perror("close");
 		pfds.erase(pfds_it);
 		pfd_info_map.erase(meta_it);
 		pfds_vector_modified = true;
@@ -605,7 +590,6 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	}
 }
 
-/* Wait, is this unneeded because POLL itself stops blocking when timeout? */
 bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
 {
 	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)
@@ -686,7 +670,7 @@ void ServerEngine::run()
 				else if (pfds_it->revents & POLLIN)
 				{
 					if (pfd_meta.type == CGI_PIPE_OUT)
-						read_from_cgi_pipe(pfds_it, meta_it);
+						read_from_cgi_pipe_out(pfds_it, meta_it);
 					else
 					{
 						initialize_new_request_if_no_active_one(meta_it);
@@ -696,7 +680,7 @@ void ServerEngine::run()
 				else if (pfds_it->revents & POLLOUT)
 				{
 					if (pfd_meta.type == CGI_PIPE_IN)
-						write_to_cgi_pipe(pfds_it, meta_it);
+						write_to_cgi_pipe_in(pfds_it, meta_it);
 					else
 						write_to_client(pfds_it, meta_it);
 				}

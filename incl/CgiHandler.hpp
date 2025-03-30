@@ -6,7 +6,7 @@
 /*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/30 00:23:18 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/03/30 00:32:51 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class CgiHandler {
 		CgiHandler();
 		int _client_fd; // to track the cgi
 		std::string _extension; // e.g. ".py"
-		std::string _interpreter; // contains "/usr/bin/python3", "/usr/bin/php" or "/usr/bin/sh" -> needed by argc
+		std::string _interpreter; // contains "/usr/bin/python3", "/usr/bin/php-cgi" or "/usr/bin/sh" -> needed by argc
 		std::string _pathname; // e.g. /cgi-bin/scrip.php
 		std::string _pathinfo;
 		std::string _querystring;

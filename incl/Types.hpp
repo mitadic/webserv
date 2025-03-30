@@ -15,10 +15,13 @@ enum e_retval {
 	NOT_OK
 };
 
-#define CLIENT_CONNECTION_SOCKET 100  // the only one that we directly map to a request
-#define LISTENER_SOCKET 101
-#define CGI_PIPE_OUT 102  // indirectly mapped to a request through Cgi, which itself is part of a Request
-#define CGI_PIPE_IN 103
+enum e_pfd_type
+{
+	CLIENT_CONNECTION_SOCKET = 100,  // the only one that we directly map to a request
+	LISTENER_SOCKET,
+	CGI_PIPE_IN,
+	CGI_PIPE_OUT  // indirectly mapped to a request through Cgi, which itself is part of a Request
+};
 
 /* Request-related info */
 enum e_cgi_status
@@ -31,7 +34,14 @@ enum e_cgi_status
 };
 
 /** Initialized and pushed_back for each client_fd
- * @param reqs_idx updated for each current request
+ * @param reqs_idx needed only by CONNECTION, PIPE
+ * @param sockaddr needed only by LISTENER + socket_addr.sin_port has the [port]
+ * @param host mapping pretend IP [host] for req and processing
+ * @param port representation from server_block in READABLE endianness
+ * @param max_client_body
+ * @param last_active needed only by CONNECTION; connection established | (done writing? | began reading?)
+ * @param had_at_least_one_processed needed only by CONNECTION, to differentiate between 408 and silent close
+ * @param cgi_pid needed only by CGI_PIPE_IN and CGI_PIPE_OUT to perform waitpid()
  * */
 struct pfd_info {
 	int type;
@@ -42,5 +52,6 @@ struct pfd_info {
 	uint16_t port;			// representation from server_block in READABLE endianness
 	uint32_t max_client_body;
 	time_t last_active;		// needed only by CONNECTION; connection established | (done writing? | began reading?)
-	bool had_at_least_one_req_processed;  // needed only by CONNECTION, to differentiate between 408 and silent close
+	bool had_at_least_one_req_processed;
+	pid_t cgi_pid;			// needed only by CGI_PIPE_IN and CGI_PIPE_OUT
 };

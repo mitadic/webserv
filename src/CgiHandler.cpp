@@ -33,7 +33,9 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 
 	// TODO add checks for valid request uri (maybe already in request parsing?)
 	size_t pos = uri.find(deduce_extension(req, loc));
+	std::cout << "DEBUG: uri: " << uri << ", pos of extension: " << pos << ", _extension: " << _extension << std::endl;
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
+	std::cout << "DEBUG: _pathname: " << _pathname << std::endl;
 	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
 
 	_argv = new char*[3];
@@ -89,7 +91,7 @@ std::string CgiHandler::deduce_extension(const Request& req, const Location& loc
 	std::vector<std::string>::const_iterator it;
 	for (it = loc.get_cgi_extensions().begin(); it != loc.get_cgi_extensions().end(); it++)
 	{
-		if (req.get_request_uri().find(*it))
+		if (req.get_request_uri().find(*it) != std::string::npos)
 			return (*it);
 	}
 	return "";
@@ -115,7 +117,6 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 
 void CgiHandler::set_env_variables(const Request& req, const Location& loc, int method)
 {
-	std::ostringstream oss;
 	(void)loc; // TODO maybe remove
 
 	if (method == GET)
@@ -123,7 +124,7 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	else if (method == POST)
 	{
 		_env_vector.push_back("REQUEST_METHOD=POST");
-		oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
+		std::ostringstream oss; oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
 		_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
 	}
 	if (!_pathinfo.empty())
@@ -133,9 +134,16 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	}
 	if (!_querystring.empty())
 		_env_vector.push_back("QUERY_STRING=" + _querystring);
+	if (_extension == ".php")
+	{
+		_env_vector.push_back("REDIRECT_STATUS=1");
+		std::ostringstream oss; oss << "SCRIPT_FILENAME=" << _pathname;
+		std::cout << "DEBUG: " << oss.str() << std::endl;
+		_env_vector.push_back(oss.str());
+	}
 	_env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	_env_vector.push_back("SCRIPT_NAME=" + _pathname.substr(_pathname.find_last_of('/') + 1));
-	oss.clear(); oss << "SERVER_PORT=" << req.get_port(); _env_vector.push_back(oss.str());
+	std::ostringstream oss; oss << "SERVER_PORT=" << req.get_port(); _env_vector.push_back(oss.str());
 	_env_vector.push_back("SERVER_NAME=" + Utils::ft_inet_ntoa(req.get_host()));
 	_env_vector.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	_env_vector.push_back("SERVER_SOFTWARE=Webserv");
@@ -211,6 +219,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 
 void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
+	Log::log("Setting up exec of CGI post", DEBUG);
 	if (pipe(pipe_in) < 0)
 	{
 		std::ostringstream oss; oss << "pipe(): " << std::strerror(errno);
@@ -234,6 +243,7 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 		throw CgiException();
 	}
 
+	std::cout << "DEBUG: argv[1]: " << _argv[1] << std::endl;
 	if (pid == 0)
 	{
 		// actually it first needs to read the message body from stdin
@@ -252,29 +262,29 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 	}
 	else
 	{
-		pid_t w;
-		int wstatus;
+		// pid_t w;
+		// int wstatus;
 
-		if (close(pipe_in[0]) < 0)  // close the end used in child before waiting on child
-		{
-			std::ostringstream oss; oss << "close: " << std::strerror(errno);
-			Log::log(oss.str(), WARNING);
-			close(pipe_out[1]);
-			throw CgiException();
-		}
+		// if (close(pipe_in[0]) < 0)  // close the end used in child before waiting on child
+		// {
+		// 	std::ostringstream oss; oss << "close: " << std::strerror(errno);
+		// 	Log::log(oss.str(), WARNING);
+		// 	close(pipe_out[1]);
+		// 	throw CgiException();
+		// }
 		if (close(pipe_out[1]) < 0)  // close the end used in child before waiting on child
 		{
 			std::ostringstream oss; oss << "close: " << std::strerror(errno);
 			Log::log(oss.str(), WARNING);
 			throw CgiException();
 		}
-		w = waitpid(pid, &wstatus, 0);
-		if (w < 0)
-		{
-			std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-			Log::log(oss.str(), WARNING);
-			throw CgiException();
-		}
+		// w = waitpid(pid, &wstatus, WNOHANG);
+		// if (w < 0)
+		// {
+		// 	std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+		// 	Log::log(oss.str(), WARNING);
+		// 	throw CgiException();
+		// }
 
 		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT
 
@@ -291,11 +301,13 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 		pfd_info info_in = {};
 		info_in.type = CGI_PIPE_IN;
 		info_in.reqs_idx = reqs_idx;
+		info_in.cgi_pid = pid;
 		pfd_info_map[pipe_in[1]] = info_in;
 
 		pfd_info info_out = {};
 		info_out.type = CGI_PIPE_OUT;
 		info_out.reqs_idx = reqs_idx;
+		info_out.cgi_pid = pid;
 		pfd_info_map[pipe_out[0]] = info_out;
 	}
 }
