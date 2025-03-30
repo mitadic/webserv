@@ -29,8 +29,8 @@
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
-#define CONNECTION_TIMEOUT 50000
-#define CGI_TIMEOUT (CONNECTION_TIMEOUT / 2)
+#define CONNECTION_TIMEOUT 2000
+#define CGI_TIMEOUT 1000
 #define BUF_SZ 256
 
 
@@ -44,7 +44,9 @@ public:
 	int		setup_listening_socket(const ServerBlock& sb);
 	void	init_listener_pfds();
 	void	accept_client(int listener_fd, pfd_info meta);
+	void	terminate_pfd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	kill_cgi_process(const int&);
 	void	initiate_error_response(std::vector<pollfd>::iterator&, int idx, int code);
 	void	initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator&);
 	void	liberate_client_for_next_request(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
@@ -58,16 +60,18 @@ public:
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	process_eof_on_pipe(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_eof_on_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	locate_and_disable_cgi_pipe_pfd(const int&);
 	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
 	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 
 	void	process_request(std::vector<pollfd>::iterator&, const int&);
 
 	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
+	bool	is_client_and_cgi_timed_out(const pfd_info& pfd_meta);
 
 	static void	signal_handler(int signal);
 

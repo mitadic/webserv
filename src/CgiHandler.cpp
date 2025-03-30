@@ -36,6 +36,11 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
 	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
 
+	pipe_in[0] = UNINITIALIZED;
+	pipe_in[1] = UNINITIALIZED;
+	pipe_out[0] = UNINITIALIZED;
+	pipe_out[1] = UNINITIALIZED;
+
 	_argv = new char*[3];
 	_argv[0] = const_cast<char *>(_interpreter.c_str()); // check later if cons_cast is ok
 	_argv[1] = const_cast<char *>(_pathname.c_str());
@@ -64,6 +69,10 @@ CgiHandler::CgiHandler(const CgiHandler & oth) :
 	}
 	if (oth._envp)
 		_envp = vector_to_2d_array(_env_vector);
+	pipe_in[0] = oth.pipe_in[0];
+	pipe_in[1] = oth.pipe_in[1];
+	pipe_out[0] = oth.pipe_out[0];
+	pipe_out[1] = oth.pipe_out[1];
 	return ;
 }
 
@@ -183,8 +192,8 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 	}
 	else
 	{
-		pid_t w;
-		int wstatus;
+		// pid_t w;
+		// int wstatus;
 
 		if (close(pipe_out[1]) < 0)  // close the end used in child before waiting on child
 		{
@@ -192,13 +201,13 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 			Log::log(oss.str(), WARNING);
 			throw CgiException();
 		}
-		w = waitpid(pid, &wstatus, WNOHANG);
-		if (w < 0)
-		{
-			std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-			Log::log(oss.str(), WARNING);
-			throw CgiException();
-		}
+		// w = waitpid(pid, &wstatus, WNOHANG);
+		// if (w < 0)
+		// {
+		// 	std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+		// 	Log::log(oss.str(), WARNING);
+		// 	throw CgiException();
+		// }
 
 		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT
 
@@ -210,6 +219,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 		pfd_info info = {};
 		info.type = CGI_PIPE_OUT;
 		info.reqs_idx = reqs_idx;
+		info.cgi_pid = pid;
 		pfd_info_map[pipe_out[0]] = info;
 	}
 }

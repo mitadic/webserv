@@ -14,7 +14,6 @@ Request::Request() :
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
-	_timed_out(false),
 	_await_reconnection(false),
 	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
@@ -36,7 +35,6 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
 	_keep_alive(true),
-	_timed_out(false),
 	_await_reconnection(false),
 	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
@@ -64,7 +62,6 @@ Request::Request(const Request& oth) : cgi(NULL)
 	_flagged_as_chunked = oth._flagged_as_chunked;
 	_done_reading_headers = oth._done_reading_headers;
 	_should_close_early = oth._should_close_early;
-	_timed_out = oth._timed_out;
 	_await_reconnection = oth._await_reconnection;
 	_keep_alive = oth._keep_alive;
 	_port = oth._port;
@@ -122,9 +119,6 @@ void Request::switch_to_reading_body() { _done_reading_headers = true; }
 /* Flip the attribute to indicate that we should close the connection early */
 void Request::flag_that_we_should_close_early() { _should_close_early = true; }
 
-/* If a request has timed out, then ServerEngine can handle it accordingly */
-bool Request::timed_out() { return _timed_out; }
-
 /* If a request should ditch the client and wait for a new connection to be established */
 bool Request::should_await_reconnection() { return _await_reconnection; }
 
@@ -166,9 +160,6 @@ void Request::append_to_cgi_output(const std::string &s) { _cgi_output += s; }
 
 /* Increment _total_sent value by num */
 void Request::increment_total_sent_by(const int &num) { _total_sent += num; }
-
-/* Set _timed_out to 'true' */
-void Request::flag_the_timeout() { _timed_out = true; }
 
 const std::map<std::string, std::string> &Request::get_cookies() const
 {

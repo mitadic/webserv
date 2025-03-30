@@ -28,9 +28,7 @@ enum e_cgi_status
 {
 	NOT_CGI = 200,
 	EXECUTE,
-	READ_PIPE,
-	FORMULATE_RESPONSE,
-	AWAIT_CLIENT_RECONNECT  // won't be needing your services
+	CGI_DONE
 };
 
 /** Initialized and pushed_back for each client_fd
@@ -40,7 +38,6 @@ enum e_cgi_status
  * @param port representation from server_block in READABLE endianness
  * @param max_client_body
  * @param last_active needed only by CONNECTION; connection established | (done writing? | began reading?)
- * @param had_at_least_one_processed needed only by CONNECTION, to differentiate between 408 and silent close
  * @param cgi_pid needed only by CGI_PIPE_IN and CGI_PIPE_OUT to perform waitpid()
  * */
 struct pfd_info {
@@ -52,6 +49,5 @@ struct pfd_info {
 	uint16_t port;			// representation from server_block in READABLE endianness
 	uint32_t max_client_body;
 	time_t last_active;		// needed only by CONNECTION; connection established | (done writing? | began reading?)
-	bool had_at_least_one_req_processed;
 	pid_t cgi_pid;			// needed only by CGI_PIPE_IN and CGI_PIPE_OUT
 };

@@ -130,7 +130,6 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.max_client_body = meta.max_client_body;
 	info.reqs_idx = UNINITIALIZED;
 	info.last_active = time(NULL);
-	info.had_at_least_one_req_processed = false;
 	pfd_info_map[client] = info;
 
 	std::stringstream ss;
@@ -140,19 +139,32 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 }
 
 /**
- * (1) close the client_fd
+ * (1) close the fd
  * (2) remove the pfd from vector
  * (3) remove the mapping of the fd and the reqs_idx
  * Finally, set the flag that pfd vector has been modified
  */
-void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+void ServerEngine::terminate_pfd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	std::cout << "Forgetting client on socket FD: " << pfds_it->fd << std::endl;
 	if (close(pfds_it->fd) == -1)
 		perror("close");
 	pfds.erase(pfds_it);
 	pfd_info_map.erase(meta_it);
 	pfds_vector_modified = true;
+}
+
+void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
+	Log::log(oss.str(), DEBUG);
+	terminate_pfd(pfds_it, meta_it);
+}
+
+void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	std::ostringstream oss; oss << "Discarding cgi_pipe_in with FD: " << pfds_it->fd;
+	Log::log(oss.str(), INFO);
+	terminate_pfd(pfds_it, meta_it);
 }
 
 void ServerEngine::initiate_error_response(std::vector<pollfd>::iterator& pfds_it, int idx, int code)
@@ -170,16 +182,6 @@ void ServerEngine::print_pfds()
 		std::cout << "fd: " << it->fd << ", type: " << pfd_info_map[it->fd].type << std::endl;
 		it++;
 	}
-}
-
-/* Very similar to forget_client(), worth merge-refactoring? */
-void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
-{
-	if (close(pfds_it->fd) < 0)
-		perror("close cgi_pipe_in");
-	pfds.erase(pfds_it);
-	pfd_info_map.erase(meta_it);
-	pfds_vector_modified = true;
 }
 
 /* locate the pipe_out's meta by req_idx, in order to identify the peer cgi_pipe_out's pfd by fd, in order to set pipe_out pfd to POLLIN */
@@ -239,23 +241,34 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
+	pid_t w;
+	int wstatus;
+
+	w = waitpid(meta_it->second.cgi_pid, &wstatus, WNOHANG);
+	if (w < 0)
+	{
+		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw CgiException();
+	}
+
+
 	char	buf[BUF_SZ];
 	ssize_t	nbytes;
 
 	memset(buf, 0, BUF_SZ);
-	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
+	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN, that's why we don't rely on POLLIN to go in here
 	if (nbytes < 0)
 	{
 		std::perror("read(pipe_fd)");
 		// TODO: message the client instead of forgetting them
-		if (close(pfds_it->fd) < 0)
-			perror("close");
-		pfds.erase(pfds_it);
-		pfd_info_map.erase(meta_it);
-		pfds_vector_modified = true;
+		terminate_pfd(pfds_it, meta_it);
 		return;
 	}
-	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
+	if (nbytes == 0)
+		reqs[meta_it->second.reqs_idx].set_cgi_status(CGI_DONE);
+	else
+		reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
 }
 
 void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator& meta_it)
@@ -275,7 +288,6 @@ void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterato
         reqs.erase(reqs.begin() + idx);
     }
     meta_it->second.reqs_idx = UNINITIALIZED;
-    meta_it->second.had_at_least_one_req_processed = true;
     pfds_it->events = POLLIN;
 
 	std::ostringstream oss; oss << "client_fd " << pfds_it->fd << " liberated for new requests";
@@ -411,6 +423,8 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 {
     size_t sz_to_send = BUF_SZ;
     int idx = meta_it->second.reqs_idx;
+	if (reqs[idx].get_cgi_status() == EXECUTE)  // not cgi or cgi not done yet
+		return;
     if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size())) {
         forget_client(pfds_it, meta_it);
         return;
@@ -443,30 +457,30 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	}
 	else  // sz_to_send == 0
 	{
-		if (reqs[idx].timed_out())
-		{
-			std::ostringstream oss; oss << "timeout: client on socket " << pfds_it->fd << ", closing connection";
-			Log::log(oss.str(), DEBUG);
-			// reqs.erase(reqs.begin() + idx); // here as well? Why not?
-			forget_client(pfds_it, meta_it);
-		}
-		else if (reqs[idx].should_close_early())
+		std::ostringstream oss; oss << "Done writing to client on socket: " << pfds_it->fd;
+		Log::log(oss.str(), INFO);
+		if (reqs[idx].should_close_early())
 		{
 			Log::log("Comply with \'should_close_early\', forget client and their req", DEBUG);
-			reqs.erase(reqs.begin() + idx);
 			forget_client(pfds_it, meta_it);
+			reqs.erase(reqs.begin() + idx);
 		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
 	}
 }
 
-void ServerEngine::process_eof_on_pipe(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+/** (1) Close cgi_pipe_out
+ * (2) Set response
+ * (3) Locate client pfd to set to POLLOUT
+*/
+void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	int idx = meta_it->second.reqs_idx;
 
-	Log::log("Processing EOF on pipe, close pipe_fd", DEBUG);
-	close(pfds_it->fd);
+	Log::log("Processing EOF on cgi_pipe_out, close pipe_fd", DEBUG);
+	if (close(pfds_it->fd) == -1)
+		Log::log("close(cgi_pipe_out): fail", WARNING);
 	pfds.erase(pfds_it);
 	pfd_info_map.erase(meta_it);
 
@@ -503,6 +517,34 @@ void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_
 	forget_client(pfds_it, meta_it);
 }
 
+void ServerEngine::kill_cgi_process(const int& pipe_fd)
+{
+	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
+	{
+		if (it_met->first == pipe_fd)
+			kill(it_met->second.cgi_pid, SIGTERM);
+	}
+}
+
+/* use pipe_fd to identify the pfd_it and the meta_it in order to initiate pfd termination, which also closes the pipe end */
+void ServerEngine::locate_and_disable_cgi_pipe_pfd(const int& pipe_fd_to_kill)
+{
+	std::vector<pollfd>::iterator it_pfd;
+	std::map<int, pfd_info>::iterator it_met;
+
+	for (it_pfd = pfds.begin(); it_pfd != pfds.end(); it_pfd++)
+	{
+		if (it_pfd->fd == pipe_fd_to_kill)
+			break;
+	}
+	for (it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
+	{
+		if (it_met->first == pipe_fd_to_kill)
+			break;
+	}
+	terminate_pfd(it_pfd, it_met);
+}
+
 /**
  * If connection without requests (telnet) -> 408
  * Else forget_client() silently, without a response
@@ -513,20 +555,37 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 
 	try
 	{
-		if (meta_it->second.had_at_least_one_req_processed)  // silent close
+		if (idx == UNINITIALIZED)  // silent close
 		{
 			std::cout << "Client connection " << pfds_it->fd << " has timed out, closing the connection silently." << std::endl;
 			forget_client(pfds_it, meta_it);
 			return ;
 		}
+		// else if CGI taking too long? The error response below is fine, but what about CGI itself?
 		else
 		{
+			if (reqs[idx].cgi)
+			{
+				if (reqs[idx].cgi->pipe_out[0] != UNINITIALIZED)
+					kill_cgi_process(reqs[idx].cgi->pipe_out[0]);
+
+				if (reqs[idx].cgi->pipe_in[1] != UNINITIALIZED)
+				{
+					locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_in[1]);
+					reqs[idx].cgi->pipe_in[1] = UNINITIALIZED;
+				}
+				if (reqs[idx].cgi->pipe_out[0] != UNINITIALIZED)
+				{
+					locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_out[0]);
+					reqs[idx].cgi->pipe_out[0] = UNINITIALIZED;
+				}
+			}
 			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, responding 408.";
 			Log::log(oss.str(), DEBUG);
 			initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+			reqs[idx].flag_that_we_should_close_early();
+			reqs[idx].set_cgi_status(CGI_DONE);
 		}
-		reqs[idx].flag_the_timeout();
-		pfds_vector_modified = true;
 	}
 	catch (RequestException& e) {
 		std::cout << e.what() << std::endl;
@@ -544,10 +603,6 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
 		set_session_id = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().begin()->second + "\r\n";
 	}
-	// else
-	// {
-	// 	Log::log("Cookies found.", DEBUG);
-	// }
 
 	std::string response;
 
@@ -576,9 +631,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 		if (!set_session_id.empty())
 			response.insert(response.find("\r\n") + 2, set_session_id);
 		reqs[req_idx].set_response(response);
-
-		pfds_it->events = POLLOUT;  // get ready for writing
 	}
+	pfds_it->events = POLLOUT;  // get ready for writing
 }
 
 bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
@@ -588,6 +642,18 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
 		time_t now = time(NULL);
 		long delta = now - pfd_meta.last_active;
 		if (delta >= CONNECTION_TIMEOUT / 1000)
+			return true;
+	}
+	return false;
+}
+
+bool ServerEngine::is_client_and_cgi_timed_out(const pfd_info& pfd_meta)
+{
+	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET)
+	{
+		time_t now = time(NULL);
+		long delta = now - pfd_meta.last_active;
+		if (delta >= CGI_TIMEOUT / 1000)
 			return true;
 	}
 	return false;
@@ -658,15 +724,12 @@ void ServerEngine::run()
 					if (pfds_it->revents & POLLIN)
 						accept_client(pfds_it->fd, pfd_meta);
 				}
-				else if (pfds_it->revents & POLLIN)
+				else if (pfd_meta.type == CGI_PIPE_OUT)  // will not have POLLIN if sleep(2), take it out of equation
+					read_from_cgi_pipe_out(pfds_it, meta_it);
+				else if (pfds_it->revents & POLLIN)  // can only be client_fd
 				{
-					if (pfd_meta.type == CGI_PIPE_OUT)
-						read_from_cgi_pipe_out(pfds_it, meta_it);
-					else
-					{
-						initialize_new_request_if_no_active_one(meta_it);
-						read_from_client_fd(pfds_it, meta_it);  // has the try / catch
-					}
+					initialize_new_request_if_no_active_one(meta_it);
+					read_from_client_fd(pfds_it, meta_it);  // has the try / catch
 				}
 				else if (pfds_it->revents & POLLOUT)
 				{
@@ -678,7 +741,7 @@ void ServerEngine::run()
 				else if (pfds_it->revents & POLLHUP)
 				{
 					if (pfd_meta.type == CGI_PIPE_OUT)
-						process_eof_on_pipe(pfds_it, meta_it);
+						process_eof_on_pipe_out(pfds_it, meta_it);
 					else
 						process_unorderly_hangup(pfds_it, meta_it);
 				}
@@ -687,7 +750,7 @@ void ServerEngine::run()
 					std::cout << "POLLERR | POLLNVAL" << std::endl;
 					forget_client(pfds_it, meta_it);
 				}
-				else if (is_client_and_timed_out(pfd_meta))  // no flag AND is client == has to be timeout??
+				else if (is_client_and_cgi_timed_out(pfd_meta))
 					process_connection_timeout(pfds_it, meta_it);
 
 				if (pfds_vector_modified)

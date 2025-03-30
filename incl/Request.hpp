@@ -54,7 +54,6 @@ public:
 	bool done_reading_headers();
 	void switch_to_reading_body();
 
-	bool timed_out();
 	bool should_await_reconnection();
 	bool should_keep_alive();
 	bool should_close_early();
@@ -70,7 +69,6 @@ public:
 	void set_cgi_status(const int& status);
 	void append_to_cgi_output(const std::string& s);
 	void increment_total_sent_by(const int& num);
-	void flag_the_timeout();
 	void flag_that_we_should_close_early();
 
 	const std::map<std::string, std::string>& get_cookies() const;
@@ -96,7 +94,6 @@ private:
 	std::vector<std::string> _content_type_params;
 	int			_client_fd;
 	bool		_keep_alive;
-	bool		_timed_out;
 	bool		_await_reconnection;
 	std::vector<std::string> _accepted_types;
 	std::multimap<float, std::string> _accepted_types_m;
