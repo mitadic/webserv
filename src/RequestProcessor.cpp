@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/24 19:43:21 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/03/30 19:03:04 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -403,6 +403,8 @@ bool RequestProcessor::detect_cgi(const Request& req, const Location* location, 
 // get the location that corresponds to the request
 // check if the method is allowed in the location
 // - if not, throw 405 error page
+// check if URI is safe (does not traverse above the root directory)
+// - if not, throw 403 error page
 // check if the file exists
 // - if it doesn't exist, return 404 error page
 // if it's a directory, show default index file
@@ -414,6 +416,9 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 {
 	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
+
+	if (!Utils::uriIsSafe(req.get_request_uri()))
+		throw RequestException(CODE_403); // Forbidden
 
 	std::string filePath = "." + location->get_root() + req.get_request_uri();
 
@@ -537,18 +542,16 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		break;
 	}
 	case TEXT_PLAIN:
-	case TEXT_HTML:
-	case TEXT_XML:
-	case APPLICATION_XML:
-	case APPLICATION_XHTML_XML:
-	case APPLICATION_OCTET_STREAM:
-	case IMAGE_GIF:
-	case IMAGE_JPEG:
-	case IMAGE_PNG:
 	{
-		Log::log("Processing png", DEBUG);
-		std::vector<unsigned char> body = req.get_request_body_raw(); // TODO: Do something with the body? Save as file?
-		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
+		Log::log("Processing plain text", INFO);
+		std::string textBody = req.get_request_body_as_str();
+		Log::log("Received text: " + textBody, DEBUG);
+		std::string body = "Text processed successfully";
+		response << "HTTP/1.1 200 OK\r\n"
+					<< "Content-Type: text/plain\r\n"
+					<< "Content-Length: " << body.size() << "\r\n"
+					<< "\r\n"
+					<< body;
 		break;
 	}
 	default:
@@ -563,8 +566,11 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 // get the location that corresponds to the request
 // check if the method is allowed in the location
 // - if not, throw 405 error page
+// check if the URI is safe (does not traverse above the root directory)
+// - if not, throw 403 error page
 // check if the file exists
-// if it's a file, try to delete
+// - if it doesn't exist, return 404 error page
+// if it's a file, try to delete it
 // if it doesn't exist, return 404 error page (Not Found)
 // if it's a directory, return 403 error page (Forbidden)
 // if deletion is successful, return 204 No Content
@@ -574,6 +580,9 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 
 	if (!location->is_del())
 		throw RequestException(CODE_405);
+
+	if (!Utils::uriIsSafe(req.get_request_uri()))
+		throw RequestException(CODE_403);
 
 	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
 	bool success = false;
@@ -585,7 +594,7 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 		throw RequestException(CODE_404);
 
 	if (Utils::isDirectory(filePath))
-		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
+		throw RequestException(CODE_403);
 
 	else if (std::remove(filePath.c_str()) != 0)
 		throw RequestException(CODE_500);

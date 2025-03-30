@@ -31,7 +31,9 @@ SRC		=	Config.cpp \
 			Utils.cpp
 
 TEST	=	test_utils.cpp \
-			test_http.cpp
+			test_http_GET.cpp \
+			test_http_DELETE.cpp \
+			test_http_POST.cpp \
 
 OBJ		=	$(SRC:cpp=o)
 SRC_FILES = $(addprefix $(SRC_DIR), $(SRC))
@@ -52,15 +54,22 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp $(I_DIR)*
 $(TEST_EXEC): $(TEST_SRC_FILES) CMakeLists.txt
 	@cmake -S . -B $(BUILD_DIR)
 	@cmake --build $(BUILD_DIR) --target test_utils
-	@cmake --build $(BUILD_DIR) --target test_http
+	@cmake --build $(BUILD_DIR) --target test_http_GET
+	@cmake --build $(BUILD_DIR) --target test_http_POST
+	@cmake --build $(BUILD_DIR) --target test_http_DELETE
 
 test: $(TEST_EXEC)
-	@echo "\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
+	@echo "\n\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
-	@echo "\033[1;34m[INFO]\033[0m Running Utils unit test..."
+	@echo "\n\033[1;34m[INFO]\033[0m Running Utils unit test..."
 	@$(BUILD_DIR)test_utils && echo "\033[1;32m[SUCCESS]\033[0m test_utils passed!" || echo "\033[1;31m[FAILURE]\033[0m test_utils failed!"
-	@echo "\033[1;34m[INFO]\033[0m Running HTTP tests with cURL..."
-	@$(BUILD_DIR)test_http && echo "\033[1;32m[SUCCESS]\033[0m test_http passed!" || echo "\033[1;31m[FAILURE]\033[0m test_http failed!"
+	@echo "\n\033[1;34m[INFO]\033[0m Running HTTP tests with cURL..."
+	@echo "\n\033[1;34m[INFO]\033[0m Running GET tests ..."
+	@$(BUILD_DIR)test_http_GET && echo "\033[1;32m[SUCCESS]\033[0m test_GET passed!" || echo "\033[1;31m[FAILURE]\033[0m test_GET failed!"
+	@echo "\n\033[1;34m[INFO]\033[0m Running DELETE tests ..."
+	@$(BUILD_DIR)test_http_DELETE && echo "\033[1;32m[SUCCESS]\033[0m test_DELETE passed!" || echo "\033[1;31m[FAILURE]\033[0m test_DELETE failed!"
+	@echo "\n\033[1;34m[INFO]\033[0m Running POST tests ..."
+	@$(BUILD_DIR)test_http_POST && echo "\033[1;32m[SUCCESS]\033[0m test_POST passed!" || echo "\033[1;31m[FAILURE]\033[0m test_POST failed!"
 
 clean:
 	@if [ -d ./$(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
