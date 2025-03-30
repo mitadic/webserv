@@ -172,6 +172,7 @@ void ServerEngine::print_pfds()
 	}
 }
 
+/* Very similar to forget_client(), worth merge-refactoring? */
 void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	if (close(pfds_it->fd) < 0)
@@ -428,27 +429,17 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		std::string str_to_send = reqs[idx].get_response().substr(reqs[idx].get_total_sent());
 		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				std::cerr << "Socket buffer full or would block, retrying send()" << std::endl;
-				return;
-			}
-			else if (errno == EPIPE)
-			{
-				std::cerr << "Client closed connection (EPIPE), closing socket: " << pfds_it->fd << std::endl;
-				std::cout << reqs[idx].get_request_str() << std::endl;
-				forget_client(pfds_it, meta_it);  // Close the socket properly
-				return;
-			}
-			else
-			{
-				perror("send");  // LOG
-				std::cerr << "sz_to_send: " << sz_to_send << ", total size: " << response_size  << ", sent_so_far: " << sent_so_far << std::endl;
-				// TODO: depending on request attributes, handle removal differently?
-			}
+			std::ostringstream oss; oss << "send(): Client closed connection (EPIPE) or socket buffer full (EAGAIN) or EWOULDBLOCK, closing socket: " << pfds_it->fd << " and dropping the request.";
+			Log::log(oss.str(), WARNING);
+			// perror("send()");  // no way of logging errno through Log:: without calling errno explicitly
+			reqs.erase(reqs.begin() + idx);
+			forget_client(pfds_it, meta_it);  // Close the socket properly
 		}
-		reqs[idx].increment_total_sent_by(sz_to_send);
-		update_client_activity_timestamp(meta_it);
+		else
+		{
+			reqs[idx].increment_total_sent_by(sz_to_send);
+			update_client_activity_timestamp(meta_it);
+		}
 	}
 	else  // sz_to_send == 0
 	{

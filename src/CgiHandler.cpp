@@ -33,9 +33,7 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 
 	// TODO add checks for valid request uri (maybe already in request parsing?)
 	size_t pos = uri.find(deduce_extension(req, loc));
-	std::cout << "DEBUG: uri: " << uri << ", pos of extension: " << pos << ", _extension: " << _extension << std::endl;
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
-	std::cout << "DEBUG: _pathname: " << _pathname << std::endl;
 	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
 
 	_argv = new char*[3];
