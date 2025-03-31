@@ -321,6 +321,7 @@ void ServerEngine::process_read_failure(std::vector<pollfd>::iterator& pfds_it, 
 	}
 	else if (nbytes == -1)
 	{
+		// This scenario includes "Connection reset by peer", and without checking errno...better to drop client and req instead of 503?
 		std::perror("recv");
 		initiate_error_response(pfds_it, idx, CODE_503);
 	}
@@ -576,6 +577,9 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
  * return true */
 bool ServerEngine::is_client_and_cgi_timed_out(const pfd_info& pfd_meta)
 {
+	if (pfd_meta.reqs_idx == UNINITIALIZED)
+		return false;
+
 	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET && reqs[pfd_meta.reqs_idx].get_cgi_status() == EXECUTE)
 	{
 		time_t now = time(NULL);
@@ -592,22 +596,25 @@ bool ServerEngine::is_client_and_cgi_timed_out(const pfd_info& pfd_meta)
  */
 void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int idx = meta_it->second.reqs_idx;
-
 	try
 	{
 		if (meta_it->second.has_had_response)  // silent close
 		{
 			// such a client should have reqs_idx == -1. But...what if...? .erase() just in case?
+			if (meta_it->second.reqs_idx != UNINITIALIZED)
+				Log::log("Found a stray request while silently closing a client!", ERROR);
 			std::cout << "Client connection " << pfds_it->fd << " has timed out, closing the connection silently." << std::endl;
 			forget_client(pfds_it, meta_it);
 			return ;
 		}
 		else
 		{
+			initialize_new_request_if_no_active_one(meta_it);  // need one to store the response 408
+			int idx = meta_it->second.reqs_idx;
+
 			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, responding 408.";
 			Log::log(oss.str(), DEBUG);
-			initiate_error_response(pfds_it, idx, CODE_408);  // this would need more time per NGINX
+			initiate_error_response(pfds_it, idx, CODE_408);
 			reqs[idx].flag_that_we_should_close_early();
 		}
 	}
