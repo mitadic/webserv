@@ -201,6 +201,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 			Log::log(oss.str(), WARNING);
 			throw CgiException();
 		}
+		pipe_out[1] = UNINITIALIZED;
 		// w = waitpid(pid, &wstatus, WNOHANG);
 		// if (w < 0)
 		// {
@@ -286,6 +287,7 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 			Log::log(oss.str(), WARNING);
 			throw CgiException();
 		}
+		pipe_out[1] = UNINITIALIZED;
 		// w = waitpid(pid, &wstatus, WNOHANG);
 		// if (w < 0)
 		// {

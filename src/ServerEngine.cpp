@@ -241,17 +241,25 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	pid_t w;
-	int wstatus;
+	// pid_t w;
+	// int wstatus;
 
-	w = waitpid(meta_it->second.cgi_pid, &wstatus, WNOHANG);
-	if (w < 0)
-	{
-		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-		Log::log(oss.str(), WARNING);
-		throw CgiException();
-	}
+	// if (meta_it->second.cgi_pid)
+	// {
+	// 	w = waitpid(meta_it->second.cgi_pid, &wstatus, WNOHANG);
+	// 	if (w < 0)
+	// 	{
+	// 		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+	// 		Log::log(oss.str(), WARNING);
+	// 		throw CgiException();
+	// 	}
+	// }
 
+	// if (!(pfds_it->revents & POLLIN))
+	// {
+	// 	Log::log("Waiting to read on CGI_PIPE_OUT, but !(revents & POLLIN)", WARNING);
+	// 	return;
+	// }
 
 	char	buf[BUF_SZ];
 	ssize_t	nbytes;
@@ -283,12 +291,12 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 /* Does not rm the meta, just resets the reqs_idx to UNINITIALIZED */
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-    int idx = meta_it->second.reqs_idx;
-    if (idx != UNINITIALIZED && idx < static_cast<int>(reqs.size())) {
-        reqs.erase(reqs.begin() + idx);
-    }
-    meta_it->second.reqs_idx = UNINITIALIZED;
-    pfds_it->events = POLLIN;
+	int idx = meta_it->second.reqs_idx;
+	if (idx != UNINITIALIZED && idx < static_cast<int>(reqs.size())) {
+		reqs.erase(reqs.begin() + idx);
+	}
+	meta_it->second.reqs_idx = UNINITIALIZED;
+	pfds_it->events = POLLIN;
 
 	std::ostringstream oss; oss << "client_fd " << pfds_it->fd << " liberated for new requests";
 	Log::log(oss.str(), DEBUG);
@@ -421,22 +429,22 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 
 void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-    size_t sz_to_send = BUF_SZ;
-    int idx = meta_it->second.reqs_idx;
-	if (reqs[idx].get_cgi_status() == EXECUTE)  // not cgi or cgi not done yet
+	size_t sz_to_send = BUF_SZ;
+	int idx = meta_it->second.reqs_idx;
+	if (reqs[idx].get_cgi_status() == EXECUTE)  // is CGI, but not done yet
 		return;
-    if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size())) {
-        forget_client(pfds_it, meta_it);
-        return;
-    }
-    int response_size = reqs[idx].get_response().size();
-    int sent_so_far = reqs[idx].get_total_sent();
+	if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size())) {
+		forget_client(pfds_it, meta_it);
+		return;
+	}
+	int response_size = reqs[idx].get_response().size();
+	int sent_so_far = reqs[idx].get_total_sent();
 
-    if (response_size - sent_so_far < BUF_SZ) {
-        if (response_size - sent_so_far < 0)
-            std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
-        sz_to_send = response_size - sent_so_far;
-    }
+	if (response_size - sent_so_far < BUF_SZ) {
+		if (response_size - sent_so_far < 0)
+			std::cerr << "Critical error identified: sz_to_send less than 0" << std::endl;
+		sz_to_send = response_size - sent_so_far;
+	}
 
 	if (sz_to_send)
 	{
@@ -522,7 +530,10 @@ void ServerEngine::kill_cgi_process(const int& pipe_fd)
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
 	{
 		if (it_met->first == pipe_fd)
+		{
 			kill(it_met->second.cgi_pid, SIGTERM);
+			it_met->second.cgi_pid = 0;
+		}
 	}
 }
 
@@ -566,15 +577,15 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 		{
 			if (reqs[idx].cgi)
 			{
-				if (reqs[idx].cgi->pipe_out[0] != UNINITIALIZED)
+				if (reqs[idx].cgi->pipe_out[0] >= 0)
 					kill_cgi_process(reqs[idx].cgi->pipe_out[0]);
 
-				if (reqs[idx].cgi->pipe_in[1] != UNINITIALIZED)
+				if (reqs[idx].cgi->pipe_in[1] >= 0)
 				{
 					locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_in[1]);
 					reqs[idx].cgi->pipe_in[1] = UNINITIALIZED;
 				}
-				if (reqs[idx].cgi->pipe_out[0] != UNINITIALIZED)
+				if (reqs[idx].cgi->pipe_out[0] >= 0)
 				{
 					locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_out[0]);
 					reqs[idx].cgi->pipe_out[0] = UNINITIALIZED;
@@ -605,11 +616,13 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	}
 
 	std::string response;
-
 	response = processor.handleMethod(reqs[req_idx], server_blocks);
+	pfds_it->events = POLLOUT;  // get ready for writing, flag before potentially adding more pfds
+
 	if (reqs[req_idx].get_cgi_status() == EXECUTE)
 	{
 		Log::log("CGI-handling", DEBUG);
+
 		try
 		{
 			if (reqs[req_idx].get_method() == GET)
@@ -632,7 +645,6 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 			response.insert(response.find("\r\n") + 2, set_session_id);
 		reqs[req_idx].set_response(response);
 	}
-	pfds_it->events = POLLOUT;  // get ready for writing
 }
 
 bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
@@ -725,7 +737,10 @@ void ServerEngine::run()
 						accept_client(pfds_it->fd, pfd_meta);
 				}
 				else if (pfd_meta.type == CGI_PIPE_OUT)  // will not have POLLIN if sleep(2), take it out of equation
-					read_from_cgi_pipe_out(pfds_it, meta_it);
+				{
+					if (pfds_it->revents & POLLIN)
+						read_from_cgi_pipe_out(pfds_it, meta_it);
+				}
 				else if (pfds_it->revents & POLLIN)  // can only be client_fd
 				{
 					initialize_new_request_if_no_active_one(meta_it);
