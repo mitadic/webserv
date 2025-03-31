@@ -138,8 +138,9 @@ const Location *Utils::getLocation(const Request &req, const ServerBlock *server
 		}
 	}
 
-	Log::log("No matching location found", ERROR);
-	Log::log(req.get_request_str(), DEBUG);
+	Log::log("No matching Request-ed location found", DEBUG);
+	std::ostringstream oss; oss << "Request string (may be empty if no Request came from client b4 timeout): \"" << req.get_request_str() << "\"";
+	Log::log(oss.str(), DEBUG);
 	return NULL;
 }
 
