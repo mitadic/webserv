@@ -143,9 +143,9 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 		_env_vector.push_back("QUERY_STRING=" + _querystring);
 	if (_extension == ".php")
 	{
+		// php-cgi interpreter relies on these additional env vars, seemingly crucially 
 		_env_vector.push_back("REDIRECT_STATUS=1");
 		std::ostringstream oss; oss << "SCRIPT_FILENAME=" << _pathname;
-		std::cout << "DEBUG: " << oss.str() << std::endl;
 		_env_vector.push_back(oss.str());
 	}
 	_env_vector.push_back("GATEWAY_INTERFACE=CGI/1.1");

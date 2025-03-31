@@ -29,9 +29,9 @@
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
-#define CONNECTION_TIMEOUT 2000
+#define CONNECTION_TIMEOUT 5000
 #define CGI_TIMEOUT 1000
-#define BUF_SZ 256
+#define BUF_SZ 4096
 
 
 class ServerEngine {
@@ -64,6 +64,7 @@ public:
 	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	process_cgi_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	locate_and_disable_cgi_pipe_pfd(const int&);
 	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
 	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);

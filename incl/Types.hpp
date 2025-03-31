@@ -50,4 +50,5 @@ struct pfd_info {
 	uint32_t max_client_body;
 	time_t last_active;		// needed only by CONNECTION; connection established | (done writing? | began reading?)
 	pid_t cgi_pid;			// needed only by CGI_PIPE_IN and CGI_PIPE_OUT
+	bool has_had_response;
 };

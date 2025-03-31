@@ -3,7 +3,7 @@
 #import cgi
 import time
 
-time.sleep(1)
+time.sleep(2)
 
 print("Hello World")  # Required HTTP header
 
