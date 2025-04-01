@@ -30,7 +30,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 50000
-#define CGI_TIMEOUT 1000
+#define CGI_TIMEOUT 25000
 #define BUF_SZ 256
 
 
@@ -60,6 +60,7 @@ public:
 	void	read_from_client_fd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	write_to_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	discard_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);

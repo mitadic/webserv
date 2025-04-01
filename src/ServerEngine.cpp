@@ -161,11 +161,26 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 	terminate_pfd(pfds_it, meta_it);
 }
 
+/* terminate_pfd associated with CGI_PIPE_IN and set cgi's pipe_in[1] to -1 */
 void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
+	int reqs_idx = meta_it->second.reqs_idx;
+
 	std::ostringstream oss; oss << "Discarding cgi_pipe_in with FD: " << pfds_it->fd;
 	Log::log(oss.str(), INFO);
 	terminate_pfd(pfds_it, meta_it);
+	reqs[reqs_idx].cgi->pipe_in[1] = UNINITIALIZED;
+}
+
+/* terminate_pfd associated with CGI_PIPE_OUT and set cgi's pipe_out[0] to -1 */
+void ServerEngine::discard_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	int reqs_idx = meta_it->second.reqs_idx;
+
+	std::ostringstream oss; oss << "Discarding cgi_pipe_out with FD: " << pfds_it->fd;
+	Log::log(oss.str(), INFO);
+	terminate_pfd(pfds_it, meta_it);
+	reqs[reqs_idx].cgi->pipe_out[0] = UNINITIALIZED;
 }
 
 void ServerEngine::initiate_error_response(std::vector<pollfd>::iterator& pfds_it, int idx, int code)
@@ -235,49 +250,26 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 	else  // sz_to_send == 0
 	{
 		reqs[idx].set_total_sent(0);  // reset to reuse same attribute for when writing to client_fd
-		set_matching_cgi_pipe_out_to_pollin(meta_it);
+		// set_matching_cgi_pipe_out_to_pollin(meta_it);
 		discard_cgi_pipe_in(pfds_it, meta_it);
 	}
 }
 
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	// pid_t w;
-	// int wstatus;
-
-	// if (meta_it->second.cgi_pid)
-	// {
-	// 	w = waitpid(meta_it->second.cgi_pid, &wstatus, WNOHANG);
-	// 	if (w < 0)
-	// 	{
-	// 		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-	// 		Log::log(oss.str(), WARNING);
-	// 		throw CgiException();
-	// 	}
-	// }
-
-	// if (!(pfds_it->revents & POLLIN))
-	// {
-	// 	Log::log("Waiting to read on CGI_PIPE_OUT, but !(revents & POLLIN)", WARNING);
-	// 	return;
-	// }
-
 	char	buf[BUF_SZ];
 	ssize_t	nbytes;
 
 	memset(buf, 0, BUF_SZ);
-	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN, that's why we don't rely on POLLIN to go in here
+	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
 	if (nbytes < 0)
 	{
 		std::perror("read(pipe_fd)");
-		// TODO: message the client instead of forgetting them
-		terminate_pfd(pfds_it, meta_it);
+		// TODO: message the client instead of forgetting them?
+		discard_cgi_pipe_out(pfds_it, meta_it);
 		return;
 	}
-	// if (nbytes == 0)
-	// 	reqs[meta_it->second.reqs_idx].set_cgi_status(CGI_DONE);
-	//else
-		reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
+	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
 }
 
 void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator& meta_it)
@@ -489,18 +481,26 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 {
 	int idx = meta_it->second.reqs_idx;
 
-	Log::log("Processing EOF on cgi_pipe_out, close pipe_fd", DEBUG);
-	if (close(pfds_it->fd) == -1)
-		Log::log("close(cgi_pipe_out): fail", WARNING);
-	pfds.erase(pfds_it);
-	pfd_info_map.erase(meta_it);
+	discard_cgi_pipe_out(pfds_it, meta_it);
 
+	// simplistic CGI output inspection
+	std::string headers = "";
+	size_t headers_end_pos = reqs[idx].get_cgi_output().find("\r\n\r\n");
+	size_t body_start_pos = 0;
+	if (headers_end_pos != std::string::npos)
+	{
+		body_start_pos = headers_end_pos + 4;
+		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos);
+	}
+	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
+
+	// set response
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				 << "Content-Type: text/plain" << "\r\n"
-				 << "Content-Length: " << reqs[idx].get_cgi_output().size() << "\r\n"
+				 << headers << "\r\n"
+				 << "Content-Length: " << body.length() << "\r\n"
 				 << "\r\n"
-				 << reqs[idx].get_cgi_output();
+				 << body;
 	reqs[idx].set_response(response.str());
 
 	// locate client pfd to set to POLLOUT
@@ -663,15 +663,19 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 
 	if (reqs[req_idx].get_cgi_status() == EXECUTE)
 	{
-		Log::log("CGI-handling", DEBUG);
-
 		try
 		{
 			if (reqs[req_idx].get_method() == GET)
+			{
 				// TODO handle CGI timeout
 				reqs[req_idx].cgi->setup_cgi_get(pfds, pfd_info_map, req_idx);
+				Log::log("CGI GET set up", DEBUG);
+			}
 			else
+			{
 				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
+				Log::log("CGI POST set up", DEBUG);
+			}
 
 		} catch (CgiException & e)
 		{
