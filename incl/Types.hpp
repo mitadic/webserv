@@ -31,8 +31,9 @@ enum e_cgi_status
 	CGI_DONE
 };
 
-/** Initialized and pushed_back for each client_fd
+/** meta. Initialized and pushed_back for each client_fd, and for each CGI_PIPE_IN / _OUT
  * @param reqs_idx needed only by CONNECTION, PIPE
+ * @param clien
  * @param sockaddr needed only by LISTENER + socket_addr.sin_port has the [port]
  * @param host mapping pretend IP [host] for req and processing
  * @param port representation from server_block in READABLE endianness

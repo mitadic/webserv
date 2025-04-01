@@ -31,7 +31,7 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	if (_extension == ".sh")
 		_interpreter = WHICH_SH;
 
-	// TODO add checks for valid request uri (maybe already in request parsing?)
+	// TODO add checks for valid request uri (maybe already in request parsing?). Response from Milos: maybe some rudimentary ones, but we don't have loc in request parsing
 	size_t pos = uri.find(deduce_extension(req, loc));
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
 	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
@@ -172,6 +172,10 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 */
 void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
+	if (!Utils::fileExists(_pathname + _pathinfo))
+		throw RequestException(CODE_404);
+
+	Log::log("Setting up exec of CGI get", DEBUG);
 	if (pipe(pipe_out) < 0)
 	{
 		std::ostringstream oss; oss << "pipe: " << std::strerror(errno);
@@ -183,13 +187,12 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 	if (pid < 0)
 	{
 		std::ostringstream oss; oss << "fork: " << std::strerror(errno);
-		Log::log(oss.str(), WARNING);
+		Log::log(oss.str(), ERROR);
 		throw CgiException();
 	}
 
 	if (pid == 0)
 	{
-		// actually it first needs to read the message body from stdin
 		close(pipe_out[0]);  // close the end not used in child right away
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_out[1]);
@@ -200,9 +203,6 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 	}
 	else
 	{
-		// pid_t w;
-		// int wstatus;
-
 		if (close(pipe_out[1]) < 0)  // close the end used in child before waiting on child
 		{
 			std::ostringstream oss; oss << "close: " << std::strerror(errno);
@@ -210,15 +210,6 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 			throw CgiException();
 		}
 		pipe_out[1] = UNINITIALIZED;
-		// w = waitpid(pid, &wstatus, WNOHANG);
-		// if (w < 0)
-		// {
-		// 	std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-		// 	Log::log(oss.str(), WARNING);
-		// 	throw CgiException();
-		// }
-
-		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT
 
 		struct pollfd fd;
 		fd.fd = pipe_out[0]; // read end (bc we read)
@@ -236,6 +227,9 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 
 void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
+	if (!Utils::fileExists(_pathname + _pathinfo))
+		throw RequestException(CODE_404);
+
 	Log::log("Setting up exec of CGI post", DEBUG);
 	if (pipe(pipe_in) < 0)
 	{
@@ -247,8 +241,10 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 	{
 		std::ostringstream oss; oss << "pipe(): " << std::strerror(errno);
 		Log::log(oss.str(), WARNING);
-		close(pipe_in[0]);
+		close(pipe_in[0]);  // may not be necessary since I've added conditional removals to CGI destructor. What would be best practice here?
 		close(pipe_in[1]);
+		pipe_in[0] = UNINITIALIZED;
+		pipe_in[1] = UNINITIALIZED;
 		throw CgiException();
 	}
 
@@ -260,10 +256,8 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 		throw CgiException();
 	}
 
-	std::cout << "DEBUG: argv[1]: " << _argv[1] << std::endl;
 	if (pid == 0)
 	{
-		// actually it first needs to read the message body from stdin
 		close(pipe_in[1]);
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[0]);
@@ -279,16 +273,6 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 	}
 	else
 	{
-		// pid_t w;
-		// int wstatus;
-
-		// if (close(pipe_in[0]) < 0)  // close the end used in child before waiting on child
-		// {
-		// 	std::ostringstream oss; oss << "close: " << std::strerror(errno);
-		// 	Log::log(oss.str(), WARNING);
-		// 	close(pipe_out[1]);
-		// 	throw CgiException();
-		// }
 		if (close(pipe_out[1]) < 0)  // close the end used in child before waiting on child
 		{
 			std::ostringstream oss; oss << "close: " << std::strerror(errno);
@@ -296,15 +280,6 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 			throw CgiException();
 		}
 		pipe_out[1] = UNINITIALIZED;
-		// w = waitpid(pid, &wstatus, WNOHANG);
-		// if (w < 0)
-		// {
-		// 	std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
-		// 	Log::log(oss.str(), WARNING);
-		// 	throw CgiException();
-		// }
-
-		// will need more params and stuff to be able to (1) rm req, (2) set 504 response and POLLOUT
 
 		struct pollfd fd_in;
 		fd_in.fd = pipe_in[1];  // write end (bc we write)

@@ -22,7 +22,7 @@ Request::Request() :
 {}
 
 /* Parametrized constructor for when accepting client */
-Request::Request(in_addr_t host, uint16_t port) :
+Request::Request(in_addr_t host, uint16_t port, int client_fd) :
 	cgi(NULL),
 	_port(port),
 	_host(host),
@@ -33,7 +33,7 @@ Request::Request(in_addr_t host, uint16_t port) :
 	_done_reading_headers(false),
 	_should_close_early(false),
 	_content_type_idx(UNINITIALIZED),
-	_client_fd(UNINITIALIZED),
+	_client_fd(client_fd),
 	_keep_alive(true),
 	_await_reconnection(false),
 	_method(UNINITIALIZED),

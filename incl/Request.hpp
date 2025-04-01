@@ -20,7 +20,7 @@ class Request {
 	friend class RequestParser;
 
 public:
-	Request(in_addr_t, uint16_t);
+	Request(in_addr_t, uint16_t, int);
     ~Request();
 	Request(const Request&);
 

@@ -12,11 +12,11 @@
 #include <cstring>
 
 #include <unistd.h>		// close()
-#include <fcntl.h> // For fcntl
+#include <fcntl.h>		// For fcntl
 #include <poll.h>
 #include <sys/socket.h> // For socket functions
 #include <netinet/in.h> // For sockaddr_in
-#include <netdb.h> // getprotobyname
+#include <netdb.h>		// getprotobyname
 
 #include "Types.hpp"
 #include "ServerBlock.hpp"
@@ -30,7 +30,7 @@
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 50000
-#define CGI_TIMEOUT 25000
+#define CGI_TIMEOUT 1000
 #define BUF_SZ 256
 
 
@@ -62,9 +62,12 @@ public:
 	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	discard_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	process_read_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
+	void	process_recv_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
+	void	process_write_failure(const int);
+	void	process_read_failure(const int);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	throw_away_cgi_proc_and_pipes(const int&);
 	void	process_cgi_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	locate_and_disable_cgi_pipe_pfd(const int&);
 	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
