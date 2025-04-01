@@ -90,6 +90,14 @@ CgiHandler::~CgiHandler() {
 		delete [] _envp;
 		_envp = NULL;
 	}
+	if (pipe_in[0] != UNINITIALIZED)
+		close(pipe_in[0]);
+	if (pipe_in[1] != UNINITIALIZED)
+		close(pipe_in[1]);
+	if (pipe_out[0] != UNINITIALIZED)
+		close(pipe_out[0]);
+	if (pipe_out[0] != UNINITIALIZED)
+		close(pipe_out[0]);
 }
 
 std::string CgiHandler::deduce_extension(const Request& req, const Location& loc) const
@@ -305,7 +313,7 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 
 		struct pollfd fd_out;
 		fd_out.fd = pipe_out[0]; // read end (bc we read)
-		// fd_out.events = POLLIN;
+		fd_out.events = POLLIN;
 		pfds.push_back(fd_out);
 
 		pfd_info info_in = {};
