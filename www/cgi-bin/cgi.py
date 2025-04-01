@@ -5,5 +5,5 @@ import time
 
 time.sleep(2)
 
-print("Hello World")  # Required HTTP header
+print("Hello World")
 
