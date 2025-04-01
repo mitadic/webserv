@@ -259,3 +259,15 @@ std::string Utils::ft_inet_ntoa(in_addr_t ip)
     }
     return (host);
 }
+
+bool is_ci_equal_char(char a, char b)
+{
+    return std::tolower(static_cast<unsigned char>(a)) ==
+           std::tolower(static_cast<unsigned char>(b));
+}
+
+/* If case-insensitive string equality, return true */
+bool Utils::is_ci_equal_str(const std::string& a, const std::string& b)
+{
+    return (a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), is_ci_equal_char));
+}

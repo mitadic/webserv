@@ -3,16 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/21 10:58:26 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/01 12:22:33 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 #include <sstream>
+#include <cctype>
+#include <algorithm>
 #include <fstream>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -48,4 +50,6 @@ namespace Utils
 	std::string generateTimestamp();
 
 	std::string	ft_inet_ntoa(in_addr_t ip);
+
+	bool is_ci_equal_str(const std::string& a, const std::string& b);
 }
