@@ -519,7 +519,8 @@ void RequestParser::parse_request_line(Request &req, std::string &line)
 			throw RequestException(CODE_400);
 		prev = tokens[1][i];
 	}
-	req._request_uri = tokens[1];
+	int questionmark_pos = tokens[1].find_first_of('?');
+	req._request_uri = tokens[1].substr(0, questionmark_pos); // ignores query string
 	// cgi detection occurs in process_request() now
 
 	size_t dot = 0;
