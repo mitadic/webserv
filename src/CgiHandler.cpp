@@ -146,8 +146,8 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	if (!_pathinfo.empty())
 	{
 		_env_vector.push_back("PATH_INFO=" + _pathinfo);
-		_env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
 	}
+	_env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
 	if (!_querystring.empty())
 		_env_vector.push_back("QUERY_STRING=" + _querystring);
 	if (_extension == ".php")
