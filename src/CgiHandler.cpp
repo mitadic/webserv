@@ -121,10 +121,11 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 	if (qm_pos != std::string::npos)
 	{
 		_querystring = s.substr(qm_pos + 1);
-		_pathinfo = "." + s.substr(0, qm_pos);
+		if (qm_pos != 0)
+			_pathinfo = "." + s.substr(0, qm_pos);
 	}
 	else
-		_pathinfo = s.substr(0);
+		_pathinfo = "." + s.substr(0);
 	// check allowed syntax
 	// check allowed syntax
 	// throw error if larger than 2?
@@ -151,7 +152,7 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 		_env_vector.push_back("QUERY_STRING=" + _querystring);
 	if (_extension == ".php")
 	{
-		// php-cgi interpreter relies on these additional env vars, seemingly crucially 
+		// php-cgi interpreter relies on these additional env vars, seemingly crucially
 		_env_vector.push_back("REDIRECT_STATUS=1");
 		std::ostringstream oss; oss << "SCRIPT_FILENAME=" << _pathname;
 		_env_vector.push_back(oss.str());
