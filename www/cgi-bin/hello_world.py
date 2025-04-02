@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # this is a simple CGI script
 # a CGI script must include: content type, blank line, body
