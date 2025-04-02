@@ -511,8 +511,10 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	}
 }
 
-/** (1) Close cgi_pipe_out
- * (2) Set response
+/**
+ * (1) Close cgi_pipe_out
+ * (2) Set response: only prints the status line and the cgi output,
+ * because the output contains a complete html formatted response
  * (3) Locate client pfd to set to POLLOUT
 */
 void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
@@ -521,24 +523,10 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 
 	discard_cgi_pipe_out(pfds_it, meta_it);
 
-	// simplistic CGI output inspection
-	std::string headers = "";
-	size_t headers_end_pos = reqs[idx].get_cgi_output().find("\r\n\r\n");
-	size_t body_start_pos = 0;
-	if (headers_end_pos != std::string::npos)
-	{
-		body_start_pos = headers_end_pos + 4;
-		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos);
-	}
-	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
-
 	// set response
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				 << headers << "\r\n"
-				 << "Content-Length: " << body.length() << "\r\n"
-				 << "\r\n"
-				 << body;
+				<< reqs[idx].get_cgi_output();
 	reqs[idx].set_response(response.str());
 
 	// locate client pfd to set to POLLOUT
@@ -579,7 +567,7 @@ void ServerEngine::kill_cgi_process(const int& pipe_fd)
 	}
 }
 
-/** use pipe_fd to identify the pfd_it and the meta_it in order to initiate pfd termination, which also closes the pipe end 
+/** use pipe_fd to identify the pfd_it and the meta_it in order to initiate pfd termination, which also closes the pipe end
  * @param pipe_fd_to_kill fd used to O(n) identify the pfd and the meta to remove
 */
 void ServerEngine::locate_and_disable_cgi_pipe_pfd(const int& pipe_fd_to_kill)
@@ -817,7 +805,7 @@ void ServerEngine::run()
 				{
 					if (pfd_meta.type == LISTENER_SOCKET)
 						accept_client(pfds_it->fd, pfd_meta);
-					
+
 					else if (pfd_meta.type == CGI_PIPE_OUT)
 						read_from_cgi_pipe_out(pfds_it, meta_it);
 					else
