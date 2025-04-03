@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Welcome</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				text-align: center;
+				margin: 50px;
+				background-color: rgb(224, 186, 17);
+			}
+			.button-list {
+				list-style-type: none;
+				padding: 0;
+			}
+			.btn {
+				display: inline-block;
+				padding: 10px 20px;
+				margin: 5px;
+				background-color: blue;
+				color: white;
+				text-decoration: none;
+				border-radius: 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<a href="index.html" class="btn backhome">Back to homepage</a>
+		<!-- //  Banner  //-->
+		 <!-- //  Header  //-->
+		<div class="container">
+			<div class="logo"></div>
+			<h1> Upload file:</h1>
+			<!-- //  Get filename: // -->
+			<form action="/cgi-bin/secondary_upload_form.py" method="POST">
+				<input type="text" id="file" name="file" placeholder="example.txt" required><br><br>
+				<button class="btn" id="uploadBtn" type="submit">Upload File</button>
+			</form>
+		<footer>
+			<p>© 2025 aarponen / mitadic / pbencze </p>
+		</footer>
+	</body>
+</html>

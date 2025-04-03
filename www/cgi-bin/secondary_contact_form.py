@@ -53,3 +53,19 @@ else:
 
 print("</body>")
 print("</html>")
+
+# version to redirect to success page
+# # Output the content type
+# print("Content-Type: text/html")
+# print()
+# print("<html>")
+# print("<head><title>Processing...</title></head>")
+# print("<body>")
+
+# if name and email and message:
+#     print('<script>window.location.href = "/success.html";</script>')  # JavaScript redirect
+# else:
+#     print("<h1>Error: Missing information</h1>")
+#     print("<p>Please ensure all fields are filled out.</p>")
+
+# print("</body></html>")
