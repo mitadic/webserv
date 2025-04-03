@@ -3,8 +3,8 @@
 # this is a simple CGI script
 # a CGI script must include: content type, blank line, body
 
-print("Content-Type: text/html")
-print()  # blank line to separate headers from body
+print("Content-Type: text/html", end="\r\n")
+print("\r\n", end="\r\n")  # Body separator
 print("<!DOCTYPE html>")
 print("<html>")
 print("<head><title>CGI script output</title></head>")

@@ -33,7 +33,7 @@ logging.info(f"User Request: Name={name}, Email={email}, Message={message}")
 
 # Output the content type
 print(f"Content-Type: {content_type}", end="\r\n")
-print("\r\n", end="\r\n")
+print("\r\n", end="")  # Body separator
 
 # Basic HTML structure for the response
 print("<html>")

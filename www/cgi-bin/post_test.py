@@ -14,15 +14,13 @@ path_info = os.environ.get("PATH_INFO", "")
 post_data = ""
 if request_method == "POST":
     content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-	content_type = os.environ.get("CONTENT_TYPE", "")
     post_data = sys.stdin.read(content_length)
     post_params = urllib.parse.parse_qs(post_data)
-	print("Content-Type: {content_type}")
-	print()
 else:
-	print("Content-Type: text/html")
-	print()
     post_params = {}
+
+print(f"Content-Type: text/html", end="\r\n")
+print("\r\n", end="\r\n")  # Body separator
 
 # Debug output
 print(f"<p><strong>Request Method:</strong> {request_method}</p>")

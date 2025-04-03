@@ -530,15 +530,16 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 	if (headers_end_pos != std::string::npos)
 	{
 		body_start_pos = headers_end_pos + 4;
-		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos);
+		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos + 2);
 	}
 	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
+	body += "\r\n";
 
 	// set response
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				 << headers << "\r\n"
-				 << "Content-Length: " << body.length() << "\r\n"
+				 << headers
+				 << "Content-Length: " << body.length() << "\r\n\r\n"
 				 << body;
 	reqs[idx].set_response(response.str());
 
