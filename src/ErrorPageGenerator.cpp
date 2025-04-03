@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 20:16:01 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/02 12:34:41 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/03 14:58:33 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,16 +51,18 @@ std::string ErrorPageGenerator::createErrorPage(const Request& req, const std::v
 	std::string errorPage;
 
 	std::map<int, std::string>::const_iterator it = server->get_error_pages().find(http_status_code);
-	if (it != server->get_error_pages().end())
+	const Location* location = Utils::getLocation(req, server);
+	struct stat sb;
+	if (location && it != server->get_error_pages().end() && stat(it->second.c_str(), &sb) != -1)
 	{
-		std::string errorPagePath = "." + it->second;
+		std::string errorPagePath = "." + location->get_root() + it->second;
 		Log::log("Using custom error page: " + errorPagePath, DEBUG);
 		errorPage = Utils::readFile(errorPagePath);
 	}
 	else
 	{
 		Log::log("Using default error page", DEBUG);
-		errorPage = generateErrorPage(error); // should it not take http_status_code rather than error?
+		errorPage = generateErrorPage(error);
 	}
 	std::ostringstream response;
 	response << "HTTP/1.1 " << status_messages[error] << "\r\n"
