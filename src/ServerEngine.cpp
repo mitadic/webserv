@@ -301,10 +301,10 @@ void ServerEngine::process_read_failure(const int idx)
 
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	char	buf[BUF_SZ];
+	char	buf[BUF_SZ + 1];
 	ssize_t	nbytes;
 
-	memset(buf, 0, BUF_SZ);
+	memset(buf, 0, BUF_SZ + 1);
 	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
 	if (nbytes < 0)
 	{
