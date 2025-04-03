@@ -523,11 +523,27 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 
 	discard_cgi_pipe_out(pfds_it, meta_it);
 
+	// simplistic CGI output inspection
+	std::string headers = "";
+	size_t headers_end_pos = reqs[idx].get_cgi_output().find("\r\n\r\n");
+	size_t body_start_pos = 0;
+	if (headers_end_pos != std::string::npos)
+	{
+		body_start_pos = headers_end_pos + 4;
+		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos);
+	}
+	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
+
 	// set response
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				<< reqs[idx].get_cgi_output();
+				 << headers << "\r\n"
+				 << "Content-Length: " << body.length() << "\r\n"
+				 << body;
 	reqs[idx].set_response(response.str());
+
+	std::ostringstream oss; oss << "Response with CGI output in body:\n" << reqs[idx].get_response();
+	Log::log(oss.str(), DEBUG);
 
 	// locate client pfd to set to POLLOUT
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)

@@ -21,7 +21,7 @@ form_data = sys.stdin.read(int(os.environ.get("CONTENT_LENGTH", 0)))
 # Parse the URL-encoded form data
 form_params = urllib.parse.parse_qs(form_data)
 
-content_type = os.environ.get("CONTENT_TYPE", "text/html")
+content_type = "text/html"
 
 # Extract individual form fields
 name = form_params.get("name", [""])[0]
@@ -32,8 +32,8 @@ message = form_params.get("message", [""])[0]
 logging.info(f"User Request: Name={name}, Email={email}, Message={message}")
 
 # Output the content type
-print("Content-Type: {content_type}")
-print()
+print(f"Content-Type: {content_type}", end="\r\n")
+print("\r\n", end="\r\n")
 
 # Basic HTML structure for the response
 print("<html>")
