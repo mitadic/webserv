@@ -798,7 +798,7 @@ void ServerEngine::run()
 
 	while (!g_signal)
 	{
-		int events_count = poll(&pfds[0], pfds.size(), CONNECTION_TIMEOUT);
+		int events_count = poll(&pfds[0], pfds.size(), CGI_TIMEOUT);
 		if (events_count == -1)
 		{
 			//if SIGINT (Ctrl+C) is received, exit gracefully

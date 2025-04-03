@@ -4,8 +4,8 @@ import time
 
 time.sleep(2)
 
-print("Content-Type: text/html")
-print()
+print("Content-Type: text/html", end="\r\n")
+print("", end="\r\n")
 print("<!DOCTYPE html>")
 print("<html>")
 print("<head><title>CGI script output</title></head>")
