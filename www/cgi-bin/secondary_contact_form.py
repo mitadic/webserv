@@ -10,7 +10,7 @@ from datetime import datetime
 log_dir = os.path.join(os.path.dirname(os.environ.get("PATH_TRANSLATED")), "logs")
 os.makedirs(log_dir, exist_ok=True)  # Create 'logs' directory if it doesn't exist
 
-log_file = os.path.join(log_dir, "secondary_contact_form.log")
+log_file = os.path.join(log_dir, "guest_book.log")
 
 # Configure logging to append to the file
 logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -34,38 +34,15 @@ logging.info(f"User Request: Name={name}, Email={email}, Message={message}")
 # Output the content type
 print(f"Content-Type: {content_type}", end="\r\n")
 print("\r\n", end="")  # Body separator
-
 # Basic HTML structure for the response
 print("<html>")
 print("<head><title>Contact Form Submission</title></head>")
 print("<body>")
-
 # Check if all fields were filled
 if name and email and message:
-    print("<h1>Thank you for contacting us!</h1>")
-    print(f"<p><strong>Name:</strong> {name}</p>")
-    print(f"<p><strong>Email:</strong> {email}</p>")
-    print(f"<p><strong>Message:</strong> {message}</p>")
-
+	print('<meta http-equiv="refresh" content="0;url=/success.html">')  # Redirect using meta refresh
 else:
     print("<h1>Error: Missing information</h1>")
     print("<p>Please ensure all fields are filled out.</p>")
-
 print("</body>")
 print("</html>")
-
-# version to redirect to success page
-# # Output the content type
-# print("Content-Type: text/html")
-# print()
-# print("<html>")
-# print("<head><title>Processing...</title></head>")
-# print("<body>")
-
-# if name and email and message:
-#     print('<script>window.location.href = "/success.html";</script>')  # JavaScript redirect
-# else:
-#     print("<h1>Error: Missing information</h1>")
-#     print("<p>Please ensure all fields are filled out.</p>")
-
-# print("</body></html>")

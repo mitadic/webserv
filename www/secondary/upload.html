@@ -34,8 +34,8 @@
 			<div class="logo"></div>
 			<h1> Upload file:</h1>
 			<!-- //  Get filename: // -->
-			<form action="/cgi-bin/secondary_upload_form.py" method="POST">
-				<input type="text" id="file" name="file" placeholder="example.txt" required><br><br>
+			<form action="/cgi-bin/secondary_upload_form.py" method="POST" enctype="multipart/form-data">
+				<input type="file" name="file" placeholder="example.txt" required><br><br>
 				<button class="btn" id="uploadBtn" type="submit">Upload File</button>
 			</form>
 		<footer>
