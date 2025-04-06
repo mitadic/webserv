@@ -750,10 +750,16 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 				reqs[req_idx].cgi->setup_cgi_get(pfds, pfd_info_map, req_idx);
 				Log::log("CGI GET set up", DEBUG);
 			}
-			else
+			else if (reqs[req_idx].get_method() == POST)
 			{
 				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
 				Log::log("CGI POST set up", DEBUG);
+			}
+			else
+			{
+				std::ostringstream oss; oss << "CGI method " << reqs[req_idx].get_method() << " unimplemented, responding 501";
+				Log::log(oss.str(), WARNING);
+				throw RequestException(CODE_501);
 			}
 
 		}
