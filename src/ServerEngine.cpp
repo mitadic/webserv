@@ -298,13 +298,14 @@ void ServerEngine::process_read_failure(const int idx)
 	initiate_error_response(client_pfd_it, idx, CODE_500);
 }
 
+/* read() should never turn out zero when POLLIN, we rely on POLLHUP to catch EOF */
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	char	buf[BUF_SZ + 1];
 	ssize_t	nbytes;
 
 	memset(buf, 0, BUF_SZ + 1);
-	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
+	nbytes = read(pfds_it->fd, buf, BUF_SZ);
 	if (nbytes < 0)
 	{
 		process_read_failure(meta_it->second.reqs_idx);
@@ -510,39 +511,102 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	}
 }
 
-/**
- * (1) Close cgi_pipe_out
- * (2) Set response: only prints the status line and the cgi output,
- * because the output contains a complete html formatted response
- * (3) Locate client pfd to set to POLLOUT
-*/
-void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+/* Called only after POLLHUP on CGI_PIPE_OUT, has the only waitpid() call */
+void ServerEngine::parse_cgi_output_to_set_response(std::map<int, pfd_info>::iterator& meta_it)
 {
 	int idx = meta_it->second.reqs_idx;
+	pid_t w;
+	int wstatus;
 
-	discard_cgi_pipe_out(pfds_it, meta_it);
+	// wait to inspect for inconsistencies or errors
+	w = waitpid(meta_it->second.cgi_pid, &wstatus, WNOHANG);
+	if (w <= 0)
+	{
+		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw RequestException(CODE_500);
+	}
+	else if (WEXITSTATUS(wstatus) != 0)
+	{
+		Log::log("CGI subprocess exited with a non-0 value, reporting 500", WARNING);
+		throw RequestException(CODE_500);
+	}
 
-	// simplistic CGI output inspection
-	std::string headers = "";
+	// separate headers from body. At least 1 of Content-Type | Location | Status is mandatory
+	std::string cgi_generated_headers = "";
 	size_t headers_end_pos = reqs[idx].get_cgi_output().find("\r\n\r\n");
 	size_t body_start_pos = 0;
-	if (headers_end_pos != std::string::npos)
+	if (headers_end_pos == std::string::npos)
+		throw RequestException(CODE_500);
+	body_start_pos = headers_end_pos + 4;
+	cgi_generated_headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos + 2);
+
+	// inspect cgi_generated_headers and create final_headers
+	std::istringstream headers_iss(cgi_generated_headers);
+	std::string line;
+	std::string final_headers;
+	while (std::getline(headers_iss, line))
 	{
-		body_start_pos = headers_end_pos + 4;
-		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos + 2);
+		std::vector<std::string> name_and_val = split(line, ":");
+		if (name_and_val.size() != 2)
+			throw RequestException(CODE_500);
+		trim_lws(name_and_val[1]);
+		if (Utils::is_ci_equal_str(name_and_val[0], "content-type"))
+			;
+		else if (Utils::is_ci_equal_str(name_and_val[0], "location"))
+			;
+		else if (Utils::is_ci_equal_str(name_and_val[0], "status"))
+		{
+			std::vector<std::string> code_and_reason = split(name_and_val[1], " ");
+			if (code_and_reason.size() > 2)
+				throw RequestException(CODE_500);
+			const int code_input = std::strtod(code_and_reason[0].c_str(), NULL);
+			int validated_code = 0;
+			for (int i = 0; i < STATUS_CODES_N; i++)
+			{
+				if (code_input == status_code_values[i])
+				{
+					validated_code = code_input;
+					final_headers += std::string("Status: ") + status_messages[i] + std::string("\r\n");
+					break;
+				}
+			}
+			if (!validated_code)
+				throw RequestException(CODE_500);
+		}
 	}
+
 	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
 	body += "\r\n";
 
 	// set response
 	std::ostringstream response;
 	response << "HTTP/1.1 200 OK\r\n"
-				 << headers
+				 << final_headers
 				 << "Content-Length: " << body.length() << "\r\n\r\n"
 				 << body;
 	reqs[idx].set_response(response.str());
+}
 
-	std::ostringstream oss; oss << "Response with CGI output in body:\n" << reqs[idx].get_response();
+/**
+ * (1) Close cgi_pipe_out
+ * (2) Set response: includes cgi_output parsing and necessary adaptions such as that of Content-Length
+ * (3) Locate client pfd to set to POLLOUT
+*/
+void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
+{
+	int idx = meta_it->second.reqs_idx;
+
+	try {
+		parse_cgi_output_to_set_response(meta_it);
+	}
+	catch (RequestException& e) {
+		reqs[idx].set_response_status(e.code());
+		reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
+	}
+	discard_cgi_pipe_out(pfds_it, meta_it);
+
+	std::ostringstream oss; oss << "Response with CGI output or Error response in body:\n" << reqs[idx].get_response();
 	Log::log(oss.str(), DEBUG);
 
 	// locate client pfd to set to POLLOUT

@@ -62,6 +62,7 @@ public:
 	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	discard_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
+	void	parse_cgi_output_to_set_response(std::map<int, pfd_info>::iterator&);
 	void	process_recv_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
 	void	process_write_failure(const int);
 	void	process_read_failure(const int);
