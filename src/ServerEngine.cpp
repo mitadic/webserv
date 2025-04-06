@@ -511,8 +511,16 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	}
 }
 
-/* Called only after POLLHUP on CGI_PIPE_OUT. Has the sole waitpid() call */
-void ServerEngine::parse_cgi_output_to_set_response(const int idx, const pid_t pid)
+/* Called only after POLLHUP on CGI_PIPE_OUT */
+void ServerEngine::process_raw_cgi_output(const int idx)
+{
+	CgiResponse cgi_response;
+	cgi_response.parse_raw_cgi_output(reqs[idx].get_cgi_output());
+	reqs[idx].set_response(cgi_response.get_formatted_response());
+}
+
+/* Has the sole waitpid() call */
+void check_in_on_subprocess(const pid_t pid)
 {
 	pid_t w;
 	int wstatus;
@@ -530,15 +538,11 @@ void ServerEngine::parse_cgi_output_to_set_response(const int idx, const pid_t p
 		Log::log("CGI subprocess exited with a non-0 value, reporting 500", WARNING);
 		throw RequestException(CODE_500);
 	}
-
-	CgiResponse cgi_response;
-	cgi_response.parse_raw_cgi_output(reqs[idx].get_cgi_output());
-	reqs[idx].set_response(cgi_response.get_formatted_response());
 }
 
 /**
- * (1) Set response: includes cgi_output parsing and necessary adaptions such as that of Content-Length
- * (2) Close and discard cgi_pipe_out
+ * (1) Close and discard cgi_pipe_out
+ * (2) Set response: includes cgi_output parsing and necessary adaptions such as that of Content-Length
  * (3) Locate client pfd to set to POLLOUT
 */
 void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
@@ -549,7 +553,8 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 	discard_cgi_pipe_out(pfds_it, meta_it);
 	try
 	{
-		parse_cgi_output_to_set_response(idx, pid);
+		check_in_on_subprocess(pid);
+		process_raw_cgi_output(idx);
 	}
 	catch (RequestException& e)
 	{
@@ -557,7 +562,7 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 		reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
 	}
 
-	std::ostringstream oss; oss << "Response with CGI output or Error response in body:\n" << reqs[idx].get_response();
+	std::ostringstream oss; oss << "Response to the CGI request:\n" << reqs[idx].get_response();
 	Log::log(oss.str(), DEBUG);
 
 	// locate client pfd to set to POLLOUT
