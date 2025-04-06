@@ -4,7 +4,7 @@ import os
 import sys
 import cgi
 
-UPLOAD_DIR = "/www/secondary/uploads/" #probably needs PATH_TRANSLATED
+UPLOAD_DIR = "www/secondary/uploads/" #os.environ.get("PATH_INFO", "")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Read form data using cgi.FieldStorage()
