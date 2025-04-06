@@ -263,13 +263,12 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 	if (sz_to_send)
 	{
-		std::string str_to_send = reqs[idx].get_request_body_as_str().substr(reqs[idx].get_total_sent());
-		if (write(pfds_it->fd, str_to_send.c_str(), sz_to_send) == -1)
+		if (write(pfds_it->fd, &(reqs[idx].get_request_body_raw().data())[sent_so_far], sz_to_send) == -1)
 		{
 			process_write_failure(meta_it->second.reqs_idx);
 			return;
 		}
-		std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send << std::endl;
+		// std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send.data() << std::endl;
 		reqs[idx].increment_total_sent_by(sz_to_send);
 		update_client_activity_timestamp(meta_it);
 	}
