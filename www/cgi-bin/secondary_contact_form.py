@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 
 # Initialize the logging module (to log to a file)
-log_dir = os.path.join(os.path.dirname(os.environ.get("PATH_TRANSLATED")), "logs")
+log_dir = os.environ.get("PATH_TRANSLATED")
 os.makedirs(log_dir, exist_ok=True)  # Create 'logs' directory if it doesn't exist
 
 log_file = os.path.join(log_dir, "guest_book.log")
