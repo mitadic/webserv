@@ -7,11 +7,28 @@ import cgi
 UPLOAD_DIR = "www/secondary/uploads/" #os.environ.get("PATH_INFO", "")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Read form data using cgi.FieldStorage()
+# Read form data
 form = cgi.FieldStorage()
 
 # Get the uploaded file
 file_item = form["file"]
+
+# allowed_extensions = {".txt", ".jpg", ".png", ".pdf"}
+# ext = os.path.splitext(file_item.filename)[1].lower()
+# if ext not in allowed_extensions:
+#     # Trigger error response
+#     print("Status: 400 Bad Request")
+#     print("Content-Type: text/html\r\n\r\n", end="")
+#     print(f"""<html>
+#         <head><title>Upload Error</title></head>
+#         <body>
+#             <h1>400 Bad Request</h1>
+#             <p>File type '{html.escape(ext)}' is not allowed.</p>
+#             <a href="/upload_form.html">Go back</a>
+#         </body>
+#     </html>
+#     """)
+#     exit()
 
 print(f"Content-Type: text/html", end="\r\n")
 print("\r\n", end="")  # Body separator

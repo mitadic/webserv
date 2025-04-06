@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/06 11:28:11 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/06 13:54:37 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -422,7 +422,7 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 					{
 						if (*it == "." || *it == "..")
 							continue;
-						body << "<li><a href=\"" << req.get_request_uri() + "/" + *it << "\">" << *it << "</a></li>";
+						body << "<li><a href=\"" << req.get_request_uri() + *it << "\">" << *it << "</a></li>";
 					}
 					body << "</ul></body></html>";
 
