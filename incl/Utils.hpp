@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:37 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/01 12:22:33 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/06 11:27:37 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,4 +52,6 @@ namespace Utils
 	std::string	ft_inet_ntoa(in_addr_t ip);
 
 	bool is_ci_equal_str(const std::string& a, const std::string& b);
+
+	std::string findBoundary(const Request &req);
 }
