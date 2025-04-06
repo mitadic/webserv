@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/24 19:43:21 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/03 23:41:06 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -428,11 +428,8 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 				if (location->is_autoindex()) // Show directory listing
 				{
 					Log::log("Showing directory listing", INFO);
-					std::ostringstream response;
-					response << "HTTP/1.1 200 OK\r\n"
-							 << "Content-Type: text/html\r\n"
-							 << "\r\n"
-							 << "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"
+					std::ostringstream response, body;
+					body << "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"
 							 << "<h1>Index of " << req.get_request_uri() << "</h1>"
 							 << "<ul>";
 
@@ -441,9 +438,17 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 					{
 						if (*it == "." || *it == "..")
 							continue;
-						response << "<li><a href=\"" << req.get_request_uri() + "/" + *it << "\">" << *it << "</a></li>";
+						body << "<li><a href=\"" << req.get_request_uri() + "/" + *it << "\">" << *it << "</a></li>";
 					}
-					response << "</ul></body></html>";
+					body << "</ul></body></html>";
+
+					response << "HTTP/1.1 200 OK\r\n"
+							 << "Content-Type: text/html\r\n"
+							 << "Content-Length: " << body.str().length() << "\r\n"
+							 << "\r\n"
+							 << body.str();
+					Log::log("Returning autoindex response:\r\n", DEBUG);
+					Log::log(response.str(), DEBUG);
 					return response.str();
 				}
 				else
