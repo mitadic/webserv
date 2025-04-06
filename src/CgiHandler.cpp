@@ -141,7 +141,12 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	{
 		_env_vector.push_back("REQUEST_METHOD=POST");
 		std::ostringstream oss; oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
-		_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
+		// is there a more elegant way to pass the multipart/form-data boundary?
+		if (strcmp(req.get_content_type(), "multipart/form-data") == 0)
+			_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()) + "; boundary=" + Utils::findBoundary(req));
+		else
+			_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
+		Log::log(_env_vector.back(), DEBUG);
 	}
 	if (!_pathinfo.empty())
 	{
