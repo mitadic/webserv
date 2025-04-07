@@ -14,3 +14,6 @@
 2025-04-07_17:15:58 | Session ID: 1744038958 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
 2025-04-07_17:17:46 | Session ID: 1744017386 | Name: unknown    | DELETE | Status: REQUESTED  | File: /test.txt
 2025-04-07_17:17:46 | Session ID: 1744017386 | Name: unknown    | DELETE | Status: SUCCESS    | File: /test.txt
+2025-04-07_21:37:40 | Session ID: 1744054660 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
+2025-04-07_21:39:25 | Session ID: 1744054765 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
+2025-04-07_21:46:54 | Session ID: 1744055214 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt

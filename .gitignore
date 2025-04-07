@@ -4,6 +4,11 @@
 www/secondary/uploads
 www/three-socketeers/uploads
 
+#.venv
+.venv
+*__pycache__*
+pyvenv.cfg
+
 # Prerequisites
 *.d
 

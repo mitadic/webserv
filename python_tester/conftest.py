@@ -18,11 +18,11 @@ def webserver():
 	process.terminate()
 	process.wait()
 
-@pytest.fixture(scope="session")
-def webserver_quickstart():
-	"""Start the webserver for checking bad config files"""
-	process = subprocess.run(WEBSERV_PATH, config_file)
-	return process.returncode
+# @pytest.fixture(scope="session")
+# def webserver_quickstart():
+# 	"""Start the webserver for checking bad config files"""
+# 	process = subprocess.run(WEBSERV_PATH, config_file)
+# 	return process.returncode
 
 @pytest.fixture(scope="session")
 def base_url():
