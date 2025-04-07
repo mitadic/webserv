@@ -263,13 +263,12 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 	if (sz_to_send)
 	{
-		std::string str_to_send = reqs[idx].get_request_body_as_str().substr(reqs[idx].get_total_sent());
-		if (write(pfds_it->fd, str_to_send.c_str(), sz_to_send) == -1)
+		if (write(pfds_it->fd, &(reqs[idx].get_request_body_raw().data())[sent_so_far], sz_to_send) == -1)
 		{
 			process_write_failure(meta_it->second.reqs_idx);
 			return;
 		}
-		std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send << std::endl;
+		// std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send.data() << std::endl;
 		reqs[idx].increment_total_sent_by(sz_to_send);
 		update_client_activity_timestamp(meta_it);
 	}
@@ -299,13 +298,14 @@ void ServerEngine::process_read_failure(const int idx)
 	initiate_error_response(client_pfd_it, idx, CODE_500);
 }
 
+/* read() should never turn out zero when POLLIN, we rely on POLLHUP to catch EOF */
 void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	char	buf[BUF_SZ + 1];
 	ssize_t	nbytes;
 
 	memset(buf, 0, BUF_SZ + 1);
-	nbytes = read(pfds_it->fd, buf, BUF_SZ);  // this should never turn out zero when POLLIN
+	nbytes = read(pfds_it->fd, buf, BUF_SZ);
 	if (nbytes < 0)
 	{
 		process_read_failure(meta_it->second.reqs_idx);
@@ -511,39 +511,58 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	}
 }
 
+/* Called only after POLLHUP on CGI_PIPE_OUT */
+void ServerEngine::process_raw_cgi_output(const int idx)
+{
+	CgiResponse cgi_response;
+	cgi_response.parse_raw_cgi_output(reqs[idx].get_cgi_output());
+	reqs[idx].set_response(cgi_response.get_formatted_response());
+}
+
+/* Has the sole waitpid() call */
+void check_in_on_subprocess(const pid_t pid)
+{
+	pid_t w;
+	int wstatus;
+
+	// wait to inspect for inconsistencies or errors
+	w = waitpid(pid, &wstatus, WNOHANG);
+	if (w <= 0)
+	{
+		std::ostringstream oss; oss << "waitpid: " << std::strerror(errno);
+		Log::log(oss.str(), WARNING);
+		throw RequestException(CODE_500);
+	}
+	else if (WEXITSTATUS(wstatus) != 0)
+	{
+		Log::log("CGI subprocess exited with a non-0 value, reporting 500", WARNING);
+		throw RequestException(CODE_500);
+	}
+}
+
 /**
- * (1) Close cgi_pipe_out
- * (2) Set response: only prints the status line and the cgi output,
- * because the output contains a complete html formatted response
+ * (1) Close and discard cgi_pipe_out
+ * (2) Set response: includes cgi_output parsing and necessary adaptions such as that of Content-Length
  * (3) Locate client pfd to set to POLLOUT
 */
 void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int idx = meta_it->second.reqs_idx;
+	const int idx = meta_it->second.reqs_idx;
+	const pid_t pid = meta_it->second.cgi_pid;
 
 	discard_cgi_pipe_out(pfds_it, meta_it);
-
-	// simplistic CGI output inspection
-	std::string headers = "";
-	size_t headers_end_pos = reqs[idx].get_cgi_output().find("\r\n\r\n");
-	size_t body_start_pos = 0;
-	if (headers_end_pos != std::string::npos)
+	try
 	{
-		body_start_pos = headers_end_pos + 4;
-		headers = reqs[idx].get_cgi_output().substr(0, headers_end_pos + 2);
+		check_in_on_subprocess(pid);
+		process_raw_cgi_output(idx);
 	}
-	std::string body = reqs[idx].get_cgi_output().substr(body_start_pos);
-	body += "\r\n";
+	catch (RequestException& e)
+	{
+		reqs[idx].set_response_status(e.code());
+		reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
+	}
 
-	// set response
-	std::ostringstream response;
-	response << "HTTP/1.1 200 OK\r\n"
-				 << headers
-				 << "Content-Length: " << body.length() << "\r\n\r\n"
-				 << body;
-	reqs[idx].set_response(response.str());
-
-	std::ostringstream oss; oss << "Response with CGI output in body:\n" << reqs[idx].get_response();
+	std::ostringstream oss; oss << "Response to the CGI request:\n" << reqs[idx].get_response();
 	Log::log(oss.str(), DEBUG);
 
 	// locate client pfd to set to POLLOUT
@@ -731,10 +750,16 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 				reqs[req_idx].cgi->setup_cgi_get(pfds, pfd_info_map, req_idx);
 				Log::log("CGI GET set up", DEBUG);
 			}
-			else
+			else if (reqs[req_idx].get_method() == POST)
 			{
 				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
 				Log::log("CGI POST set up", DEBUG);
+			}
+			else  // should already be caught in detect_cgi(), but jic
+			{
+				std::ostringstream oss; oss << "CGI method " << reqs[req_idx].get_method() << " unimplemented, responding 501";
+				Log::log(oss.str(), WARNING);
+				throw RequestException(CODE_501);
 			}
 
 		}

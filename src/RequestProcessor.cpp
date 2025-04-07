@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/03 23:41:06 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/07 11:04:48 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,22 +164,6 @@ void logUpload(const Request &req, std::string original_filename, std::string fi
 		std::cerr << "Unable to open log file." << std::endl;
 }
 
-
-// Find boundary from the request params
-std::string findBoundary(const Request &req)
-{
-	std::vector<std::string> contentTypeParams = req.get_content_type_params();
-	for (std::vector<std::string>::const_iterator it = contentTypeParams.begin(); it != contentTypeParams.end(); ++it)
-	{
-		if (it->find("boundary=") != std::string::npos)
-			return it->substr(it->find("boundary=") + 9);
-	}
-	Log::log("Boundary not found in header", ERROR);
-	throw RequestException(CODE_400); // Bad Request
-}
-
-
-
 // For file uploads:
 // - split the request body into parts per boundary
 // - for each part, extract the filename and the file content
@@ -188,7 +172,7 @@ std::string findBoundary(const Request &req)
 // -- if the file can't be saved, throw 500 error page
 void parseMultipartFormData(const Request &req, const Location *location)
 {
-	std::string boundary = "--" + findBoundary(req);
+	std::string boundary = "--" + Utils::findBoundary(req);
 	Log::log("Boundary: " + boundary, DEBUG);
 
 	std::string request_body_str = req.get_request_body_as_str();
@@ -389,7 +373,7 @@ bool RequestProcessor::detect_cgi(const Request& req, const Location* location, 
 				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object
 				const_cast<Request&>(req).set_cgi_status(EXECUTE);
 				if (method == DELETE)
-					throw RequestException(CODE_405); //delete not allowed on cgi
+					throw RequestException(CODE_501); //delete not allowed on cgi
 				return true;
 			}
 		}
@@ -438,7 +422,7 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 					{
 						if (*it == "." || *it == "..")
 							continue;
-						body << "<li><a href=\"" << req.get_request_uri() + "/" + *it << "\">" << *it << "</a></li>";
+						body << "<li><a href=\"" << req.get_request_uri() + *it << "\">" << *it << "</a></li>";
 					}
 					body << "</ul></body></html>";
 

@@ -122,10 +122,10 @@ void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
 	{
 		_querystring = s.substr(qm_pos + 1);
 		if (qm_pos != 0)
-			_pathinfo = "." + s.substr(0, qm_pos);
+			_pathinfo = s.substr(0, qm_pos);
 	}
 	else
-		_pathinfo = "." + s.substr(0);
+		_pathinfo = s.substr(0);
 	// check allowed syntax
 	// check allowed syntax
 	// throw error if larger than 2?
@@ -141,13 +141,17 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	{
 		_env_vector.push_back("REQUEST_METHOD=POST");
 		std::ostringstream oss; oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
-		_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
+		// is there a more elegant way to pass the multipart/form-data boundary?
+		if (strcmp(req.get_content_type(), "multipart/form-data") == 0)
+			_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()) + "; boundary=" + Utils::findBoundary(req));
+		else
+			_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()));
 	}
 	if (!_pathinfo.empty())
 	{
 		_env_vector.push_back("PATH_INFO=" + _pathinfo);
 	}
-	_env_vector.push_back("PATH_TRANSLATED=" + (_pathname + _pathinfo));
+	_env_vector.push_back("PATH_TRANSLATED=" + (_pathname.substr(0, _pathname.find_last_of('/')) + _pathinfo));
 	if (!_querystring.empty())
 		_env_vector.push_back("QUERY_STRING=" + _querystring);
 	if (_extension == ".php")
@@ -173,7 +177,7 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 */
 void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
-	if (!Utils::fileExists(_pathname + _pathinfo))
+	if (!Utils::fileExists(_pathname))
 		throw RequestException(CODE_404);
 
 	Log::log("Setting up exec of CGI get", DEBUG);
@@ -228,7 +232,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 
 void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
 {
-	if (!Utils::fileExists(_pathname + _pathinfo))
+	if (!Utils::fileExists(_pathname))
 		throw RequestException(CODE_404);
 
 	Log::log("Setting up exec of CGI post", DEBUG);

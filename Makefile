@@ -10,6 +10,7 @@ SRC		=	Config.cpp \
 			Log.cpp \
 			ServerEngine.cpp \
 			CgiHandler.cpp \
+			CgiResponse.cpp \
 			ContentTypes.cpp \
 			ErrorPageGenerator.cpp \
 			Exceptions.cpp \

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/03/30 00:32:51 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/06 16:38:26 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,9 @@ class CgiHandler {
 		// TODO current working directory should be set to the directory containing the script; not sure where it is stored ?
 
 		void set_env_variables(const Request& req, const Location& loc, int method);
-
 };
+
+// std::ostream& operator<<(std::ostream &out, CgiHandler &rhs);
 
 /**
  * @brief These are the envp variables for the cgi needed by execve

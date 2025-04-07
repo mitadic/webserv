@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form</title>
+	<style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+			background-color: rgb(224, 186, 17);
+        }
+    </style>
+</head>
+<body>
+    <h1>Calendar Generator</h1>
+    <form action="/cgi-bin/calendar.php" method="POST">
+        <label for="month">Month:</label><br>
+        <input type="number" id="month" name="month" required><br><br>
+
+        <label for="year">Year:</label><br>
+        <input type="number" id="year" name="year" required><br><br>
+
+        <input type="submit" value="View">
+    </form>
+	<!--//  FOOTER  //-->
+	<footer>
+		<p>© 2025 aarponen / mitadic / pbencze </p>
+	</footer>
+</body>
+</html>

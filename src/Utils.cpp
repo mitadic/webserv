@@ -271,3 +271,15 @@ bool Utils::is_ci_equal_str(const std::string& a, const std::string& b)
 {
     return (a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), is_ci_equal_char));
 }
+
+std::string Utils::findBoundary(const Request &req)
+{
+	std::vector<std::string> contentTypeParams = req.get_content_type_params();
+	for (std::vector<std::string>::const_iterator it = contentTypeParams.begin(); it != contentTypeParams.end(); ++it)
+	{
+		if (it->find("boundary=") != std::string::npos)
+			return it->substr(it->find("boundary=") + 9);
+	}
+	Log::log("Boundary not found in header", ERROR);
+	throw RequestException(CODE_400); // Bad Request
+}
