@@ -110,6 +110,17 @@ void CgiResponse::validate_and_format_headers(const std::string& cgi_generated_h
 		Log::log("Bad CGI output: did not include 1*(Content-Type | Location | Status)", WARNING);
 		throw RequestException(CODE_500);
 	}
+
+	if (!_location.empty() && _formatted_headers.find_first_of("\r\n") != _formatted_headers.size() - 2)  // if any header other than Location
+	{
+		Log::log("Bad CGI output: specified Location but then had other headers which is explicitly forbidden", WARNING);
+		throw RequestException(CODE_500);
+	}
+	else
+	{
+		_status_code_and_msg = status_messages[CODE_302];
+		_formatted_headers += _status_code_and_msg + std::string("\r\n");
+	}
 }
 
 void CgiResponse::set_formatted_response(const std::string& body)

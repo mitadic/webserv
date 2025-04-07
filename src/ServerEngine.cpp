@@ -755,7 +755,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
 				Log::log("CGI POST set up", DEBUG);
 			}
-			else
+			else  // should already be caught in detect_cgi(), but jic
 			{
 				std::ostringstream oss; oss << "CGI method " << reqs[req_idx].get_method() << " unimplemented, responding 501";
 				Log::log(oss.str(), WARNING);
