@@ -24,8 +24,3 @@ def test_basic_get(webserver, base_url):
 
 def test_basic_404(webserver, base_url):
 	assert requests.get(f"{base_url}/banana").status_code == 404
-
-
-
-# if __name__ == "__main__":
-#     pytest.main()

@@ -10,7 +10,7 @@ WEBSERV_PATH = "./a.out"
 def webserver():
 	"""Start the webserver for the entire test session"""
 	process = subprocess.Popen([WEBSERV_PATH])
-	time.sleep(5)  # Give server time to start
+	time.sleep(2)  # Give server time to start
 	yield process
 	process.terminate()
 	process.wait()
