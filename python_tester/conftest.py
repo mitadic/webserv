@@ -16,6 +16,12 @@ def webserver():
 	process.wait()
 
 @pytest.fixture(scope="session")
+def webserver_quickstart():
+	"""Start the webserver for checking bad config files"""
+	process = subprocess.run(WEBSERV_PATH, config_file)
+	return process.returncode
+
+@pytest.fixture(scope="session")
 def base_url():
 	"""Base URL for the default server"""
 	return "http://127.0.0.1:8080"
