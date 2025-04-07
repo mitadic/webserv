@@ -4,13 +4,13 @@ import time
 import requests
 from pathlib import Path
 
-WEBSERV_PATH = "../a.out"
+WEBSERV_PATH = "./a.out"
 
 @pytest.fixture(scope="session")
 def webserver():
 	"""Start the webserver for the entire test session"""
-	process = subprocess.Popen([WEBSERV_PATH, "-l", "DEBUG", "conf/default.conf"])
-	time.sleep(2)  # Give server time to start
+	process = subprocess.Popen([WEBSERV_PATH])
+	time.sleep(5)  # Give server time to start
 	yield process
 	process.terminate()
 	process.wait()
