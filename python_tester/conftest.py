@@ -6,12 +6,15 @@ from pathlib import Path
 
 WEBSERV_PATH = "./a.out"
 
+# the deacorator is used to mark a function as a fixture
+# the session scope means the fixture is created once per test session
+# any test function that includes webserver will trigger this fixture
 @pytest.fixture(scope="session")
 def webserver():
 	"""Start the webserver for the entire test session"""
 	process = subprocess.Popen([WEBSERV_PATH])
 	time.sleep(2)  # Give server time to start
-	yield process
+	yield process # this is where the test will run
 	process.terminate()
 	process.wait()
 
