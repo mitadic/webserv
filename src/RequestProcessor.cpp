@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/06 13:54:37 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/07 11:04:48 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -373,7 +373,7 @@ bool RequestProcessor::detect_cgi(const Request& req, const Location* location, 
 				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object
 				const_cast<Request&>(req).set_cgi_status(EXECUTE);
 				if (method == DELETE)
-					throw RequestException(CODE_405); //delete not allowed on cgi
+					throw RequestException(CODE_501); //delete not allowed on cgi
 				return true;
 			}
 		}
