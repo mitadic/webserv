@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 12:38:08 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/20 17:49:26 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/07 12:06:11 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,6 @@
 #include "Log.hpp"
 #include <stdexcept>
 #include <algorithm>
-
-#define MAX_REDIRECTS 5
 
 class Request;
 class CgiHandler;
