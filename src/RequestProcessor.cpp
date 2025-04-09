@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/07 11:04:48 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/09 18:20:25 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -564,7 +564,8 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 	if (!location->is_del())
 		throw RequestException(CODE_405);
 
-	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+	//std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+	std::string filePath = "." + location->get_root() + req.get_request_uri();
 	bool success = false;
 	logDelete(req, req.get_request_uri(), success);
 
