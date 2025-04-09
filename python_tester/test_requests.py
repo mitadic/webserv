@@ -49,3 +49,13 @@ def test_delete_inexistent_file(webserver, base_url):
 def test_invalid_request(webserver, base_url):
 	response = requests.request("INVALID", f"{base_url}")
 	assert response.status_code == 405
+
+def test_not_allowed_methods(webserver, secondary_url):
+	# Test with a method that is not allowed
+	response = requests.get(f"{secondary_url}/nomethods/")
+	assert response.status_code == 405
+	response = requests.post(f"{secondary_url}/nomethods/")
+	assert response.status_code == 405
+	response = requests.delete(f"{secondary_url}/nomethods/")
+	assert response.status_code == 405
+
