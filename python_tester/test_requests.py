@@ -45,12 +45,13 @@ def test_delete_inexistent_file(webserver, base_url):
 	response = requests.delete(f"{base_url}{upload_path}inexistent.txt")
 	assert response.status_code == 404, f"Unexpected status code: {response.status_code}"
 
-def test_basic_405(webserver, secondary_url):
+def test_basic_405(webserver, secondary_url, base_url):
 	response = requests.get(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
 	response = requests.post(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
 	response = requests.delete(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
+
 	response = requests.request("INVALID", f"{base_url}")
 	assert response.status_code == 405
