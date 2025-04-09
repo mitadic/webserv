@@ -12,3 +12,5 @@ def test_curl_get(webserver, base_url):
         text=True
     )
     assert result.stdout.strip() == "200"  # Check if the HTTP status code is 200
+
+

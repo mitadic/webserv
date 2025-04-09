@@ -31,4 +31,5 @@ def base_url():
 
 @pytest.fixture(scope="session")
 def secondary_url():
+	"""Base URL for the secondary server"""
 	return "http://127.0.0.2:9090"
