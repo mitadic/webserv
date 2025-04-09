@@ -40,7 +40,10 @@ print("<head><title>Contact Form Submission</title></head>")
 print("<body>")
 # Check if all fields were filled
 if name and email and message:
-	print('<meta http-equiv="refresh" content="0;url=/success.html">')  # Redirect using meta refresh
+	# Redirect using HTTP Location header
+    print("Status: 302 Found")
+    print("Location: /success.html")
+    print("\r\n", end="")  # End of headers
 else:
     print("<h1>Error: Missing information</h1>")
     print("<p>Please ensure all fields are filled out.</p>")
