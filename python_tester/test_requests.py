@@ -9,7 +9,7 @@ def test_basic_get(webserver, base_url):
 	assert requests.get(f"{base_url}").status_code == 200
 
 # # POST allowed in location
-# This test gets stuck
+# # This test gets stuck
 # def test_basic_post(webserver, base_url):
 # 	upload_path = "/uploads/"
 # 	response = requests.post(f"{base_url}{upload_path}",
@@ -25,16 +25,27 @@ def test_basic_get(webserver, base_url):
 # 	assert response.status_code == 201
 # 	assert "Form submitted" in response.text
 
-
-# DELETE allowed in location
 def test_basic_delete(webserver, base_url):
+	# Define the file path
 	upload_path = "/uploads/"
-	response = requests.delete(f"{base_url}{upload_path}hello.txt")
-	assert response.status_code == 204  # No Content (commonly returned if DELETE is successful)
+	file_name = "hello.txt"
+	file_url = f"{base_url}{upload_path}{file_name}"
+	local_file_path = f"./www/three-socketeers/uploads/{file_name}"
+	# Step 1: Create the file on the server
+	with open(local_file_path, "w") as f:
+		f.write("This is a test file for DELETE request.")
+	# Step 2: Send the DELETE request
+	response = requests.delete(file_url)
+	assert response.status_code == 204, f"Unexpected status code: {response.status_code}"
+	# Step 3: Verify the file no longer exists
+	assert not os.path.exists(local_file_path), "File was not deleted."
+
+def test_delete_inexistent_file(webserver, base_url):
+	upload_path = "/uploads/"
+	response = requests.delete(f"{base_url}{upload_path}inexistent.txt")
+	assert response.status_code == 404, f"Unexpected status code: {response.status_code}"
 
 # Invalid request
 def test_invalid_request(webserver, base_url):
-	try:
-		requests.request("INVALID", f"{base_url}")
-	except requests.exceptions.RequestException as e:
-		assert isinstance(e, requests.exceptions.InvalidSchema)  # Invalid method should raise an exception
+	response = requests.request("INVALID", f"{base_url}")
+	assert response.status_code == 405
