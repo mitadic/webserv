@@ -58,8 +58,8 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
  */
 void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
-	Log::log("Before validation:", DEBUG);
-	Log::log(server_blocks);
+	//Log::log("Before validation:", DEBUG);
+	//Log::log(server_blocks);
 
 	if (server_blocks.empty())
 		throw std::runtime_error("Empty vector of server blocks");

@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 		else
 			throw std::runtime_error("usage: ./webserv [config_file]");
 		Log::log("Server blocks are ready:", INFO);
-		Log::log(server_blocks);
+		//Log::log(server_blocks);
 	}
 	catch (std::exception & e)
 	{
@@ -30,6 +30,6 @@ int main(int argc, char **argv)
 	}
 
 	ServerEngine engine(server_blocks);
-	
+
 	engine.run();
 }

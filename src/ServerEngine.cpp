@@ -799,7 +799,6 @@ void	ServerEngine::remove_failed_blocks(std::vector<ServerBlock> &server_blocks,
 		}
 		i--;
 	}
-	// Log::log(server_blocks);
 }
 
 void ServerEngine::run()
