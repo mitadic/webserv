@@ -55,3 +55,32 @@ def test_basic_405(webserver, secondary_url, base_url):
 
 	response = requests.request("INVALID", f"{base_url}")
 	assert response.status_code == 405
+
+def test_autoindex(secondary_url):
+	# Test that autoindex is enabled for /uploads/
+	response = requests.get(f"{secondary_url}/uploads/")
+	assert response.text.find("Index of /uploads/") != -1
+	# Test that autoindex is disabled for /cgi-bin/
+	response = requests.get(f"{secondary_url}/cgi-bin/")
+	assert response.text.find("Index of /uploads/") == -1
+
+def test_redirect(webserver):
+	url = "http://127.0.0.18:7070"
+	# Test that the server redirects from /old-page to /new-page
+	response = requests.get(f"{url}/tube/")
+	assert response.status_code == 308
+	assert response.headers["Location"] == f"https://youtube.com"
+
+	response = requests.get(f"{url}/intra/")
+	assert response.status_code == 301
+	assert response.headers["Location"] == f"https://intra.42.fr"
+
+	response = requests.get(f"{url}/google/")
+	assert response.status_code == 302
+	assert response.headers["Location"] == f"https://www.google.com"
+
+	response = requests.get(f"{url}/redirect/")
+	assert response.status_code == 307
+	assert response.headers["Location"] == f"{url}/secondary/"
+
+
