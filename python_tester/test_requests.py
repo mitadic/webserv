@@ -64,9 +64,10 @@ def test_autoindex(secondary_url):
 	response = requests.get(f"{secondary_url}/cgi-bin/")
 	assert response.text.find("Index of /uploads/") == -1
 
+# fail: loading forever
 def test_redirect(webserver):
 	url = "http://127.0.0.18:7070"
-	# Test that the server redirects from /old-page to /new-page
+
 	response = requests.get(f"{url}/tube/")
 	assert response.status_code == 308
 	assert response.headers["Location"] == f"https://youtube.com"
