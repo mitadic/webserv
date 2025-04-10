@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/09 18:20:25 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/10 19:04:18 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -307,6 +307,7 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 		response << "HTTP/1.1 "
 				 << status_messages[match_code(response_code)] << "\r\n"
 				 << "Location: " << matchingLocation->get_redirect().second << "\r\n"
+				 << "Content-Length: 0\r\n"
 				 << "\r\n";
 		Log::log("Response: " + response.str(), DEBUG);
 		return response.str();
