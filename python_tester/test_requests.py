@@ -19,12 +19,10 @@ def test_basic_post(webserver, base_url):
 	assert response.status_code == 201  # Created (commonly returned if POST is successful)
 
 # POST allowed in location
-# This test gets stuck
 # CURL equivalent: curl -X POST http://127.0.0.1:8080/contact.html -H "Content-Type: text/plain" -d "subject=Hola&message=Hello"
 def test_post_contact_form(webserver, base_url):
 	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
-	assert response.status_code == 200
-	assert "Form submitted" in response.text
+	assert response.status_code == 201
 
 def test_basic_delete(webserver, base_url):
 	# Define the file path

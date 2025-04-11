@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/10 19:04:18 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/11 14:44:10 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -514,26 +514,114 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 	}
 	case MULTIPART_FORM_DATA: // file uploads
 	{
-		Log::log("Processing file upload", INFO);
+		Log::log("Processing multipart form data upload", INFO);
 		if (!location->is_upload_allowed())
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
-		std::string body = "file uploaded successfully";
+		std::string body = "File uploaded successfully";
 		response << "HTTP/1.1 201 OK\r\n"
-				 << "Content-Type: text/plain" << "\r\n"
-				 << "Content-Length: " << body.size() << "\r\n"
-				 << "\r\n"
-				 << body;
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
 		break;
 	}
 	case TEXT_PLAIN:
+	{
+		Log::log("Processing text/plain body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "text/plain received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case TEXT_HTML:
+	{
+		Log::log("Processing text/html body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "text/html received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case TEXT_XML:
+	{
+		Log::log("Processing text/xml body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "text/xml received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case APPLICATION_XML:
+	{
+		Log::log("Processing application/xml body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "application/xml received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case APPLICATION_XHTML_XML:
+	{
+		Log::log("Processing application/xthml-xml body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "application/xthml-xml received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case APPLICATION_OCTET_STREAM:
+	{
+		Log::log("Processing application/octet-stream body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "application/octet-stream received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case IMAGE_GIF:
+	{
+		Log::log("Processing image/gif body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "image/gif received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case IMAGE_JPEG:
+	{
+		Log::log("Processing image/jpeg body", INFO);
+		// no process, proceed to generate reply
+		std::string body = "image/jpeg received successfully";
+		response << "HTTP/1.1 201 OK\r\n"
+			<< "Content-Type: text/plain" << "\r\n"
+			<< "Content-Length: " << body.size() << "\r\n"
+			<< "\r\n"
+			<< body;
+		break;
+	}
 	case IMAGE_PNG:
 	{
 		Log::log("Processing png", DEBUG);
