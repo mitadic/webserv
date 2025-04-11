@@ -15,13 +15,19 @@ def test_basic_get(webserver, base_url):
 # 		f.write("This is a test file for POST request.")
 # 	response = requests.post(f"{base_url}{upload_path}",
 # 		files={"file": ("post_test.txt", open("./post_test.txt", "rb"))},
-# 		headers={"Content-Type": "multipart/form-data"})
+# 		headers={"Content-Type": "multipart/form-data", "Content-Length": "38"})
 # 	assert response.status_code == 201  # Created (commonly returned if POST is successful)
+
+# POST missing Content-Length header
+# CURL equivalent: difficult to emulate
+def test_post_contact_form(webserver, base_url):
+	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
+	assert response.status_code == 411
 
 # POST allowed in location
 # CURL equivalent: curl -X POST http://127.0.0.1:8080/contact.html -H "Content-Type: text/plain" -d "subject=Hola&message=Hello"
 def test_post_contact_form(webserver, base_url):
-	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
+	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"})
 	assert response.status_code == 201
 
 def test_basic_delete(webserver, base_url):
@@ -47,7 +53,7 @@ def test_delete_inexistent_file(webserver, base_url):
 def test_basic_405(webserver, secondary_url, base_url):
 	response = requests.get(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
-	response = requests.post(f"{secondary_url}/nomethods/")
+	response = requests.post(f"{secondary_url}/nomethods/", data={"This one needed data added in order for Content-Length to be generated"})
 	assert response.status_code == 405
 	response = requests.delete(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405

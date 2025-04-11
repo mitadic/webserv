@@ -17,3 +17,25 @@
 2025-04-07_21:37:40 | Session ID: 1744054660 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
 2025-04-07_21:39:25 | Session ID: 1744054765 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
 2025-04-07_21:46:54 | Session ID: 1744055214 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/test.txt
+2025-04-11_23:21:12 | Session ID: 1744406472 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-11_23:21:12 | Session ID: 1744406472 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-11_23:21:12 | Session ID: 1744406472 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_00:18:03 | Session ID: 1744409883 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_00:18:03 | Session ID: 1744409883 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_00:18:04 | Session ID: 1744409884 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_00:21:10 | Session ID: 1744410070 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_00:21:10 | Session ID: 1744410070 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_00:21:10 | Session ID: 1744410070 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_00:21:53 | Session ID: 1744410113 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_00:21:53 | Session ID: 1744410113 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_00:21:53 | Session ID: 1744410113 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_00:26:00 | Session ID: 1744410360 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_00:26:00 | Session ID: 1744410360 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_00:26:00 | Session ID: 1744410360 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_00:27:07 | Session ID: 1744410427 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_00:27:07 | Session ID: 1744410427 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_00:27:07 | Session ID: 1744410427 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_01:22:38 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:22:38.txt
+2025-04-12_01:22:38 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:22:38.txt
+2025-04-12_01:24:50 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:24:50.txt
+2025-04-12_01:24:50 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:24:50.txt

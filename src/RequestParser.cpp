@@ -577,7 +577,8 @@ void RequestParser::parse_header_line(Request &req, std::istringstream &stream, 
 	// while folded continuation, whether recognized header or no
 	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line[0]))
 		dispatch_header_parser(req, header_idx, line);
-	check_stream_for_errors(stream);
+	if (!stream.eof())
+		check_stream_for_errors(stream);
 }
 
 /* If not EOF, continues reading until req._content_length */

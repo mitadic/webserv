@@ -381,7 +381,8 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int
 	else
 	{
 		reqs[idx].switch_to_reading_body();
-		std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
+		// std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
+		std::string buf_as_str(buf + 0, buf + crlf_begin + 2);
 		reqs[idx].append_to_request_str(buf_as_str);
 		for (ssize_t i = crlf_begin + 4; i < nbytes + the_trail_from_prev; i++)	// 3: tailsize; 4: rnrn size
 			reqs[idx].append_byte_to_body(buf[i - the_trail_from_prev]);
@@ -392,7 +393,6 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int
 		}
 		catch (RequestException& e) {
 			Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
-			Log::log(static_cast<std::ostringstream&>(std::ostringstream() << "Corruption reason: " << e.what()).str(), DEBUG);
 			reqs[idx].flag_that_we_should_close_early();
 			initiate_error_response(pfds_it, idx, e.code());
 			return 1;

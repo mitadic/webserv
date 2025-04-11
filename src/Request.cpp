@@ -196,7 +196,7 @@ void Request::validate_self()
 {
 	if (_host == 0x00000000)
 		throw RequestException(CODE_400);
-	if (_method == POST && _content_length == UNINITIALIZED)
+	if (_method == POST && _content_length == 0 && _flagged_as_chunked == false)
 		throw RequestException(CODE_411);
 	if (_major_http_v > 1 || _major_http_v < 0 || (_major_http_v == 1 && _minor_http_v > 1) || (_major_http_v == 0 && _minor_http_v < 9))
 		throw RequestException(CODE_505);
