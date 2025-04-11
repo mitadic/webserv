@@ -88,7 +88,11 @@ const int &Request::get_total_sent() const { return _total_sent; }
 const int &Request::get_content_length() const { return _content_length; }
 const int &Request::get_content_type_idx() const { return _content_type_idx; }
 const std::vector<std::string> &Request::get_content_type_params() const { return _content_type_params; }
-const char *Request::get_content_type() const { return content_types[_content_type_idx]; }
+const char *Request::get_content_type() const {
+	if (_content_type_idx == UNINITIALIZED)
+		return "";
+	return content_types[_content_type_idx];
+}
 const int &Request::get_client_fd() const { return _client_fd; }
 const int &Request::get_method() const { return _method; }
 const int &Request::get_major_http_v() const { return _major_http_v; }
