@@ -22,7 +22,7 @@ def test_basic_get(webserver, base_url):
 # CURL equivalent: curl -X POST http://127.0.0.1:8080/contact.html -H "Content-Type: text/plain" -d "subject=Hola&message=Hello"
 # def test_post_contact_form(webserver, base_url):
 # 	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
-# 	assert response.status_code == 201
+# 	assert response.status_code == 200
 # 	assert "Form submitted" in response.text
 
 def test_basic_delete(webserver, base_url):
@@ -68,20 +68,20 @@ def test_autoindex(secondary_url):
 def test_redirect(webserver):
 	url = "http://127.0.0.18:7070"
 
-	response = requests.get(f"{url}/tube/")
+	response = requests.get(f"{url}/tube/", allow_redirects=False)
 	assert response.status_code == 308
 	assert response.headers["Location"] == f"https://youtube.com"
 
-	response = requests.get(f"{url}/intra/")
+	response = requests.get(f"{url}/intra/", allow_redirects=False)
 	assert response.status_code == 301
 	assert response.headers["Location"] == f"https://intra.42.fr"
 
-	response = requests.get(f"{url}/google/")
+	response = requests.get(f"{url}/google/", allow_redirects=False)
 	assert response.status_code == 302
 	assert response.headers["Location"] == f"https://www.google.com"
 
-	response = requests.get(f"{url}/redirect/")
+	response = requests.get(f"{url}/redirect/", allow_redirects=False)
 	assert response.status_code == 307
-	assert response.headers["Location"] == f"{url}/secondary/"
+	assert response.headers["Location"] == f"/secondary/"
 
 
