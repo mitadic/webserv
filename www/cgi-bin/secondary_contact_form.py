@@ -31,21 +31,23 @@ message = form_params.get("message", [""])[0]
 # Log user request with form data
 logging.info(f"User Request: Name={name}, Email={email}, Message={message}")
 
-# Output the content type
-print(f"Content-Type: {content_type}", end="\r\n")
-print("\r\n", end="")  # Body separator
-# Basic HTML structure for the response
-print("<html>")
-print("<head><title>Contact Form Submission</title></head>")
-print("<body>")
+
 # Check if all fields were filled
 if name and email and message:
 	# Redirect using HTTP Location header
-    print("Status: 302 Found")
-    print("Location: /success.html")
-    print("\r\n", end="")  # End of headers
+	# print("Status: 302 Found\r\n", end="")
+	print("Location: /success.html\r\n", end="")
+	# print("Content-Length: 0\r\n", end="")
+	print("\r\n", end="")  # End of headers
 else:
-    print("<h1>Error: Missing information</h1>")
-    print("<p>Please ensure all fields are filled out.</p>")
-print("</body>")
-print("</html>")
+	# Output the content type
+	print(f"Content-Type: {content_type}", end="\r\n")
+	print("\r\n", end="")  # Body separator
+	# Basic HTML structure for the response
+	print("<html>")
+	print("<head><title>Contact Form Submission</title></head>")
+	print("<body>")
+	print("<h1>Error: Missing information</h1>")
+	print("<p>Please ensure all fields are filled out.</p>")
+	print("</body>")
+	print("</html>")
