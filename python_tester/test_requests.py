@@ -8,22 +8,23 @@ import requests
 def test_basic_get(webserver, base_url):
 	assert requests.get(f"{base_url}").status_code == 200
 
-# # POST allowed in location
-# # This test gets stuck
-# def test_basic_post(webserver, base_url):
-# 	upload_path = "/uploads/"
-# 	response = requests.post(f"{base_url}{upload_path}",
-# 		data={"file": "hello.txt"},
-# 		headers={"Content-Type": "text/plain"})
-# 	assert response.status_code == 201  # Created (commonly returned if POST is successful)
+# POST allowed in location
+def test_basic_post(webserver, base_url):
+	upload_path = "/uploads/"
+	with open("./post_test.txt", "w") as f:
+		f.write("This is a test file for POST request.")
+	response = requests.post(f"{base_url}{upload_path}",
+		files={"file": ("post_test.txt", open("./post_test.txt", "rb"))},
+		headers={"Content-Type": "multipart/form-data"})
+	assert response.status_code == 201  # Created (commonly returned if POST is successful)
 
 # POST allowed in location
 # This test gets stuck
 # CURL equivalent: curl -X POST http://127.0.0.1:8080/contact.html -H "Content-Type: text/plain" -d "subject=Hola&message=Hello"
-# def test_post_contact_form(webserver, base_url):
-# 	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
-# 	assert response.status_code == 200
-# 	assert "Form submitted" in response.text
+def test_post_contact_form(webserver, base_url):
+	response = requests.post(f"{base_url}/contact.html", data={"subject": "Hola", "message": "Hello"}, headers={"Content-Type": "text/plain"})
+	assert response.status_code == 200
+	assert "Form submitted" in response.text
 
 def test_basic_delete(webserver, base_url):
 	# Define the file path
@@ -70,18 +71,18 @@ def test_redirect(webserver):
 
 	response = requests.get(f"{url}/tube/", allow_redirects=False)
 	assert response.status_code == 308
-	assert response.headers["Location"] == f"https://youtube.com"
+	assert response.headers["Location"] == "https://youtube.com"
 
 	response = requests.get(f"{url}/intra/", allow_redirects=False)
 	assert response.status_code == 301
-	assert response.headers["Location"] == f"https://intra.42.fr"
+	assert response.headers["Location"] == "https://intra.42.fr"
 
 	response = requests.get(f"{url}/google/", allow_redirects=False)
 	assert response.status_code == 302
-	assert response.headers["Location"] == f"https://www.google.com"
+	assert response.headers["Location"] == "https://www.google.com"
 
 	response = requests.get(f"{url}/redirect/", allow_redirects=False)
 	assert response.status_code == 307
-	assert response.headers["Location"] == f"/secondary/"
+	assert response.headers["Location"] == "/secondary/"
 
 
