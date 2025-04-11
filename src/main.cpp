@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	}
 	catch (std::exception & e)
 	{
-		std::cout << "Error: " << e.what() << std::endl;
+		Log::log("Error: " + std::string(e.what()), ERROR);
 		return (1);
 	}
 
