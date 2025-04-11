@@ -114,7 +114,7 @@ void    ServerBlock::add_error_page(std::string page)
 void    ServerBlock::set_max_client_body(std::string size)
 {
 	if (_max_client_body != 0 || !Config::has_only_digits(const_cast<char *>(size.c_str()))
-		|| (std::strtod(size.c_str(), NULL) > UINT32_MAX))
+		|| (std::strtod(size.c_str(), NULL) > UINT32_MAX) || (std::strtod(size.c_str(), NULL) <= 0))
 		throw std::runtime_error("max body size already declared or invalid size");
 	// optional: change type or size
 	_max_client_body = std::atol(size.c_str());

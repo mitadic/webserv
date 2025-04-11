@@ -725,6 +725,20 @@ void ServerEngine::process_cgi_timeout(std::vector<pollfd>::iterator& pfds_it, s
 	initiate_error_response(pfds_it, idx, CODE_504);  // this would need more time per NGINX
 }
 
+void ServerEngine::normalize_uri(std::vector<ServerBlock>& server_blocks, int req_idx)
+{
+	// normalize URI with consideration of the location block
+	std::string originalUri = reqs[req_idx].get_request_uri();
+	const Location *matchingLocation1 = Utils::getLocation(reqs[req_idx], Utils::getServerBlock(reqs[req_idx], server_blocks));
+	reqs[req_idx].set_request_uri(originalUri + "/");
+	const Location *matchingLocation2 = Utils::getLocation(reqs[req_idx], Utils::getServerBlock(reqs[req_idx], server_blocks));
+	if (matchingLocation1 && matchingLocation2)
+	{
+		if (matchingLocation1->get_path() == matchingLocation2->get_path())
+			reqs[req_idx].set_request_uri(originalUri);
+	}
+}
+
 /* Called as soon as Request reading has finished */
 void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const int& req_idx)
 {
@@ -737,6 +751,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
 		set_session_id = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().begin()->second + "\r\n";
 	}
+
+	normalize_uri(server_blocks, req_idx);
 
 	std::string response;
 	response = processor.handleMethod(reqs[req_idx], server_blocks);

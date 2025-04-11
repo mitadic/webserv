@@ -144,6 +144,11 @@ void Request::set_response(const std::string &s)
 	_response = s;
 }
 
+void Request::set_request_uri(const std::string &s)
+{
+	_request_uri = s;
+}
+
 /* Append string to the _response */
 void Request::append_to_response(const std::string &s) { _response += s; }
 
