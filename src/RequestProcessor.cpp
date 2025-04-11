@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/10 19:04:18 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/11 16:32:36 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -368,7 +368,7 @@ bool RequestProcessor::detect_cgi(const Request& req, const Location* location, 
 		std::vector<std::string>::const_iterator it;
 		for (it = location->get_cgi_extensions().begin(); it != location->get_cgi_extensions().end(); it++)
 		{
-			if (req.get_request_uri().find(*it))
+			if (req.get_request_uri().find(*it) != std::string::npos)
 			{
 				// optional:  throw exception on unallowed syntax
 				const_cast<Request&>(req).cgi = new CgiHandler(req, *location, method); // -> pass info to the cgi object

@@ -61,6 +61,7 @@ public:
 	// void set_port(const uint16_t&);
 	// void set_host(const in_addr_t&);
 	void append_to_request_str(const std::string& s);
+	void set_request_uri(const std::string& s);
 	void set_response(const std::string& s);
 	void append_to_response(const std::string& s);
 	void append_byte_to_body(const unsigned char& c);

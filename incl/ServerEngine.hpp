@@ -76,6 +76,7 @@ public:
 	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 
 	void	process_request(std::vector<pollfd>::iterator&, const int&);
+	void	normalize_uri(std::vector<ServerBlock>& server_blocks, int req_idx);
 
 	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
 	bool	is_client_and_cgi_timed_out(const pfd_info& pfd_meta);
