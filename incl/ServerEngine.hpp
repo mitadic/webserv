@@ -30,9 +30,9 @@
 
 #define MAX_SERVER_BLOCKS 50
 #define MAX_CONNECTIONS 500
-#define CONNECTION_TIMEOUT 50000
+#define CONNECTION_TIMEOUT 5000
 #define CGI_TIMEOUT 2000
-#define BUF_SZ 256
+#define BUF_SZ 1024
 
 
 class ServerEngine {

@@ -352,6 +352,11 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 	{
 		std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown";
 		Log::log(oss.str(), DEBUG);
+		if (meta_it->second.reqs_idx != UNINITIALIZED)
+		{
+			Log::log("Found a pending request while receiving FIN. Deleting request...", WARNING);
+			reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
+		}
 		forget_client(pfds_it, meta_it);
 	}
 	else if (nbytes == -1)
@@ -466,8 +471,8 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 {
 	size_t sz_to_send = BUF_SZ;
 	int idx = meta_it->second.reqs_idx;
-	// if (reqs[idx].get_cgi_status() == EXECUTE)  // is CGI, but not done yet
-	// 	return;
+
+	// TODO: this check might be obsolete / superfluous
 	if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size()))
 	{
 		forget_client(pfds_it, meta_it);
@@ -503,15 +508,15 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 		if (reqs[idx].should_close_early())
 		{
 			Log::log("Comply with \'should_close_early\', forget client and their req", DEBUG);
-			forget_client(pfds_it, meta_it);
 			reqs.erase(reqs.begin() + idx);
+			forget_client(pfds_it, meta_it);
 		}
 		else
 			liberate_client_for_next_request(pfds_it, meta_it);
 	}
 }
 
-/* Called only after POLLHUP on CGI_PIPE_OUT */
+/* Called only after POLLHUP on CGI_PIPE_OUT, includes parsing */
 void ServerEngine::process_raw_cgi_output(const int idx)
 {
 	CgiResponse cgi_response;
@@ -587,6 +592,11 @@ void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_
 {
 	std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown";
 	Log::log(oss.str(), DEBUG);
+	if (meta_it->second.reqs_idx != UNINITIALIZED)
+	{
+		Log::log("Deleting the dangling request due to the unorderly connection hangup", DEBUG);
+		reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
+	}
 	forget_client(pfds_it, meta_it);
 }
 
@@ -671,17 +681,20 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 		{
 			// such a client should have reqs_idx == -1. But...what if...? .erase() just in case?
 			if (meta_it->second.reqs_idx != UNINITIALIZED)
-				Log::log("Found a stray request while silently closing a client!", ERROR);
-			std::cout << "Client connection " << pfds_it->fd << " has timed out, closing the connection silently." << std::endl;
+			{
+				Log::log("Found a stray request while silently closing a client! Deleting...", ERROR);
+				reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
+			}
+			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, closing the connection silently.";
+			Log::log(oss.str(), DEBUG);
 			forget_client(pfds_it, meta_it);
-			return ;
 		}
 		else
 		{
 			initialize_new_request_if_no_active_one(meta_it);  // need one to store the response 408
 			int idx = meta_it->second.reqs_idx;
 
-			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, responding 408.";
+			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out without sending a request, responding 408.";
 			Log::log(oss.str(), DEBUG);
 			initiate_error_response(pfds_it, idx, CODE_408);
 			reqs[idx].flag_that_we_should_close_early();
@@ -889,6 +902,8 @@ void ServerEngine::run()
 				{
 					// can this only occur for client_fd tho?
 					std::cout << "POLLERR | POLLNVAL" << std::endl;
+					if (meta_it->second.reqs_idx != UNINITIALIZED)
+						reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
 					forget_client(pfds_it, meta_it);
 				}
 				else

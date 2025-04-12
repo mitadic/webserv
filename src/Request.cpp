@@ -205,7 +205,7 @@ void Request::validate_self()
 		_accepted_types.push_back(it->second);
 }
 
-/* (Includes request validation before parsing the body.) TODO: update outdated description */
+/* Parses all headers and validates the Request before the body is recv()-ed */
 void Request::parse()
 {
 	std::istringstream stream(_request_str);
@@ -218,5 +218,4 @@ void Request::parse()
 	parser.parse_request_line(*this, line);
 	parser.parse_headers(*this, stream, line);
 	validate_self();
-	parser.parse_body(*this, stream, line);  // TODO: remove this, outdated
 }

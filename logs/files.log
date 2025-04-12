@@ -39,3 +39,32 @@
 2025-04-12_01:22:38 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:22:38.txt
 2025-04-12_01:24:50 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:24:50.txt
 2025-04-12_01:24:50 | Session ID: 1744413730 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= subject.txt, sanitized= subject.txt, saved= subject_2025-04-12_01:24:50.txt
+2025-04-12_18:22:29 | Session ID: 1744474949 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_18:22:29 | Session ID: 1744474949 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_18:22:29 | Session ID: 1744474949 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_18:23:20 | Session ID: 1744475000 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_18:23:20 | Session ID: 1744475000 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_18:23:20 | Session ID: 1744475000 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_18:23:49 | Session ID: 1744475029 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_18:23:49 | Session ID: 1744475029 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_18:24:26 | Session ID: 1744475066 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_18:24:26 | Session ID: 1744475066 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_18:24:26 | Session ID: 1744475066 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_18:24:57 | Session ID: 1744475097 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_18:24:57 | Session ID: 1744475097 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_18:24:57 | Session ID: 1744475097 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_23:20:45 | Session ID: 1744492845 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_23:20:45 | Session ID: 1744492845 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_23:20:45 | Session ID: 1744492845 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_23:20:56 | Session ID: 1744492856 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_23:20:56 | Session ID: 1744492856 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_23:20:56 | Session ID: 1744492856 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_23:24:56 | Session ID: 1744493096 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_23:24:56 | Session ID: 1744493096 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_23:24:56 | Session ID: 1744493096 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_23:34:25 | Session ID: 1744493665 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_23:34:25 | Session ID: 1744493665 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_23:34:25 | Session ID: 1744493665 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-12_23:58:25 | Session ID: 1744495105 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-12_23:58:25 | Session ID: 1744495105 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-12_23:58:25 | Session ID: 1744495105 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt

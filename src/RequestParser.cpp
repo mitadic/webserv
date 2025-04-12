@@ -554,7 +554,7 @@ void RequestParser::parse_headers(Request &req, std::istringstream &stream, std:
 
 	while (!is_empty_crlf(line) && !stream.eof())
 	{
-		// Log::log("Parsing header line: " + line, DEBUG);
+		Log::log("Parsing header line: " + line, DEBUG);
 		parse_header_line(req, stream, line);
 	}
 
@@ -579,32 +579,4 @@ void RequestParser::parse_header_line(Request &req, std::istringstream &stream, 
 		dispatch_header_parser(req, header_idx, line);
 	if (!stream.eof())
 		check_stream_for_errors(stream);
-}
-
-/* If not EOF, continues reading until req._content_length */
-void RequestParser::parse_body(Request &req, std::istringstream &stream, std::string &line)
-{
-	(void)req;
-	(void)stream;
-	(void)line;
-
-	// if (req._content_length <= 0)
-	// 	return;
-
-	// std::ostringstream oss;
-	// oss << req._content_length;
-	// Log::log("Parsing the body with content-length: " + oss.str(), DEBUG);
-
-	// while (std::getline(stream, line))
-	// {
-	// 	std::cout << "." << std::endl;
-	// 	if (req._request_body.size() > static_cast<size_t>(req._content_length))
-	// 		throw RequestException(CODE_400);
-	// 	req._request_body += line;
-	// 	req._request_body += '\n';
-	// }
-	// Log::log("Parsed Request body: " + req._request_body, WARNING);
-
-	// incorrectly flagging for error when eof() ? temp disabled
-	// check_stream_for_errors(stream);
 }
