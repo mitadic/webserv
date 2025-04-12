@@ -53,7 +53,7 @@ def test_delete_inexistent_file(webserver, base_url):
 def test_basic_405(webserver, secondary_url, base_url):
 	response = requests.get(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
-	response = requests.post(f"{secondary_url}/nomethods/", data={"This one needed data added in order for Content-Length to be generated"})
+	response = requests.post(f"{secondary_url}/nomethods/", data="This one needed data added in order for Content-Length to be generated")
 	assert response.status_code == 405
 	response = requests.delete(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
