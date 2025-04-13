@@ -23,8 +23,13 @@ typedef enum e_log_level
     DEBUG,
     INFO,
     WARNING,
-    ERROR
+    ERROR,
+    LOG_LEVELS_N
 } t_log_level;
+
+extern t_log_level g_debug_level;
+
+extern const char *log_levels[LOG_LEVELS_N];
 
 /**
  * @brief Class with static method overloads for logging debug messages

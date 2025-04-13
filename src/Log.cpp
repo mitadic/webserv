@@ -4,9 +4,16 @@
 # include "ServerBlock.hpp"
 # include "Location.hpp"
 
+const char *log_levels[LOG_LEVELS_N] = {
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR"
+};
+
 void Log::log(const std::string message, t_log_level level)
 {
-    if (!DEBUGMODE)
+    if (!DEBUGMODE || level < g_debug_level)
         return ;
     std::string color = WHITE;
 

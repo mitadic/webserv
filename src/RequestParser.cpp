@@ -554,7 +554,7 @@ void RequestParser::parse_headers(Request &req, std::istringstream &stream, std:
 
 	while (!is_empty_crlf(line) && !stream.eof())
 	{
-		Log::log("Parsing header line: " + line, DEBUG);
+		// Log::log("Parsing header line: " + line, DEBUG);
 		parse_header_line(req, stream, line);
 	}
 
