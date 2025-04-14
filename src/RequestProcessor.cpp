@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/11 16:53:39 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/14 15:58:19 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -501,7 +501,10 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing form submission", INFO);
 		std::map<std::string, std::string> formData = parseForm(req.get_request_body_as_str());
 		for (std::map<std::string, std::string>::const_iterator it = formData.begin(); it != formData.end(); ++it)
-			std::cout << it->first << ": " << it->second << std::endl;
+		{
+			std::ostringstream oss; oss << it->first << ": " << it->second;
+			Log::log(oss.str(), SETUP);
+		}
 		logFormSubmission(req, formData);
 		Log::log("Form submission processed successfully", INFO);
 		std::string body = "Form submitted successfully";

@@ -5,6 +5,7 @@
 # include "Location.hpp"
 
 const char *log_levels[LOG_LEVELS_N] = {
+	"SETUP",
     "DEBUG",
     "INFO",
     "WARNING",
@@ -17,12 +18,14 @@ void Log::log(const std::string message, t_log_level level)
         return ;
     std::string color = WHITE;
 
+	if (level == SETUP)
+		color = BLUE;
     if (level == DEBUG)
-        color = BLUE;
+        color = CYAN;
     if (level == INFO)
         color = GREEN;
     if (level == WARNING)
-        color = MAGENTA;
+        color = PURPLE;
     if (level == ERROR)
         color = RED;
 
@@ -37,6 +40,9 @@ void Log::log(const std::string message, t_log_level level)
 
     switch (level)
     {
+		case SETUP:
+			std::clog << "SETUP: ";
+			break;
         case DEBUG:
             std::clog << "DEBUG: ";
             break;
@@ -58,14 +64,16 @@ void Log::log(const std::string message, t_log_level level)
     std::clog.flush();
 };
 
-void Log::log(std::vector<ServerBlock> & server_blocks)
+void Log::log(std::vector<ServerBlock> & server_blocks, t_log_level level)
 {
+	if (!DEBUGMODE || level < g_debug_level)
+        return ;
     if (server_blocks.empty())
     return ;
-    log("ServerBlocks: ", INFO);
+    log("ServerBlocks: ", level);
     for (std::vector<ServerBlock>::const_iterator it = server_blocks.begin(); it != server_blocks.end(); ++it)
     {
-        std::clog << PURPLE;
+        std::clog << BLUE;
         std::clog << *it;
         std::clog << WHITE;
     }

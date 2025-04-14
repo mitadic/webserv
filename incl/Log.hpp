@@ -11,8 +11,9 @@
 # define WHITE "\033[0m"
 # define PURPLE "\033[35m"
 # define BLUE "\033[34m"
-# define MAGENTA "\033[35m"
+# define CYAN "\033[36m"
 # define RED "\033[31m"
+# define BROWN "\033[33m"
 # define DEBUGMODE 1
 
 class ServerBlock;
@@ -20,6 +21,7 @@ class Location;
 
 typedef enum e_log_level
 {
+	SETUP,
     DEBUG,
     INFO,
     WARNING,
@@ -37,7 +39,7 @@ extern const char *log_levels[LOG_LEVELS_N];
 class Log {
     public:
         static void log(const std::string message, t_log_level level);
-        static void log(std::vector<ServerBlock> & server_blocks);
+        static void log(std::vector<ServerBlock> & server_blocks, t_log_level level);
 
         // ideas for future logging overloads:
         // static void log(const Request & request);
