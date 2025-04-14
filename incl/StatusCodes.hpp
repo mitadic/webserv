@@ -37,6 +37,7 @@ enum e_status_codes {
     CODE_415,
     CODE_416,
     CODE_417,
+    CODE_418,
     CODE_500,
     CODE_501,
     CODE_502,

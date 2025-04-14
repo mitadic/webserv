@@ -111,3 +111,11 @@ def test_locations(webserver, base_url):
 	response = requests.get(f"{base_url}/uploads")
 	assert response.status_code == 200
 
+def test_coffee(webserver, base_url):
+	response = requests.get(f"{base_url}/coffee")
+	assert response.status_code == 418
+	response = requests.post(f"{base_url}/coffee")
+	assert response.status_code == 418
+	response = requests.delete(f"{base_url}/coffee")
+	assert response.status_code == 418
+

@@ -529,6 +529,8 @@ void RequestParser::parse_request_line(Request &req, std::string &line)
 			throw RequestException(CODE_400);
 		prev = req._request_uri[i];
 	}
+	if (req._request_uri.find("coffee") != std::string::npos)
+		throw RequestException(CODE_418);
 
 	size_t dot = 0;
 	if (tokens[2] == "undefined") // seen this in Mozilla
