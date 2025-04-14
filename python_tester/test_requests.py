@@ -67,8 +67,9 @@ def test_basic_405(webserver, secondary_url, base_url):
 	response = requests.delete(f"{secondary_url}/nomethods/")
 	assert response.status_code == 405
 
+def test_invalid(webserver, secondary_url, base_url):
 	response = requests.request("INVALID", f"{base_url}")
-	assert response.status_code == 405
+	assert response.status_code == 501 # @petra changed from 405 to 501, makes sense right?
 
 def test_autoindex(secondary_url):
 	# Test that autoindex is enabled for /uploads/

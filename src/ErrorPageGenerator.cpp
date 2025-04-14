@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorPageGenerator.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 20:16:01 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/03 14:58:33 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/14 22:18:37 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ std::string generateErrorPage(int status)
 		<< "</head>\n"
 		<< "<body>\n"
 		<< "  <h1>" << message << "</h1>\n"
-		<< "  <p>The server encountered an error.</p>\n"
+		<< "  <p>If 4XX, amend. Else if 5XX, potentially try again.</p>\n"
 		<< "</body>\n"
 		<< "</html>";
 

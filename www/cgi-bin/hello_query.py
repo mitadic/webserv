@@ -14,7 +14,8 @@ params = urllib.parse.parse_qs(query_string)
 #print(f"<p><strong>Raw Query String:</strong> {query_string}</p>")
 #print(f"<p><strong>Parsed Query Parameters:</strong> {params}</p>")
 
-name = params.get("name", ["World"])[0]  # Default to "World" if no name is given
+first_name = params.get("first_name", ["barren"])[0]  # Default to "barren" if no name is given
+last_name = params.get("last_name", ["world"])[0]  # Default to "world" if no name is given
 
 # HTML response
 print(
@@ -22,7 +23,7 @@ f"""<!DOCTYPE html>
 <html>
 <head><title>CGI Script</title></head>
 <body>
-    <h1>Hello, {name}!</h1>
+    <h1>Hello, {first_name} {last_name}!</h1>
 </body>
 </html>
 """, end="")

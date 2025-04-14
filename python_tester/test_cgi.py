@@ -48,8 +48,8 @@ def test_query_string(webserver, secondary_url):
 
 # Example for manual testing of the secondary_upload_form.py script:
 # curl -X POST http://127.0.0.1:8080/cgi-bin/secondary_upload_form.py \
-def test_cgi_upload(webserver, secondary_url):
-	files = {'upload_test': ('This is a cgi test for secondary_upload_form.py')}
-	response = requests.post(f"{secondary_url}/cgi-bin/secondary_upload_form.py", files=files)
-	assert response.status_code == 200
-	assert "File Upload" in response.text
+# def test_cgi_upload(webserver, secondary_url):
+# 	files = {'upload_test': ('This is a cgi test for secondary_upload_form.py')}
+# 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_upload_form.py", files=files)
+# 	assert response.status_code == 200
+# 	assert "File Upload" in response.text

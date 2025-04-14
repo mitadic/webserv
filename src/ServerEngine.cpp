@@ -764,7 +764,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	RequestProcessor processor;
 	std::string set_session_id;
 
-	std::ostringstream oss; oss << "Raw Request:\n******\n" << reqs[req_idx].get_request_str() << reqs[req_idx].get_request_body_as_str() << "\n******";
+	std::ostringstream oss; oss << "Raw Request:\n******\n" << reqs[req_idx].get_request_str() << "\r\n" << reqs[req_idx].get_request_body_as_str() << "\n******";
 	Log::log(oss.str(), DEBUG);
 
 	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id

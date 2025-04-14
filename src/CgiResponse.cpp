@@ -20,10 +20,10 @@ void CgiResponse::process_header_location(const std::string& value)
 void CgiResponse::process_header_status(const std::string& value)
 {
 	std::vector<std::string> code_and_reason = split(value, " ");
-	const int code_input = std::strtod(code_and_reason[0].c_str(), NULL);
+	const int cgi_status_code = std::strtod(code_and_reason[0].c_str(), NULL);
 	for (int i = 0; i < STATUS_CODES_N; i++)
 	{
-		if (code_input == status_code_values[i])
+		if (cgi_status_code == status_code_values[i])
 		{
 			if (!_status_code_and_msg.empty())
 			{
@@ -116,11 +116,11 @@ void CgiResponse::validate_and_format_headers(const std::string& cgi_generated_h
 		Log::log("Bad CGI output: specified Location but then had other headers which is explicitly forbidden", WARNING);
 		throw RequestException(CODE_500);
 	}
-	else
-	{
-		_status_code_and_msg = status_messages[CODE_200];
-		_formatted_headers += ("Status: " + _status_code_and_msg + std::string("\r\n"));
-	}
+	// else
+	// {
+	// 	if (_status_code_and_msg.empty())
+	// 		_formatted_headers += ("Status: " + _status_code_and_msg + std::string("\r\n"));
+	// }
 }
 
 void CgiResponse::set_formatted_response(const std::string& body)
