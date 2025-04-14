@@ -20,7 +20,13 @@ BAD_CONFIG_FILES = [
     "invalid_path5.conf",
     "invalid_path6.conf",
     "nested_sb.conf",
-    "port_too_big.conf"
+    "port_too_big.conf",
+	"host_too_big.conf",
+	"no_port.conf",
+	"no_host.conf",
+	"no_client_body.conf",
+	"bad_extension.txt",
+	"empty_location.conf",
 ]
 
 @pytest.mark.parametrize("config_file", BAD_CONFIG_FILES)
