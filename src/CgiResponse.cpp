@@ -116,11 +116,6 @@ void CgiResponse::validate_and_format_headers(const std::string& cgi_generated_h
 		Log::log("Bad CGI output: specified Location but then had other headers which is explicitly forbidden", WARNING);
 		throw RequestException(CODE_500);
 	}
-	// else
-	// {
-	// 	if (_status_code_and_msg.empty())
-	// 		_formatted_headers += ("Status: " + _status_code_and_msg + std::string("\r\n"));
-	// }
 }
 
 void CgiResponse::set_formatted_response(const std::string& body)
