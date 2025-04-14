@@ -34,7 +34,7 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
 	std::stringstream	content;
 
 	load_file(filename, content);
-	while (getline(content, line))
+	while (std::getline(content, line))
 	{
 		line = trim(line);
 		if (line.empty()) // skip empty lines
@@ -58,8 +58,8 @@ void Config::parse_config(const std::string & filename, std::vector<ServerBlock>
  */
 void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 {
-	//Log::log("Before validation:", DEBUG);
-	//Log::log(server_blocks);
+	Log::log("Before validation:", DEBUG);
+	Log::log(server_blocks);
 
 	if (server_blocks.empty())
 		throw std::runtime_error("Empty vector of server blocks");
@@ -70,8 +70,6 @@ void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 		if (server_it->get_port() == 0 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
 			throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
 		// optional: check for same host-port combinations
-		if (server_it->get_locations().empty())
-			continue ;
 		server_it->validate_locations();
 	}
 }
@@ -82,7 +80,7 @@ void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 void	Config::parse_server_block(ServerBlock & block, std::stringstream & content, std::string & line)
 {
 	Log::log("inside parse server block", DEBUG);
-	while (getline(content, line))
+	while (std::getline(content, line))
 	{
 		line = trim(line); // remove abundant whitespaces and comments
 		if (line.empty()) // skip empty lines
@@ -111,7 +109,7 @@ void Config::parse_server_block_directives(std::string & line, ServerBlock & blo
 	std::string			directive, value;
 	std::stringstream	ss(line);
 
-	if (getline(ss, directive, ' ') && getline(ss, value))
+	if (std::getline(ss, directive, ' ') && getline(ss, value))
 	{
 		if (directive == "listen")
 			block.set_port(value);
@@ -143,7 +141,7 @@ void Config::parse_location(std::string & line, Location & block, std::stringstr
 	Log::log("inside parse location", DEBUG);
 	block.set_path(line);
 	int directive_count = 0;
-	while (getline(content, line))
+	while (std::getline(content, line))
 	{
 		line = trim(line); // remove unnecessary whitespaces
 		if (line.empty()) // skip empty lines
@@ -173,7 +171,7 @@ void Config::parse_location_block_directives(std::string & line, Location & bloc
 	std::string			directive, value;
 	std::stringstream  	ss(line);
 
-	if (getline(ss, directive, ' ') && getline(ss, value))
+	if (std::getline(ss, directive, ' ') && std::getline(ss, value))
 	{
 		if (directive == "root")
 			block.set_root(value);

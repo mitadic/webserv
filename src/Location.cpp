@@ -166,7 +166,7 @@ void Location::set_redirect(std::string redirection)
 		throw std::runtime_error("double declaration of 'return'");
 	std::string code, url;
 	std::stringstream ss(redirection);
-	if (!getline(ss, code, ' ') || !getline(ss, url) || (url.find(' ') != std::string::npos)
+	if (!std::getline(ss, code, ' ') || !std::getline(ss, url) || (url.find(' ') != std::string::npos)
 		|| !Config::has_only_digits(const_cast<char *>(code.c_str())))
 		throw std::runtime_error("in location block: return directive has wrong arguments");
 	if (_path == url)

@@ -27,6 +27,8 @@ BAD_CONFIG_FILES = [
 	"no_client_body.conf",
 	"bad_extension.txt",
 	"empty_location.conf",
+	"no_location.conf",
+	"no_root.conf",
 ]
 
 @pytest.mark.parametrize("config_file", BAD_CONFIG_FILES)

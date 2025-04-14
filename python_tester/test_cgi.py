@@ -6,9 +6,9 @@ import requests
 
 WEBSERV_PATH = "./a.out"
 
-# def test_cgi_delete_501(webserver, base_url):
-# 	# Does pass once once DELETE is added to /cgi-bin/ in default.conf
-# 	assert requests.delete(f"{base_url}/cgi-bin/hello.py").status_code == 501
+def test_cgi_delete_501(webserver, base_url):
+	# Does pass once once DELETE is added to /cgi-bin/ in default.conf
+	assert requests.delete("http://127.0.0.18:7070/cgi-bin/hello.py").status_code == 501
 
 # def test_post_contact(webserver, secondary_url):
 # 	# I need Petra's help and explanation

@@ -100,7 +100,7 @@ void    ServerBlock::add_error_page(std::string page)
 {
 	std::string code, path;
 	std::stringstream ss(page);
-	if (!getline(ss, code, ' ') || !getline(ss, path))
+	if (!std::getline(ss, code, ' ') || !std::getline(ss, path))
 		throw std::runtime_error("in server block: error_page directive requires 2 arguments");
 	if (code.size() != 3 || !Config::has_only_digits(const_cast<char *>(code.c_str())))
 		throw std::runtime_error("invalid error code " + code);
@@ -146,14 +146,18 @@ std::ostream &operator<<(std::ostream &os, const ServerBlock &server_block)
  */
 void ServerBlock::validate_locations()
 {
+	bool has_root = false;
+	if (_locations.empty())
+			throw std::runtime_error("serverblock requires locations");
 	std::sort(_locations.begin(), _locations.end(), Location::compare_prefix); // sort by prefix: longest -> shortest
 	std::vector<Location>::iterator location_it, tmp;
 	for (location_it = _locations.begin(); location_it != _locations.end(); ++location_it)
 	{
+		if (location_it->get_path() == "/")
+			has_root = true;
 		if ((location_it + 1) != _locations.end() && Location::same_prefix(*location_it, *(location_it + 1)))  // error for same prefixes
 			throw std::runtime_error("locations with same prefix cannot override each other");
-		// optional: check if location is empty?
 	}
+	if (!has_root)
+		throw std::runtime_error("serverblock requires a root (location directive with prefix '/')");
 };
-
-
