@@ -519,9 +519,12 @@ void RequestParser::parse_request_line(Request &req, std::string &line)
 			throw RequestException(CODE_400);
 		prev = tokens[1][i];
 	}
-	int questionmark_pos = tokens[1].find_first_of('?');
-	req._request_uri = tokens[1].substr(0, questionmark_pos); // ignores query string
+	// int questionmark_pos = tokens[1].find_first_of('?');
+	// req._request_uri = tokens[1].substr(0, questionmark_pos); // ignores query string
 	// cgi detection occurs in process_request() now
+
+	// query strings should not be ignored
+	req._request_uri = tokens[1];
 
 	size_t dot = 0;
 	if (tokens[2] == "undefined") // seen this in Mozilla

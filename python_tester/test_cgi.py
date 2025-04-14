@@ -42,9 +42,9 @@ def test_timeout_secondary(webserver, secondary_url):
 	assert response.status_code == 504
 
 def test_query_string(webserver, secondary_url):
-	response = requests.get(f"{secondary_url}/cgi-bin/hello_query.py?name=Tester")
+	response = requests.get(f"{secondary_url}/cgi-bin/hello_query.py?first_name=Milos&last_name=Tadic")
 	assert response.status_code == 200
-	assert "Hello, Tester!" in response.text
+	assert "Hello, Milos Tadic!" in response.text
 
 # curl -X POST http://127.0.0.1:8080/cgi-bin/secondary_upload_form.py \
 # -F "file=hello.txt"
