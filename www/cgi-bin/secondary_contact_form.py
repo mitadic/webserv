@@ -42,6 +42,7 @@ if name and email and message:
 else:
 	# Output the content type
 	print(f"Content-Type: {content_type}", end="\r\n")
+	print(f"Status: 400 Bad Request", end="\r\n")
 	print("\r\n", end="")  # Body separator
 	# Basic HTML structure for the response
 	print("<html>")
