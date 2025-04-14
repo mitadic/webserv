@@ -6,7 +6,7 @@
 
 
 volatile sig_atomic_t g_signal = 0; // forward declared in SignalHandling.hpp
-t_log_level g_debug_level;			// forward declared in Log.hpp
+t_log_level g_debug_level = INFO;	// forward declared in Log.hpp
 
 void set_up_according_to_argv(int argc, char **argv, std::vector<ServerBlock>& server_blocks)
 {
@@ -48,7 +48,6 @@ void set_up_according_to_argv(int argc, char **argv, std::vector<ServerBlock>& s
 int main(int argc, char **argv)
 {
 	std::vector<ServerBlock> server_blocks;
-	g_debug_level = INFO;
 
 	try
 	{
@@ -59,7 +58,7 @@ int main(int argc, char **argv)
 		else
 			set_up_according_to_argv(argc, argv, server_blocks);
 		Log::log("Server blocks are ready:", INFO);
-		//Log::log(server_blocks);
+		// Log::log(server_blocks);
 	}
 	catch (std::exception & e)
 	{

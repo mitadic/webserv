@@ -20,7 +20,7 @@ else:
     post_params = {}
 
 print(f"Content-Type: text/html", end="\r\n")
-print("\r\n", end="\r\n")  # Body separator
+print("", end="\r\n")  # Body separator
 
 # Debug output
 print(f"<p><strong>Request Method:</strong> {request_method}</p>")

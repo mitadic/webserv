@@ -32,7 +32,7 @@
 #define MAX_CONNECTIONS 500
 #define CONNECTION_TIMEOUT 5000
 #define CGI_TIMEOUT 2000
-#define BUF_SZ 1024
+#define BUF_SZ 512
 
 
 class ServerEngine {
