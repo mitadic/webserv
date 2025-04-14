@@ -100,7 +100,7 @@ void    ServerBlock::add_error_page(std::string page)
 {
 	std::string code, path;
 	std::stringstream ss(page);
-	if (!getline(ss, code, ' ') || !getline(ss, path))
+	if (!std::getline(ss, code, ' ') || !std::getline(ss, path))
 		throw std::runtime_error("in server block: error_page directive requires 2 arguments");
 	if (code.size() != 3 || !Config::has_only_digits(const_cast<char *>(code.c_str())))
 		throw std::runtime_error("invalid error code " + code);

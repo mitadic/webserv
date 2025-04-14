@@ -180,9 +180,9 @@ void Request::set_cookies(const std::string &cookie)
 	std::istringstream stream(cookie);
 	std::string single_cookie_key;
 	std::string single_cookie_value;
-	while (getline(stream, single_cookie_key, '='))
+	while (std::getline(stream, single_cookie_key, '='))
 	{
-		getline(stream, single_cookie_value, ';');
+		std::getline(stream, single_cookie_value, ';');
 		_cookies[single_cookie_key] = single_cookie_value;
 	}
 }
