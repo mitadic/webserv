@@ -89,7 +89,7 @@ void	Config::parse_server_block(ServerBlock & block, std::stringstream & content
 			continue ;
 
 		if (line == "}") // end of server block
-			return ;
+			return;
 		else if (line[line.size() - 1] == ';'
 			|| (line.find("location") != std::string::npos && line[line.size() - 1] == '{')) // remove ';'
 		{
@@ -100,6 +100,7 @@ void	Config::parse_server_block(ServerBlock & block, std::stringstream & content
 			throw std::runtime_error("in server block: missing semicolon: " + line);
 		parse_server_block_directives(line, block, content);
 	}
+	throw std::runtime_error("in server block: missing closing bracket");
 }
 
 /**
