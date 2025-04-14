@@ -8,10 +8,8 @@ CONFIG_BAD_BASE = "python_tester/test_conf/bad/"
 CONFIG_GOOD_BASE = "python_tester/test_conf/good/"
 TIMEOUT = 1
 
-# commented out == webserv launches when it should fail
 BAD_CONFIG_FILES = [
     "error.conf",
-    # "circular_redirect.conf",
 	"same_prefix.conf",
 	"asymmetric_scope_symbols1.conf",
 	"asymmetric_scope_symbols2.conf",
