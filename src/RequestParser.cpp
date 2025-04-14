@@ -506,25 +506,29 @@ void RequestParser::parse_request_line(Request &req, std::string &line)
 	else if (tokens[0] == "DELETE")
 		req._method = DELETE;
 	else
-		throw RequestException(CODE_405);
+		throw RequestException(CODE_501);
 
 	if (tokens[1][0] != '/')
 		throw RequestException(CODE_400);
 	if (tokens[1].size() > MAX_URI_LENGTH)
 		throw RequestException(CODE_414);
-	char prev = '\0';
-	for (size_t i = 0; i < tokens[1].size(); i++)
+	// split uri and query string
+	size_t questionmark_pos = tokens[1].find_first_of('?');
+	if (questionmark_pos == std::string::npos)
+		req._request_uri = tokens[1];
+	else
 	{
-		if (prev == '/' && tokens[1][i] == '/')
-			throw RequestException(CODE_400);
-		prev = tokens[1][i];
+		req._request_uri = tokens[1].substr(0, questionmark_pos);
+		req._query_string = tokens[1].substr(questionmark_pos + 1);  // will produce "" if ? is at final pos
 	}
-	// int questionmark_pos = tokens[1].find_first_of('?');
-	// req._request_uri = tokens[1].substr(0, questionmark_pos); // ignores query string
-	// cgi detection occurs in process_request() now
-
-	// query strings should not be ignored
-	req._request_uri = tokens[1];
+	// check uri for '//' occurrences
+	char prev = '\0';
+	for (size_t i = 0; i < req._request_uri.size(); i++)
+	{
+		if (prev == '/' && req._request_uri[i] == '/')
+			throw RequestException(CODE_400);
+		prev = req._request_uri[i];
+	}
 
 	size_t dot = 0;
 	if (tokens[2] == "undefined") // seen this in Mozilla

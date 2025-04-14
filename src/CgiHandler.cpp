@@ -34,7 +34,8 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	// TODO add checks for valid request uri (maybe already in request parsing?). Response from Milos: maybe some rudimentary ones, but we don't have loc in request parsing
 	size_t pos = uri.find(deduce_extension(req, loc));
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
-	identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
+	// identify_pathinfo_and_querystring(uri.substr(pos + _extension.length()));
+	_querystring = req.get_request_query_string();
 
 	pipe_in[0] = UNINITIALIZED;
 	pipe_in[1] = UNINITIALIZED;
@@ -112,24 +113,25 @@ std::string CgiHandler::deduce_extension(const Request& req, const Location& loc
 	return "";
 }
 
-void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
-{
-	if (s.empty())
-		return;
+/* No longer needed, is split in request parsing */
+// void CgiHandler::identify_pathinfo_and_querystring(const std::string& s)
+// {
+// 	if (s.empty())
+// 		return;
 
-	size_t qm_pos = s.find("?");
-	if (qm_pos != std::string::npos)
-	{
-		_querystring = s.substr(qm_pos + 1);
-		if (qm_pos != 0)
-			_pathinfo = s.substr(0, qm_pos);
-	}
-	else
-		_pathinfo = s.substr(0);
-	// check allowed syntax
-	// check allowed syntax
-	// throw error if larger than 2?
-}
+// 	size_t qm_pos = s.find("?");
+// 	if (qm_pos != std::string::npos)
+// 	{
+// 		_querystring = s.substr(qm_pos + 1);
+// 		if (qm_pos != 0)
+// 			_pathinfo = s.substr(0, qm_pos);
+// 	}
+// 	else
+// 		_pathinfo = s.substr(0);
+// 	// check allowed syntax
+// 	// check allowed syntax
+// 	// throw error if larger than 2?
+// }
 
 void CgiHandler::set_env_variables(const Request& req, const Location& loc, int method)
 {

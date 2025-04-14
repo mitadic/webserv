@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/04/06 16:38:26 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/14 20:26:50 by mitadic          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ class CgiHandler {
 		int pipe_out[2];
 
 		std::string deduce_extension(const Request& req, const Location& loc) const;
-		void identify_pathinfo_and_querystring(const std::string& s);
+		// void identify_pathinfo_and_querystring(const std::string& s);  // no longer needed, splitting in parsing
 		void setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx);
 		void setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx);
 

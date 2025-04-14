@@ -32,6 +32,7 @@ public:
 	const std::vector<unsigned char>& get_request_body_raw() const;
 	const std::string& get_response() const;
 	const std::string& get_request_uri() const;
+	const std::string& get_request_query_string() const;
 	const std::string& get_cgi_job_id() const;
 	const std::string& get_cgi_output() const;
 	const int& get_response_status() const;
@@ -103,6 +104,7 @@ private:
 	int			_major_http_v;
 	int			_minor_http_v;
 	std::string _request_uri;
+	std::string _query_string;
 
 	std::map<std::string, std::string> _cookies;
 
