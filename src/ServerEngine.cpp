@@ -319,6 +319,8 @@ void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_inf
 {
 	if (meta_it->second.reqs_idx == UNINITIALIZED)
 	{
+		std::ostringstream oss; oss << "Initializing new request for client_fd [" << meta_it->first << "] since no active one";
+		Log::log(oss.str(), DEBUG);
 		reqs.push_back(Request(meta_it->second.host, meta_it->second.port, meta_it->first));
 		meta_it->second.reqs_idx = reqs.size() - 1;
 	}
@@ -354,7 +356,9 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 		Log::log(oss.str(), DEBUG);
 		if (meta_it->second.reqs_idx != UNINITIALIZED)
 		{
-			Log::log("Found a pending request while receiving FIN. Deleting request...", WARNING);
+			std::ostringstream oss; oss << "Found a pending request (potentially empty-initialized by server) \n"
+				<< "on client_fd [" << pfds_it->fd << "] with reqs index [" << meta_it->second.reqs_idx <<"] while receiving FIN. Deleting request...";
+			Log::log(oss.str(), DEBUG);
 			reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
 		}
 		forget_client(pfds_it, meta_it);
@@ -559,6 +563,8 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 	try
 	{
 		check_in_on_subprocess(pid);
+		std::ostringstream oss; oss << "Raw CGI output:\n******\n" << reqs[idx].get_cgi_output() << "\n******";
+		Log::log(oss.str(), DEBUG);
 		process_raw_cgi_output(idx);
 	}
 	catch (RequestException& e)
@@ -567,7 +573,7 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 		reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
 	}
 
-	std::ostringstream oss; oss << "Response to the CGI request:\n" << reqs[idx].get_response();
+	std::ostringstream oss; oss << "Response to the CGI request:\n******\n" << reqs[idx].get_response() << "\n******";
 	Log::log(oss.str(), DEBUG);
 
 	// locate client pfd to set to POLLOUT
@@ -757,6 +763,9 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 {
 	RequestProcessor processor;
 	std::string set_session_id;
+
+	std::ostringstream oss; oss << "Raw Request:\n******\n" << reqs[req_idx].get_request_str() << reqs[req_idx].get_request_body_as_str() << "\n******";
+	Log::log(oss.str(), DEBUG);
 
 	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id
 	{

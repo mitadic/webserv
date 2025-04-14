@@ -17,14 +17,13 @@ WEBSERV_PATH = "./a.out"
 # 	assert "Form submitted" in response.text
 
 def test_receiving_non_legal_cookies_from_script(webserver, base_url):
-	# @petra: is 302 basically true for all cgi?
 	response = requests.get(f"{base_url}/cgi-bin/gibberish_headers.py")
-	assert response.status_code == 302
+	assert response.status_code == 200
 	assert "fruit-type" in response.headers
 
 def test_get_correct_script_body_length(webserver, base_url):
 	response = requests.get(f"{base_url}/cgi-bin/post_test.py")
-	assert response.status_code == 302
+	assert response.status_code == 200
 	content_length = int(response.headers.get("Content-Length", 0))
 	assert content_length == len(response.text)
 

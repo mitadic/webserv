@@ -118,8 +118,8 @@ void CgiResponse::validate_and_format_headers(const std::string& cgi_generated_h
 	}
 	else
 	{
-		_status_code_and_msg = status_messages[CODE_302];
-		_formatted_headers += _status_code_and_msg + std::string("\r\n");
+		_status_code_and_msg = status_messages[CODE_200];
+		_formatted_headers += ("Status: " + _status_code_and_msg + std::string("\r\n"));
 	}
 }
 

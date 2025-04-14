@@ -71,3 +71,9 @@
 2025-04-13_20:46:24 | Session ID: 1744569984 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
 2025-04-13_20:46:24 | Session ID: 1744569984 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
 2025-04-13_20:46:24 | Session ID: 1744569984 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-14_13:06:37 | Session ID: 1744628797 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-14_13:06:37 | Session ID: 1744628797 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-14_13:06:37 | Session ID: 1744628797 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-14_13:09:04 | Session ID: 1744628944 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-14_13:09:04 | Session ID: 1744628944 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-14_13:09:04 | Session ID: 1744628944 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
