@@ -8,15 +8,24 @@ import requests
 def test_basic_get(webserver, base_url):
 	assert requests.get(f"{base_url}").status_code == 200
 
+# Parameterized test for POST requests
+@pytest.mark.parametrize("file_name", [
+	("post_test.txt"),
+	("boot.jpg"),
+	("meow.png"),
+	("logo.webp"),
+	("ballad.mp3"),
+])
+
 # POST allowed in location
-# def test_basic_post(webserver, base_url):
-# 	upload_path = "/uploads/"
-# 	with open("./post_test.txt", "w") as f:
-# 		f.write("This is a test file for POST request.")
-# 	response = requests.post(f"{base_url}{upload_path}",
-# 		files={"file": ("post_test.txt", open("./post_test.txt", "rb"))},
-# 		headers={"Content-Type": "multipart/form-data", "Content-Length": "38"})
-# 	assert response.status_code == 201  # Created (commonly returned if POST is successful)
+# uploading a file
+def test_post_file(webserver, base_url, file_name):
+	upload_path = "/uploads/"
+	file_path = f"./test_files/{file_name}"
+	with open(file_path, "rb") as f:
+		response = requests.post(f"{base_url}{upload_path}", files={"file": (file_name, f)})
+	assert response.status_code == 201, f"Unexpected status code for {file_name}: {response.status_code}"
+
 
 # POST missing Content-Length header
 # CURL equivalent: difficult to emulate
