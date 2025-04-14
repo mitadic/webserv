@@ -70,8 +70,6 @@ void	Config::validate_blocks(std::vector<ServerBlock> & server_blocks)
 		if (server_it->get_port() == 0 || server_it->get_host() == ft_inet("255.255.255.255") || server_it->get_max_client_body() == 0)
 			throw std::runtime_error("missing directive 'listen', 'host' or 'client_max_body_size' inside server block");
 		// optional: check for same host-port combinations
-		if (server_it->get_locations().empty())
-			continue ;
 		server_it->validate_locations();
 	}
 }
