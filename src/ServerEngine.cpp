@@ -407,15 +407,6 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<
 
 		// do trailing body this round of POLLIN
 		read_body(pfds_it, meta_it, idx, &buf[crlf_begin + 4], nbytes - (crlf_begin + 4));
-		// if (reqs[idx].is_flagged_as_chunked())
-		// {
-		// 	read_body(pfds_it, meta_it, idx, &buf[crlf_begin + 4], nbytes - (crlf_begin + 4));
-		// }
-		// else
-		// {
-		// 	for (ssize_t i = crlf_begin + 4; i < nbytes + the_trail_from_prev; i++)	// 3: tailsize; 4: rnrn size
-		// 		reqs[idx].append_byte_to_body(buf[i - the_trail_from_prev]);
-		// }
 	}
 	return 0;
 }
