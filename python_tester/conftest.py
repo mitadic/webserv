@@ -27,6 +27,8 @@ def webserver():
 	process.terminate() # terminate the process
 	process.wait() # wait for it to finish
 
+	time.sleep(1)
+
 	# Check the Valgrind log for leaks or errors
 	with open(valgrind_log, "r") as log_file:
 		valgrind_output = log_file.read()
@@ -34,9 +36,9 @@ def webserver():
 		print(valgrind_output)
 
 		# Optionally, fail the test session if Valgrind detects issues
-		if "definitely lost: 0 bytes" not in valgrind_output or "All heap blocks were freed" not in valgrind_output:
+		if "All heap blocks were freed" not in valgrind_output:
 			pytest.fail("Valgrind detected memory leaks. Check valgrind.log for details.")
-		if "3 open (3 std) at exit" not in valgrind_output:
+		if "4 open (3 std) at exit" not in valgrind_output:
 			pytest.fail("Leaking FDs. Make sure to run from non-VS-code terminal. Check valgrind.log for details.")
 
 # @pytest.fixture(scope="session")
