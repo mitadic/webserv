@@ -29,7 +29,6 @@ OBJ_DIR	=	./obj/
 I_DIR	=	./incl/
 NAME	=	a.out
 
-
 all: $(NAME)
 
 $(NAME): $(addprefix $(OBJ_DIR),$(OBJ))
@@ -44,6 +43,10 @@ clean:
 
 fclean: clean
 	rm -f $(NAME)
+	rm -rf www/three-socketeers/uploads/*
+	rm -rf www/cgi-bin/guest-book/*
+	rm -rf logs/*
+	rm -rf www/secondary/uploads/*
 
 re:	fclean all
 
