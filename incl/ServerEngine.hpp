@@ -72,7 +72,7 @@ public:
 	void	throw_away_cgi_proc_and_pipes(const int&);
 	void	process_cgi_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	locate_and_disable_cgi_pipe_pfd(const int&);
-	int		read_headers(std::vector<pollfd>::iterator&, const int&, const char*, const ssize_t&);
+	int		read_headers(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
 
 	void	process_request(std::vector<pollfd>::iterator&, const int&);

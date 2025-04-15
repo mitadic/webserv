@@ -129,3 +129,146 @@
 2025-04-14_23:29:11 | Session ID: 1744666151 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
 2025-04-14_23:29:11 | Session ID: 1744666151 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
 2025-04-14_23:29:11 | Session ID: 1744666151 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:29:56.txt
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:29:56.txt
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:29:56.jpg
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:29:56.jpg
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:29:56.png
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:29:56.png
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:29:56.webp
+2025-04-15_10:29:56 | Session ID: 1744705796 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:29:56.webp
+2025-04-15_10:29:57 | Session ID: 1744705797 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:29:57.mp3
+2025-04-15_10:29:57 | Session ID: 1744705797 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:29:57.mp3
+2025-04-15_10:29:57 | Session ID: 1744705797 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_10:29:57 | Session ID: 1744705797 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_10:29:57 | Session ID: 1744705797 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:30:24.txt
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:30:24.txt
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:30:24.jpg
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:30:24.jpg
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:30:24.png
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:30:24.png
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:30:24.webp
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:30:24.webp
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:30:24.mp3
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:30:24.mp3
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_10:30:24 | Session ID: 1744705824 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:30:44.txt
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:30:44.txt
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:30:44.jpg
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:30:44.jpg
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:30:44.png
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:30:44.png
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:30:44.webp
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:30:44.webp
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:30:44.mp3
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:30:44.mp3
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_10:30:44 | Session ID: 1744705844 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:32:28.txt
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_10:32:28.txt
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:32:28.jpg
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_10:32:28.jpg
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:32:28.png
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_10:32:28.png
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:32:28.webp
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_10:32:28.webp
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:32:28.mp3
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_10:32:28.mp3
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_10:32:28 | Session ID: 1744705948 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_12:46:13.txt
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_12:46:13.txt
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_12:46:13.jpg
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_12:46:13.jpg
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_12:46:13.png
+2025-04-15_12:46:13 | Session ID: 1744713973 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_12:46:13.png
+2025-04-15_12:46:14 | Session ID: 1744713974 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_12:46:14.webp
+2025-04-15_12:46:14 | Session ID: 1744713974 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_12:46:14.webp
+2025-04-15_12:46:19 | Session ID: 1744713977 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_12:46:19.mp3
+2025-04-15_12:46:19 | Session ID: 1744713977 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_12:46:19.mp3
+2025-04-15_12:46:19 | Session ID: 1744713979 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_12:46:19 | Session ID: 1744713979 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_12:46:19 | Session ID: 1744713979 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_12:55:00.txt
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_12:55:00.txt
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_12:55:00.jpg
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_12:55:00.jpg
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_12:55:00.png
+2025-04-15_12:55:00 | Session ID: 1744714500 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_12:55:00.png
+2025-04-15_12:55:01 | Session ID: 1744714501 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_12:55:01.webp
+2025-04-15_12:55:01 | Session ID: 1744714501 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_12:55:01.webp
+2025-04-15_12:55:06 | Session ID: 1744714504 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_12:55:06.mp3
+2025-04-15_12:55:06 | Session ID: 1744714504 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_12:55:06.mp3
+2025-04-15_12:55:06 | Session ID: 1744714506 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_12:55:06 | Session ID: 1744714506 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_12:55:06 | Session ID: 1744714506 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:27:41.txt
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:27:41.txt
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:27:41.jpg
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:27:41.jpg
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:27:41.png
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:27:41.png
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:27:41.webp
+2025-04-15_23:27:41 | Session ID: 1744752461 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:27:41.webp
+2025-04-15_23:27:47 | Session ID: 1744752465 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:27:47.mp3
+2025-04-15_23:27:47 | Session ID: 1744752465 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:27:47.mp3
+2025-04-15_23:27:47 | Session ID: 1744752467 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_23:27:47 | Session ID: 1744752467 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_23:27:47 | Session ID: 1744752467 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_23:34:28 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:34:28.txt
+2025-04-15_23:34:28 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:34:28.txt
+2025-04-15_23:34:28 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:34:28.jpg
+2025-04-15_23:34:28 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:34:28.jpg
+2025-04-15_23:34:29 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:34:29.png
+2025-04-15_23:34:29 | Session ID: 1744752868 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:34:29.png
+2025-04-15_23:34:29 | Session ID: 1744752869 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:34:29.webp
+2025-04-15_23:34:29 | Session ID: 1744752869 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:34:29.webp
+2025-04-15_23:34:34 | Session ID: 1744752872 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:34:34.mp3
+2025-04-15_23:34:34 | Session ID: 1744752872 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:34:34.mp3
+2025-04-15_23:34:34 | Session ID: 1744752874 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_23:34:34 | Session ID: 1744752874 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_23:34:34 | Session ID: 1744752874 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:34:58.txt
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:34:58.txt
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:34:58.jpg
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:34:58.jpg
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:34:58.png
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:34:58.png
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:34:58.webp
+2025-04-15_23:34:58 | Session ID: 1744752898 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:34:58.webp
+2025-04-15_23:35:04 | Session ID: 1744752902 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:35:04.mp3
+2025-04-15_23:35:04 | Session ID: 1744752902 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:35:04.mp3
+2025-04-15_23:35:04 | Session ID: 1744752904 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_23:35:04 | Session ID: 1744752904 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_23:35:04 | Session ID: 1744752904 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:37:11.txt
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-15_23:37:11.txt
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:37:11.jpg
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-15_23:37:11.jpg
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:37:11.png
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-15_23:37:11.png
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:37:11.webp
+2025-04-15_23:37:11 | Session ID: 1744753031 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-15_23:37:11.webp
+2025-04-15_23:37:17 | Session ID: 1744753034 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:37:17.mp3
+2025-04-15_23:37:17 | Session ID: 1744753034 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-15_23:37:17.mp3
+2025-04-15_23:37:17 | Session ID: 1744753037 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-15_23:37:17 | Session ID: 1744753037 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-15_23:37:17 | Session ID: 1744753037 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-16_00:14:31.txt
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= post_test.txt, sanitized= post_test.txt, saved= post_test_2025-04-16_00:14:31.txt
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-16_00:14:31.jpg
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= boot.jpg, sanitized= boot.jpg, saved= boot_2025-04-16_00:14:31.jpg
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-16_00:14:31.png
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= meow.png, sanitized= meow.png, saved= meow_2025-04-16_00:14:31.png
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-16_00:14:31.webp
+2025-04-16_00:14:31 | Session ID: 1744755271 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= logo.webp, sanitized= logo.webp, saved= logo_2025-04-16_00:14:31.webp
+2025-04-16_00:14:37 | Session ID: 1744755275 | Name: unknown    | UPLOAD | Status: REQUESTED  | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-16_00:14:37.mp3
+2025-04-16_00:14:37 | Session ID: 1744755275 | Name: unknown    | UPLOAD | Status: SUCCESS    | File: original= ballad.mp3, sanitized= ballad.mp3, saved= ballad_2025-04-16_00:14:37.mp3
+2025-04-16_00:14:37 | Session ID: 1744755277 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/hello.txt
+2025-04-16_00:14:37 | Session ID: 1744755277 | Name: unknown    | DELETE | Status: SUCCESS    | File: /uploads/hello.txt
+2025-04-16_00:14:37 | Session ID: 1744755277 | Name: unknown    | DELETE | Status: REQUESTED  | File: /uploads/inexistent.txt

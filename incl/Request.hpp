@@ -51,9 +51,18 @@ public:
 	const in_addr_t& get_host() const;
 	const std::vector<std::string>& get_accepted_types() const;
 
+	const std::string get_chunk_size_hex_str() const;
+	const int& get_chunk_size() const;
+	const int& get_nread_of_chunk_size() const;
+	void set_chunk_size_hex_str(const std::string);
+	void set_chunk_size(const int&);
+	void set_nread_of_chunk_size(const int&);
+
 	bool is_flagged_as_chunked();
+	bool done_reading_chunked_body();
 	bool done_reading_headers();
 	void switch_to_reading_body();
+	void flag_that_done_reading_chunked_body();
 
 	bool should_await_reconnection();
 	bool should_keep_alive();
@@ -91,6 +100,7 @@ private:
 	int			_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	bool		_done_reading_headers;
+	bool		_done_reading_chunked_body;
 	bool		_should_close_early;
 	int			_content_type_idx;  // content_types[n] || macros: TEXT_PLAIN, IMAGE_JPG
 	std::vector<std::string> _content_type_params;
@@ -112,4 +122,7 @@ private:
 	std::string _cgi_job_id;
 	std::string _cgi_output;
 
+	std::string	_chunk_size_hex_str;
+	int			_chunk_size;
+	int			_nread_in_chunk_size;
 };

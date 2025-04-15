@@ -34,7 +34,7 @@ def webserver():
 		print(valgrind_output)
 
 		# Optionally, fail the test session if Valgrind detects issues
-		if "definitely lost: 0 bytes" not in valgrind_output or "All heap blocks were freed" not in valgrind_output:
+		if "definitely lost: 0 bytes" not in valgrind_output and "All heap blocks were freed" not in valgrind_output:
 			pytest.fail("Valgrind detected memory leaks. Check valgrind.log for details.")
 		if "3 open (3 std) at exit" not in valgrind_output:
 			pytest.fail("Leaking FDs. Make sure to run from non-VS-code terminal. Check valgrind.log for details.")
