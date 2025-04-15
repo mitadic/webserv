@@ -12,14 +12,12 @@ def test_cgi_delete_501(webserver, base_url):
 
 def test_post_contact(webserver, secondary_url):
 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_contact_form.py/guest-book", data={"name": "Sophie", "message": "Hello", "email": "a@b.com"}, allow_redirects=False)
-	assert response.status_code == 200 # @Milos: changed this to 200 instead of 201, maybe it should be 201
+	assert response.status_code == 200
 	assert response.headers["Location"] == "/success.html"
 
-# @Milos: added this test, maybe the response should return 400
-# if the client does not fill out all fields?
 def test_post_contact_incomplete(webserver, secondary_url):
 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_contact_form.py/guest-book", data={"name": "Sophie", "message": "Hello"})
-	assert response.status_code == 400 # @Milos I guess it would be nice to read the Status header from the cgi output
+	assert response.status_code == 400
 	assert "Error: Missing information" in response.text
 
 def test_receiving_non_legal_cookies_from_script(webserver, base_url):
@@ -46,10 +44,33 @@ def test_query_string(webserver, secondary_url):
 	assert response.status_code == 200
 	assert "Hello, Milos Tadic!" in response.text
 
-# Example for manual testing of the secondary_upload_form.py script:
-# curl -X POST http://127.0.0.1:8080/cgi-bin/secondary_upload_form.py \
-# def test_cgi_upload(webserver, secondary_url):
-# 	files = {'upload_test': ('This is a cgi test for secondary_upload_form.py')}
-# 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_upload_form.py", files=files)
-# 	assert response.status_code == 200
-# 	assert "File Upload" in response.text
+def test_php(webserver, secondary_url):
+	response = requests.get(f"{secondary_url}/cgi-bin/calendar.php")
+	assert response.status_code == 200
+	assert "Calendar for" in response.text
+	response = requests.get(f"{secondary_url}/cgi-bin/simple_html.php")
+	assert response.status_code == 200
+	assert "PHP CGI Script Output" in response.text
+
+def test_hello_world(webserver, secondary_url):
+	response = requests.get(f"{secondary_url}/cgi-bin/hello_world.py")
+	assert response.status_code == 200
+	assert "Hello, world!" in response.text
+
+def test_cgi_upload(webserver, secondary_url):
+	file_path = f"./test_files/boot.jpg"
+	with open(file_path, "rb") as f:
+		response = requests.post(f"{secondary_url}/cgi-bin/secondary_upload_form.py", files={"file": ("boot.jpg", f)})
+	assert response.status_code == 200, f"Unexpected status code for boot.jpg: {response.status_code}"
+	assert "File Upload" in response.text, "Response body does not contain expected content."
+
+def test_bad_status(webserver, secondary_url):
+	response = requests.get(f"{secondary_url}/cgi-bin/bad_status.py")
+	assert response.status_code == 608 # @Milos
+	assert "hello" in response.text
+
+def test_redirect(webserver, secondary_url):
+	response = requests.get(f"{secondary_url}/cgi-bin/redirect.py", allow_redirects=False)
+	assert response.status_code == 302 # @Milos
+	assert "Location" in response.headers
+	assert response.headers["Location"] == "./hello_world.py"
