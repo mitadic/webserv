@@ -4,8 +4,6 @@ import pytest
 import subprocess
 import requests
 
-
-
 # GET allowed in location
 def test_basic_get(webserver, base_url):
 	assert requests.get(f"{base_url}").status_code == 200
@@ -125,3 +123,22 @@ def test_coffee(webserver, base_url):
 	response = requests.delete(f"{base_url}/coffee")
 	assert response.status_code == 418
 
+# imitating this test:  curl -X POST -H "Content-Type: plain/text" --data "BODY IS HERE write something shorter
+# or longer than body limit"
+def test_small_body(webserver, base_url):
+	# Define the URL and payload
+	url = f"http://127.0.0.20:5050/"
+	long = "BODY IS HERE write something shorter or longer than body limit. This is longer!!!"
+	short = "Shorter!"
+
+	# Send the POST request
+	response_long = requests.post(url, data=long)
+	response_short = requests.post(url, data=short)
+
+	# Assert the response status code
+	assert response_long.status_code == 413, f"Unexpected status code: {response_long.status_code}"
+	assert response_short.status_code == 200, f"Unexpected status code: {response_short.status_code}"
+
+	# Optionally, assert the response body or headers
+	assert "BODY IS HERE write something shorter or longer than body limit. This is longer!!!" in response_long.text, "Response body does not contain expected content."
+	assert "Shorter!" in response_short.text, "Response body does not contain expected content."
