@@ -4,6 +4,8 @@ import pytest
 import subprocess
 import requests
 
+
+
 # GET allowed in location
 def test_basic_get(webserver, base_url):
 	assert requests.get(f"{base_url}").status_code == 200
