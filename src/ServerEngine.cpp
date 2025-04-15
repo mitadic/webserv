@@ -832,7 +832,8 @@ void	ServerEngine::remove_failed_blocks(std::vector<ServerBlock> &server_blocks,
 		if (!failed_indexes.empty() && failed_indexes.back() == i)
 		{
 			server_blocks.erase((it.base() - 1));
-			std::clog << "Erasing server block at index " << i << std::endl;
+			std::ostringstream oss; oss << "Erasing server block at index " << i << std::endl;
+			Log::log(oss.str(), DEBUG);
 			failed_indexes.pop_back();
 		}
 		i--;
