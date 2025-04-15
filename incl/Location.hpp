@@ -10,6 +10,8 @@
 # include <stdexcept>
 # include <vector>
 
+# define MAX_REDIRECTS 10
+
 /**
  * @brief Enum for location prefixes and location roots
  */
@@ -65,10 +67,13 @@ class Location
 		void set_redirect(std::string redirection);
 
 		// methods
-		
+
 		static void check_valid_path(std::string &path, t_path type);
 		static bool compare_prefix(const Location &a, const Location &b);
 		static bool same_prefix(const Location &a, const Location &b);
+
+		// attributes
+		int redirects;
 
 	private:
 		std::string _path;

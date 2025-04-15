@@ -101,6 +101,10 @@ def test_redirect(webserver):
 	assert response.status_code == 307
 	assert response.headers["Location"] == "/secondary/"
 
+def test_redirect_loops(webserver, base_url):
+	response = requests.get("http://127.0.0.20:5050/redirect/")
+	assert response.status_code == 508
+
 def test_path(webserver, base_url):
 	response = requests.get(f"{base_url}/../../../uploads/")
 	assert response.status_code == 200 # or 403

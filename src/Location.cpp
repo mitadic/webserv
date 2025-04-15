@@ -5,6 +5,7 @@
 #include "Log.hpp"
 
 Location::Location() :
+	redirects(0),
 	_upload_allowed(false),
 	_get(false),
 	_post(false),

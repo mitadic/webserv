@@ -44,6 +44,7 @@ enum e_status_codes {
     CODE_503,
     CODE_504,
     CODE_505,
+	CODE_508,
     STATUS_CODES_N
 };
 

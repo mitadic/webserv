@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/14 15:58:19 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/15 12:05:53 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,7 +297,9 @@ std::string RequestProcessor::handleMethod(const Request &req, const std::vector
 
 	if (!matchingLocation->get_redirect().second.empty())
 	{
-		// the browser or Postman handle redirection loops, no need to check manually
+		const_cast<Location *>(matchingLocation)->redirects++;
+		if (matchingLocation->redirects > MAX_REDIRECTS)
+			throw RequestException(CODE_508); // Loop Detected
 		Log::log("Redirect directive found", DEBUG);
 		int response_code = matchingLocation->get_redirect().first;
 		if ((response_code == 301 || response_code == 302) && req.get_method() == DELETE)

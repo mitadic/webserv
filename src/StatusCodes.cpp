@@ -44,7 +44,8 @@ const char *status_messages[STATUS_CODES_N] =
     "502 Bad Gateway",
     "503 Service Unavailable",
     "504 Gateway Timeout",
-    "505 HTTP Version Not Supported"
+    "505 HTTP Version Not Supported",
+	"508 Loop Detected"
 };
 
 const int status_code_values[STATUS_CODES_N] =
@@ -53,5 +54,5 @@ const int status_code_values[STATUS_CODES_N] =
     300, 301, 302, 303, 304, 305, 306, 307, 308,
     400, 401, 402, 403, 404, 405, 406, 407, 408,
     409, 410, 411, 412, 413, 414, 415, 416, 417,
-    418, 500, 501, 502, 503, 504, 505
+    418, 500, 501, 502, 503, 504, 505, 508
 };
