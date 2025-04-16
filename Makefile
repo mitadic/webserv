@@ -51,10 +51,14 @@ $(OBJ_DIR)%.o: $(SRC_DIR)%.cpp | $(OBJ_DIR)
 $(BUILD_DIR)/CMakeCache.txt:
 	@cmake -S . -B $(BUILD_DIR)
 
+test: all $(PYTHON_TESTER)
+	@source ./venv/bin/activate && \
+	pytest -v python_tester
+
 test_build: $(BUILD_DIR)/CMakeCache.txt
 	@cmake --build $(BUILD_DIR) --target $(TEST_TARGETS)
 
-test: test_build
+google_test: test_build
 	@echo "\n\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
 	@for test in $(TEST_TARGETS); do \
@@ -75,4 +79,4 @@ fclean: clean
 
 re:	fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re test google_test test_build
