@@ -843,6 +843,7 @@ void	ServerEngine::remove_failed_blocks(std::vector<ServerBlock> &server_blocks,
 void ServerEngine::run()
 {
 	std::signal(SIGINT, signal_handler); // handles Ctrl+C
+	std::signal(SIGTERM, signal_handler); // handles kill -15
 	std::signal(SIGPIPE, SIG_IGN);  // ignore SIGPIPE so that we can handle errno == EPIPE ourselves
 	std::vector<int> failed_indexes;
 
