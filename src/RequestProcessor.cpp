@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/30 19:03:04 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/16 13:56:03 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ std::string createContentString(const std::string &file, const std::string &mime
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
-	response << "HTTP/1.1 200 OK\r\n"
+	response << "HTTP/1.1 200 Created\r\n"
 			 << "Content-Type: " << mimeType << "\r\n"
 			 << "Content-Length: " << body.size() << "\r\n"
 			 << "\r\n"
@@ -520,7 +520,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		logFormSubmission(req, formData);
 		Log::log("Form submission processed successfully", INFO);
 		std::string body = "Form submitted successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 				 << "Content-Type: text/plain" << "\r\n"
 				 << "Content-Length: " << body.size() << "\r\n"
 				 << "\r\n"
@@ -534,7 +534,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
 		std::string body = "file uploaded successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 				 << "Content-Type: text/plain" << "\r\n"
 				 << "Content-Length: " << body.size() << "\r\n"
 				 << "\r\n"
@@ -547,7 +547,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		std::string textBody = req.get_request_body_as_str();
 		Log::log("Received text: " + textBody, DEBUG);
 		std::string body = "Text processed successfully";
-		response << "HTTP/1.1 200 OK\r\n"
+		response << "HTTP/1.1 200 Created\r\n"
 					<< "Content-Type: text/plain\r\n"
 					<< "Content-Length: " << body.size() << "\r\n"
 					<< "\r\n"
@@ -584,7 +584,7 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 	if (!Utils::uriIsSafe(req.get_request_uri()))
 		throw RequestException(CODE_403);
 
-	std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+	std::string filePath = "." + location->get_root() + req.get_request_uri();
 	bool success = false;
 	logDelete(req, req.get_request_uri(), success);
 
