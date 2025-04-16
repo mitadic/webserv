@@ -67,7 +67,7 @@ def test_cgi_upload(webserver, secondary_url):
 def test_bad_status(webserver, secondary_url):
 	response = requests.get(f"{secondary_url}/cgi-bin/bad_status.py")
 	assert response.status_code == 500
-	assert "hello" in response.text
+	assert "hello" not in response.text
 
 def test_redirect(webserver, secondary_url):
 	response = requests.get(f"{secondary_url}/cgi-bin/redirect.py", allow_redirects=False)
