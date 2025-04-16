@@ -2,7 +2,6 @@
 
 # Server block uploads
 www/secondary/uploads
-www/three-socketeers/uploads
 
 #.venv
 .venv
