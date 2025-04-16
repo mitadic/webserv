@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 10:41:33 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/16 14:12:08 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ void logPageVisit(const Request &req)
 {
 	if (req.get_request_uri().find(".html") == std::string::npos)
 		return;
-	std::ofstream logFile("logs/page_visits.log", std::ios_base::app);
+	std::ofstream logFile("www/logs/page_visits.log", std::ios_base::app);
 	std::map<std::string, std::string> cookies = req.get_cookies();
 	std::string name;
 	if (cookies.find("username") != cookies.end())
@@ -94,7 +94,7 @@ void logPageVisit(const Request &req)
 
 void logFormSubmission(const Request &req, std::map<std::string, std::string> formData)
 {
-	std::ofstream logFile("logs/form_submissions.log", std::ios_base::app);
+	std::ofstream logFile("www/logs/form_submissions.log", std::ios_base::app);
 	std::map<std::string, std::string> cookies = req.get_cookies();
 	std::string name;
 	if (cookies.find("username") != cookies.end())
@@ -138,7 +138,7 @@ std::map<std::string, std::string> parseForm(const std::string &form)
 
 void logUpload(const Request &req, std::string original_filename, std::string filename, std::string new_filename, bool success)
 {
-	std::ofstream logFile("logs/files.log", std::ios_base::app);
+	std::ofstream logFile("www/logs/files.log", std::ios_base::app);
 	std::map<std::string, std::string> cookies = req.get_cookies();
 	std::string name;
 	if (cookies.find("username") != cookies.end())
@@ -258,7 +258,7 @@ void parseMultipartFormData(const Request &req, const Location *location)
 
 void logDelete(const Request &req, const std::string &filename, bool success)
 {
-	std::ofstream logFile("logs/files.log", std::ios_base::app);
+	std::ofstream logFile("www/logs/files.log", std::ios_base::app);
 	std::map<std::string, std::string> cookies = req.get_cookies();
 	std::string name;
 	if (cookies.find("username") != cookies.end())
