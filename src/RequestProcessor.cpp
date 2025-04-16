@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 15:38:13 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/16 16:17:03 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -542,7 +542,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		std::string textBody = req.get_request_body_as_str();
 		Log::log("Received text: " + textBody, DEBUG);
 		std::string body = "Text processed successfully";
-		response << "HTTP/1.1 200 Created\r\n"
+		response << "HTTP/1.1 200 OK\r\n"
 					<< "Content-Type: text/plain\r\n"
 					<< "Content-Length: " << body.size() << "\r\n"
 					<< "\r\n"

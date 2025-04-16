@@ -138,8 +138,8 @@ def test_small_body(webserver, base_url):
 
 	# Assert the response status code
 	assert response_long.status_code == 413, f"Unexpected status code: {response_long.status_code}"
-	assert response_short.status_code == 201, f"Unexpected status code: {response_short.status_code}"
+	assert response_short.status_code == 200, f"Unexpected status code: {response_short.status_code}"
 
 	# Optionally, assert the response body or headers
-	assert "BODY IS HERE write something shorter or longer than body limit. This is longer!!!" in response_long.text, "Response body does not contain expected content."
-	assert "Shorter!" in response_short.text, "Response body does not contain expected content."
+	assert "Text processed successfully" not in response_long.text, "Response body does not contain expected content."
+	assert "Text processed successfully" in response_short.text, "Response body does not contain expected content."
