@@ -6,7 +6,11 @@ import urllib.parse
 import logging
 from datetime import datetime
 
-log_file = "www/logs/guest_book.log"
+# relative_path = os.environ.get("PATH_INFO")
+#log_dir = os.path.abspath(relative_path)
+log_dir = "/home/pbencze/Documents/42cursus/Github/Webserv/www/logs"
+os.makedirs(log_dir, exist_ok=True)  # Ensure the logs directory exists
+log_file = os.path.join(log_dir, "guest_book.log")
 
 if not os.path.exists(log_file):
 	with open(log_file, "w") as f:
