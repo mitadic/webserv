@@ -116,7 +116,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	fd.events = POLLIN;
 	if (pfds.size() >= MAX_CONNECTIONS)
 	{
-		std::cerr << "Max connections reached." << std::endl;
+		Log::log("Max connections reached", ERROR);
 		return ;
 	}
 
@@ -366,7 +366,8 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 	else if (nbytes == -1)
 	{
 		// This scenario includes "Connection reset by peer", and without checking errno...better to drop client and req instead of 503?
-		std::perror("recv");
+		std::ostringstream oss; oss << "recv: " << std::strerror(errno);
+		Log::log(oss.str(), ERROR);
 		initiate_error_response(pfds_it, idx, CODE_503);
 	}
 }
@@ -855,7 +856,7 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	std::string set_session_id;
 
 	std::ostringstream oss; oss << "Raw Request:\n******\n" << reqs[req_idx].get_request_str() << "\r\n" << reqs[req_idx].get_request_body_as_str() << "\n******";
-	Log::log(oss.str(), DEBUG);
+	Log::log(oss.str(), SETUP);
 
 	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id
 	{
