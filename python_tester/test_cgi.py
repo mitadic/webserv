@@ -58,7 +58,7 @@ def test_hello_world(webserver, secondary_url):
 	assert "Hello, world!" in response.text
 
 def test_cgi_upload(webserver, secondary_url):
-	file_path = f"./test_files/boot.jpg"
+	file_path = f"./test/test_files/boot.jpg"
 	with open(file_path, "rb") as f:
 		response = requests.post(f"{secondary_url}/cgi-bin/secondary_upload_form.py", files={"file": ("boot.jpg", f)})
 	assert response.status_code == 200, f"Unexpected status code for boot.jpg: {response.status_code}"

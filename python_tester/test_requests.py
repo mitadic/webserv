@@ -21,7 +21,7 @@ def test_basic_get(webserver, base_url):
 # uploading a file
 def test_post_file(webserver, base_url, file_name):
 	upload_path = "/uploads/"
-	file_path = f"./test_files/{file_name}"
+	file_path = f"./test/test_files/{file_name}"
 	with open(file_path, "rb") as f:
 		response = requests.post(f"{base_url}{upload_path}", files={"file": (file_name, f)})
 	assert response.status_code == 201, f"Unexpected status code for {file_name}: {response.status_code}"
