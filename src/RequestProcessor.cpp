@@ -6,7 +6,7 @@
 /*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/15 12:05:53 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/16 10:41:33 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -510,7 +510,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		logFormSubmission(req, formData);
 		Log::log("Form submission processed successfully", INFO);
 		std::string body = "Form submitted successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 				 << "Content-Type: text/plain" << "\r\n"
 				 << "Content-Length: " << body.size() << "\r\n"
 				 << "\r\n"
@@ -524,7 +524,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 			throw RequestException(CODE_405); // Method Not Allowed
 		parseMultipartFormData(req, location);
 		std::string body = "File uploaded successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -536,7 +536,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing text/plain body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "text/plain received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -548,7 +548,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing text/html body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "text/html received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -560,7 +560,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing text/xml body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "text/xml received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -572,7 +572,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing application/xml body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "application/xml received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -584,7 +584,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing application/xthml-xml body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "application/xthml-xml received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -596,7 +596,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing application/octet-stream body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "application/octet-stream received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -608,7 +608,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing image/gif body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "image/gif received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -620,7 +620,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 		Log::log("Processing image/jpeg body", INFO);
 		// no process, proceed to generate reply
 		std::string body = "image/jpeg received successfully";
-		response << "HTTP/1.1 201 OK\r\n"
+		response << "HTTP/1.1 201 Created\r\n"
 			<< "Content-Type: text/plain" << "\r\n"
 			<< "Content-Length: " << body.size() << "\r\n"
 			<< "\r\n"
@@ -631,7 +631,7 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 	{
 		Log::log("Processing png", DEBUG);
 		std::vector<unsigned char> body = req.get_request_body_raw(); // TODO: Do something with the body? Save as file?
-		response << "HTTP/1.1 200 OK\r\n\r\nRequest body processed successfully.";
+		response << "HTTP/1.1 200 Created\r\n\r\nRequest body processed successfully.";
 		break;
 	}
 	default:
