@@ -73,8 +73,7 @@ clean:
 
 fclean: clean
 	rm -f $(NAME)
-	rm -rf www/three-socketeers/uploads/*
-	rm -rf www/cgi-bin/guest-book/*
+	rm -rf .venv
 	rm -rf logs/*
 	rm -rf www/secondary/uploads/*
 
