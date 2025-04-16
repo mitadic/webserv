@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorPageGenerator.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/28 20:16:01 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/14 22:18:37 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/16 09:50:45 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,11 @@ std::string ErrorPageGenerator::createErrorPage(const Request& req, const std::v
 	std::string errorPage;
 
 	std::map<int, std::string>::const_iterator it = server->get_error_pages().find(http_status_code);
+	// print avilable error pages
+
 	const Location* location = Utils::getLocation(req, server);
 	struct stat sb;
-	if (location && it != server->get_error_pages().end() && stat(it->second.c_str(), &sb) != -1)
+	if (location && it != server->get_error_pages().end() && stat(("." + location->get_root() + it->second).c_str(), &sb) != -1)
 	{
 		std::string errorPagePath = "." + location->get_root() + it->second;
 		Log::log("Using custom error page: " + errorPagePath, DEBUG);
