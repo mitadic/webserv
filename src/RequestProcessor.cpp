@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 16:17:03 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/16 17:11:19 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -419,6 +419,11 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 			{
 				if (location->is_autoindex()) // Show directory listing
 				{
+					if (req.get_request_uri()[req.get_request_uri().size() - 1] != '/') 	// if the request uri does not end with a slash, update uri
+					{
+						filePath += "/";
+						const_cast<Request&>(req).set_request_uri(req.get_request_uri() + "/");
+					}
 					Log::log("Showing directory listing", INFO);
 					std::ostringstream response, body;
 					body << "<html><head><title>Index of " << req.get_request_uri() << "</title></head><body>"

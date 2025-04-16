@@ -69,7 +69,7 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 	rm -f www/cgi-bin/guest-book/*
-	rm -f logs/*
+	rm -f www/logs/*
 	rm -f www/secondary/uploads/*
 
 re:	fclean all
