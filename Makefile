@@ -68,10 +68,9 @@ clean:
 
 fclean: clean
 	rm -f $(NAME)
-	rm -rf www/three-socketeers/uploads/*
-	rm -rf www/cgi-bin/guest-book/*
-	rm -rf logs/*
-	rm -rf www/secondary/uploads/*
+	rm -f www/cgi-bin/guest-book/*
+	rm -f logs/*
+	rm -f www/secondary/uploads/*
 
 re:	fclean all
 
