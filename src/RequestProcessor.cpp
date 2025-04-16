@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 17:11:19 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/16 18:00:01 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@ std::string defineMime(const std::string &file)
 		return "application/xhtml+xml";
 	else if (extension == "txt")
 		return "text/plain";
+	else if (extension == "mp3")
+		return "audio/mpeg";
 	else
 		return "application/octet-stream";
 }

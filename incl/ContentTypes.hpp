@@ -1,6 +1,6 @@
 #pragma once
 
-#define CONTENT_TYPES_N 11
+#define CONTENT_TYPES_N 12
 
 enum e_content_types {
     TEXT_PLAIN = 0,
@@ -13,7 +13,8 @@ enum e_content_types {
     MULTIPART_FORM_DATA,  // file uploads
     IMAGE_GIF,
     IMAGE_JPEG,
-    IMAGE_PNG
+    IMAGE_PNG,
+	MEDIA_MP3
 };
 
 extern const char *content_types[CONTENT_TYPES_N];
