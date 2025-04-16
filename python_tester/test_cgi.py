@@ -4,8 +4,6 @@ import pytest
 import subprocess
 import requests
 
-WEBSERV_PATH = "./a.out"
-
 def test_cgi_delete_501(webserver, base_url):
 	# Does pass once once DELETE is added to /cgi-bin/ in default.conf
 	assert requests.delete("http://127.0.0.18:7070/cgi-bin/hello.py").status_code == 501

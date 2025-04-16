@@ -4,7 +4,7 @@ import time
 import requests
 from pathlib import Path
 
-WEBSERV_PATH = "./a.out"
+WEBSERV_PATH = "./webserv"
 
 # the deacorator is used to mark a function as a fixture
 # the session scope means the fixture is created once per test session

@@ -8,7 +8,7 @@
             "name": "Debug C++ (GDB)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/a.out",
+            "program": "${workspaceFolder}/webserv",
             "args": ["SETUP"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -27,4 +27,3 @@
         }
     ]
 }
-    

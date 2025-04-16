@@ -36,10 +36,10 @@ OBJ_FILES = $(addprefix $(OBJ_DIR), $(OBJ))
 
 TEST_TARGETS = test_utils test_http_GET test_http_POST test_http_DELETE
 
+all: $(NAME)
+
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
-
-all: $(NAME)
 
 $(NAME): $(OBJ_FILES)
 	$(CXX) $(FLAGS) $^ -o $@

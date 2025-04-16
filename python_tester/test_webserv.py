@@ -4,7 +4,7 @@ import pytest
 import subprocess
 import requests
 
-WEBSERV_PATH = "./a.out"
+WEBSERV_PATH = "./webserv"
 
 def binary_exists():
 	return os.path.isfile(WEBSERV_PATH)

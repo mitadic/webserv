@@ -13,7 +13,7 @@
                 "-I${workspaceFolder}/incl/",
                 "${workspaceFolder}/src/*.cpp",
                 "-o",
-                "${workspaceFolder}/a.out"
+                "${workspaceFolder}/webserv"
             ],
             "group": {
                 "kind": "build",

@@ -3,7 +3,7 @@ import pytest
 import subprocess
 import requests
 
-WEBSERV_PATH = "./a.out"
+WEBSERV_PATH = "./webserv"
 CONFIG_BAD_BASE = "python_tester/test_conf/bad/"
 CONFIG_GOOD_BASE = "python_tester/test_conf/good/"
 TIMEOUT = 1
