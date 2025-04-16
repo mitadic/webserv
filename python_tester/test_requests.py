@@ -130,14 +130,15 @@ def test_small_body(webserver, base_url):
 	url = f"http://127.0.0.20:5050/"
 	long = "BODY IS HERE write something shorter or longer than body limit. This is longer!!!"
 	short = "Shorter!"
+	headers = {"Content-Type": "text/plain"}
 
 	# Send the POST request
-	response_long = requests.post(url, data=long)
-	response_short = requests.post(url, data=short)
+	response_long = requests.post(url, data=long, headers=headers)
+	response_short = requests.post(url, data=short, headers=headers)
 
 	# Assert the response status code
 	assert response_long.status_code == 413, f"Unexpected status code: {response_long.status_code}"
-	assert response_short.status_code == 200, f"Unexpected status code: {response_short.status_code}"
+	assert response_short.status_code == 201, f"Unexpected status code: {response_short.status_code}"
 
 	# Optionally, assert the response body or headers
 	assert "BODY IS HERE write something shorter or longer than body limit. This is longer!!!" in response_long.text, "Response body does not contain expected content."
