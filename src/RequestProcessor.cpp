@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestProcessor.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
+/*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 10:41:33 by pbencze          ###   ########.fr       */
+/*   Updated: 2025/04/16 14:57:03 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ std::string createContentString(const std::string &file, const std::string &mime
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
-	response << "HTTP/1.1 200 OK\r\n"
+	response << "HTTP/1.1 200 Created\r\n"
 			 << "Content-Type: " << mimeType << "\r\n"
 			 << "Content-Length: " << body.size() << "\r\n"
 			 << "\r\n"
@@ -390,6 +390,8 @@ bool RequestProcessor::detect_cgi(const Request& req, const Location* location, 
 // get the location that corresponds to the request
 // check if the method is allowed in the location
 // - if not, throw 405 error page
+// check if URI is safe (does not traverse above the root directory)
+// - if not, throw 403 error page
 // check if the file exists
 // - if it doesn't exist, return 404 error page
 // if it's a directory, show default index file
@@ -401,6 +403,9 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 {
 	if (!location->is_get())
 		throw RequestException(CODE_405); // Method Not Allowed
+
+	if (!Utils::uriIsSafe(req.get_request_uri()))
+		throw RequestException(CODE_403); // Forbidden
 
 	std::string filePath = "." + location->get_root() + req.get_request_uri();
 
@@ -533,105 +538,15 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 	}
 	case TEXT_PLAIN:
 	{
-		Log::log("Processing text/plain body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "text/plain received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case TEXT_HTML:
-	{
-		Log::log("Processing text/html body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "text/html received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case TEXT_XML:
-	{
-		Log::log("Processing text/xml body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "text/xml received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case APPLICATION_XML:
-	{
-		Log::log("Processing application/xml body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "application/xml received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case APPLICATION_XHTML_XML:
-	{
-		Log::log("Processing application/xthml-xml body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "application/xthml-xml received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case APPLICATION_OCTET_STREAM:
-	{
-		Log::log("Processing application/octet-stream body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "application/octet-stream received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case IMAGE_GIF:
-	{
-		Log::log("Processing image/gif body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "image/gif received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case IMAGE_JPEG:
-	{
-		Log::log("Processing image/jpeg body", INFO);
-		// no process, proceed to generate reply
-		std::string body = "image/jpeg received successfully";
-		response << "HTTP/1.1 201 Created\r\n"
-			<< "Content-Type: text/plain" << "\r\n"
-			<< "Content-Length: " << body.size() << "\r\n"
-			<< "\r\n"
-			<< body;
-		break;
-	}
-	case IMAGE_PNG:
-	{
-		Log::log("Processing png", DEBUG);
-		std::vector<unsigned char> body = req.get_request_body_raw(); // TODO: Do something with the body? Save as file?
-		response << "HTTP/1.1 200 Created\r\n\r\nRequest body processed successfully.";
+		Log::log("Processing plain text", INFO);
+		std::string textBody = req.get_request_body_as_str();
+		Log::log("Received text: " + textBody, DEBUG);
+		std::string body = "Text processed successfully";
+		response << "HTTP/1.1 200 Created\r\n"
+					<< "Content-Type: text/plain\r\n"
+					<< "Content-Length: " << body.size() << "\r\n"
+					<< "\r\n"
+					<< body;
 		break;
 	}
 	default:
@@ -646,8 +561,11 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 // get the location that corresponds to the request
 // check if the method is allowed in the location
 // - if not, throw 405 error page
+// check if the URI is safe (does not traverse above the root directory)
+// - if not, throw 403 error page
 // check if the file exists
-// if it's a file, try to delete
+// - if it doesn't exist, return 404 error page
+// if it's a file, try to delete it
 // if it doesn't exist, return 404 error page (Not Found)
 // if it's a directory, return 403 error page (Forbidden)
 // if deletion is successful, return 204 No Content
@@ -658,7 +576,9 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 	if (!location->is_del())
 		throw RequestException(CODE_405);
 
-	//std::string filePath = "." + location->get_upload_location() + req.get_request_uri();
+	if (!Utils::uriIsSafe(req.get_request_uri()))
+		throw RequestException(CODE_403);
+
 	std::string filePath = "." + location->get_root() + req.get_request_uri();
 	bool success = false;
 	logDelete(req, req.get_request_uri(), success);
@@ -669,7 +589,7 @@ std::string RequestProcessor::processDelete(const Request &req, const Location *
 		throw RequestException(CODE_404);
 
 	if (Utils::isDirectory(filePath))
-		throw RequestException(CODE_403); // TODO: Or do we want to allow directory deletion and implement recursive deletion?
+		throw RequestException(CODE_403);
 
 	else if (std::remove(filePath.c_str()) != 0)
 		throw RequestException(CODE_500);

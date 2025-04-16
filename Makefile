@@ -1,8 +1,15 @@
+NAME	=	webserv
 CXX		=	c++
 FLAGS	=	-Wall -Werror -Wextra -g -std=c++98
-#FLAGS	=	-g -std=c++98
-#FLAGS	+=	-Wall -Wextra -Werror
 # FLAGS	+= -fsanitize=address
+
+SRC_DIR =	./src/
+OBJ_DIR	=	./obj/
+I_DIR	=	./incl/
+TEST_DIR = 	./test/
+BUILD_DIR = ./build/
+
+
 SRC		=	Config.cpp \
 			main.cpp \
 			ConfigUtils.cpp \
@@ -23,23 +30,41 @@ SRC		=	Config.cpp \
 			StatusCodes.cpp \
 			Utils.cpp
 
-SRC_DIR =	./src/
 OBJ		=	$(SRC:cpp=o)
-OBJ_DIR	=	./obj/
-I_DIR	=	./incl/
-NAME	=	a.out
+SRC_FILES = $(addprefix $(SRC_DIR), $(SRC))
+OBJ_FILES = $(addprefix $(OBJ_DIR), $(OBJ))
+
+TEST_TARGETS = test_utils test_http_GET test_http_POST test_http_DELETE
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 all: $(NAME)
 
-$(NAME): $(addprefix $(OBJ_DIR),$(OBJ))
-	$(CXX) $(FLAGS) $(addprefix $(OBJ_DIR),$(OBJ)) -o $(NAME)
+$(NAME): $(OBJ_FILES)
+	$(CXX) $(FLAGS) $^ -o $@
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp $(I_DIR)*
-	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
+$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp | $(OBJ_DIR)
 	$(CXX) $(FLAGS) -I$(I_DIR) -c $< -o $@
+
+# Build and run tests using CMake
+$(BUILD_DIR)/CMakeCache.txt:
+	@cmake -S . -B $(BUILD_DIR)
+
+test_build: $(BUILD_DIR)/CMakeCache.txt
+	@cmake --build $(BUILD_DIR) --target $(TEST_TARGETS)
+
+test: test_build
+	@echo "\n\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
+	@cd $(BUILD_DIR) && ctest --output-on-failure
+	@for test in $(TEST_TARGETS); do \
+		echo "\n\033[1;34m[INFO]\033[0m Running $$test..."; \
+		$(BUILD_DIR)/$$test && echo "\033[1;32m[SUCCESS]\033[0m $$test passed!" || echo "\033[1;31m[FAILURE]\033[0m $$test failed!"; \
+	done
 
 clean:
 	@if [ -d ./$(OBJ_DIR) ]; then rm -rf $(OBJ_DIR); fi
+	@if [ -d ./build ]; then rm -rf $(BUILD_DIR); fi
 
 fclean: clean
 	rm -f $(NAME)
