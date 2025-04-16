@@ -8,14 +8,13 @@ OBJ_DIR	=	./obj/
 I_DIR	=	./incl/
 TEST_DIR = 	./test/
 BUILD_DIR = ./build/
+SHELL	:= /usr/bin/bash
 
 
 SRC		=	Config.cpp \
-			main.cpp \
 			ConfigUtils.cpp \
 			Location.cpp \
 			Log.cpp \
-			ServerEngine.cpp \
 			CgiHandler.cpp \
 			CgiResponse.cpp \
 			ContentTypes.cpp \
@@ -27,8 +26,10 @@ SRC		=	Config.cpp \
 			RequestProcessor.cpp \
 			RequestUtils.cpp \
 			ServerBlock.cpp \
+			ServerEngine.cpp \
 			StatusCodes.cpp \
-			Utils.cpp
+			Utils.cpp \
+			main.cpp
 
 OBJ		=	$(SRC:cpp=o)
 SRC_FILES = $(addprefix $(SRC_DIR), $(SRC))
@@ -38,23 +39,27 @@ TEST_TARGETS = test_utils test_http_GET test_http_POST test_http_DELETE
 
 all: $(NAME)
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
-$(NAME): $(OBJ_FILES)
+$(NAME): $(addprefix $(OBJ_DIR),$(OBJ))
 	$(CXX) $(FLAGS) $^ -o $@
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp $(I_DIR)*
+	@if [ ! -d $(OBJ_DIR) ]; then mkdir $(OBJ_DIR); fi
 	$(CXX) $(FLAGS) -I$(I_DIR) -c $< -o $@
 
 # Build and run tests using CMake
 $(BUILD_DIR)/CMakeCache.txt:
 	@cmake -S . -B $(BUILD_DIR)
 
+test: all
+	@if [ ! -d .venv ]; then virtualenv .venv; fi
+	@source .venv/bin/activate && \
+	pytest -v python_tester && \
+	deactivate
+
 test_build: $(BUILD_DIR)/CMakeCache.txt
 	@cmake --build $(BUILD_DIR) --target $(TEST_TARGETS)
 
-test: test_build
+google_test: test_build
 	@echo "\n\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
 	@for test in $(TEST_TARGETS); do \
@@ -68,10 +73,10 @@ clean:
 
 fclean: clean
 	rm -f $(NAME)
-	rm -f www/cgi-bin/guest-book/*
-	rm -f www/logs/*
-	rm -f www/secondary/uploads/*
+	rm -rf .venv
+	rm -rf logs/*
+	rm -rf www/secondary/uploads/*
 
 re:	fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re test google_test test_build
