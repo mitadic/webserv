@@ -1,63 +1,71 @@
-==42415== Memcheck, a memory error detector
-==42415== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
-==42415== Using Valgrind-3.24.0 and LibVEX; rerun with -h for copyright info
-==42415== Command: ./a.out
-==42415== Parent PID: 42414
-==42415== 
-==42415== 
-==42415== Process terminating with default action of signal 15 (SIGTERM)
-==42415==    at 0x4CC8E56: __internal_syscall_cancel (cancellation.c:64)
-==42415==    by 0x4CC8E73: __syscall_cancel (cancellation.c:75)
-==42415==    by 0x4D4353D: poll (poll.c:29)
-==42415==    by 0x11D6EE: ServerEngine::run() (ServerEngine.cpp:961)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== FILE DESCRIPTORS: 8 open (3 std) at exit.
-==42415== Open AF_INET socket 7: 127.0.0.20:5050 <-> 127.0.0.1:45298
-==42415==    at 0x4CC8E56: __internal_syscall_cancel (cancellation.c:64)
-==42415==    by 0x4CC8E73: __syscall_cancel (cancellation.c:75)
-==42415==    by 0x4D5233D: accept (accept.c:26)
-==42415==    by 0x1174E6: ServerEngine::accept_client(int, pfd_info) (ServerEngine.cpp:108)
-==42415==    by 0x11D892: ServerEngine::run() (ServerEngine.cpp:984)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== Open AF_INET socket 6: 127.0.0.20:5050 <-> <unbound>
-==42415==    at 0x4D5287B: socket (syscall-template.S:120)
-==42415==    by 0x116C8E: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
-==42415==    by 0x11D5A4: ServerEngine::run() (ServerEngine.cpp:948)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== Open AF_INET socket 5: 127.0.0.18:7070 <-> <unbound>
-==42415==    at 0x4D5287B: socket (syscall-template.S:120)
-==42415==    by 0x116C8E: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
-==42415==    by 0x11D5A4: ServerEngine::run() (ServerEngine.cpp:948)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== Open AF_INET socket 4: 127.0.0.2:9090 <-> <unbound>
-==42415==    at 0x4D5287B: socket (syscall-template.S:120)
-==42415==    by 0x116C8E: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
-==42415==    by 0x11D5A4: ServerEngine::run() (ServerEngine.cpp:948)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== Open AF_INET socket 3: 127.0.0.1:8080 <-> <unbound>
-==42415==    at 0x4D5287B: socket (syscall-template.S:120)
-==42415==    by 0x116C8E: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
-==42415==    by 0x11D5A4: ServerEngine::run() (ServerEngine.cpp:948)
-==42415==    by 0x112945: main (main.cpp:71)
-==42415== 
-==42415== 
-==42415== HEAP SUMMARY:
-==42415==     in use at exit: 89,312 bytes in 99 blocks
-==42415==   total heap usage: 7,221 allocs, 7,122 frees, 100,087,597 bytes allocated
-==42415== 
-==42415== LEAK SUMMARY:
-==42415==    definitely lost: 0 bytes in 0 blocks
-==42415==    indirectly lost: 0 bytes in 0 blocks
-==42415==      possibly lost: 0 bytes in 0 blocks
-==42415==    still reachable: 89,312 bytes in 99 blocks
-==42415==         suppressed: 0 bytes in 0 blocks
-==42415== Reachable blocks (those to which a pointer was found) are not shown.
-==42415== To see them, rerun with: --leak-check=full --show-leak-kinds=all
-==42415== 
-==42415== For lists of detected and suppressed errors, rerun with: -s
-==42415== ERROR SUMMARY: 5 errors from 5 contexts (suppressed: 0 from 0)
+==72323== Memcheck, a memory error detector
+==72323== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==72323== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==72323== Command: ./a.out
+==72323== Parent PID: 72322
+==72323== 
+==72323== Invalid read of size 1
+==72323==    at 0x138D8D: ServerEngine::read_body(__gnu_cxx::__normal_iterator<pollfd*, std::vector<pollfd, std::allocator<pollfd> > >&, std::_Rb_tree_iterator<std::pair<int const, pfd_info> >&, int const&, char const*, long const&) (ServerEngine.cpp:434)
+==72323==    by 0x13895F: ServerEngine::read_headers(__gnu_cxx::__normal_iterator<pollfd*, std::vector<pollfd, std::allocator<pollfd> > >&, std::_Rb_tree_iterator<std::pair<int const, pfd_info> >&, int const&, char const*, long const&) (ServerEngine.cpp:408)
+==72323==    by 0x139CBD: ServerEngine::read_from_client_fd(__gnu_cxx::__normal_iterator<pollfd*, std::vector<pollfd, std::allocator<pollfd> > >&, std::_Rb_tree_iterator<std::pair<int const, pfd_info> >&) (ServerEngine.cpp:540)
+==72323==    by 0x13CEEE: ServerEngine::run() (ServerEngine.cpp:982)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323==  Address 0x4e8fb91 is 0 bytes after a block of size 369 alloc'd
+==72323==    at 0x4849013: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==72323==    by 0x49BC0BD: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==72323==    by 0x49BDB4F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==72323==    by 0x13875C: ServerEngine::read_headers(__gnu_cxx::__normal_iterator<pollfd*, std::vector<pollfd, std::allocator<pollfd> > >&, std::_Rb_tree_iterator<std::pair<int const, pfd_info> >&, int const&, char const*, long const&) (ServerEngine.cpp:384)
+==72323==    by 0x139CBD: ServerEngine::read_from_client_fd(__gnu_cxx::__normal_iterator<pollfd*, std::vector<pollfd, std::allocator<pollfd> > >&, std::_Rb_tree_iterator<std::pair<int const, pfd_info> >&) (ServerEngine.cpp:540)
+==72323==    by 0x13CEEE: ServerEngine::run() (ServerEngine.cpp:982)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== 
+==72323== Process terminating with default action of signal 15 (SIGTERM)
+==72323==    at 0x4BD4B97: poll (poll.c:29)
+==72323==    by 0x13CCB5: ServerEngine::run() (ServerEngine.cpp:952)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== FILE DESCRIPTORS: 8 open (3 std) at exit.
+==72323== Open AF_INET socket 7: 127.0.0.20:5050 <-> unbound
+==72323==    at 0x4BE3B3B: socket (syscall-template.S:120)
+==72323==    by 0x1363F2: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
+==72323==    by 0x13CB7E: ServerEngine::run() (ServerEngine.cpp:939)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== Open AF_INET socket 6: 127.0.0.18:7070 <-> unbound
+==72323==    at 0x4BE3B3B: socket (syscall-template.S:120)
+==72323==    by 0x1363F2: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
+==72323==    by 0x13CB7E: ServerEngine::run() (ServerEngine.cpp:939)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== Open AF_INET socket 5: 127.0.0.2:9090 <-> unbound
+==72323==    at 0x4BE3B3B: socket (syscall-template.S:120)
+==72323==    by 0x1363F2: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
+==72323==    by 0x13CB7E: ServerEngine::run() (ServerEngine.cpp:939)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== Open AF_INET socket 4: 127.0.0.1:8080 <-> unbound
+==72323==    at 0x4BE3B3B: socket (syscall-template.S:120)
+==72323==    by 0x1363F2: ServerEngine::setup_listening_socket(ServerBlock const&) (ServerEngine.cpp:38)
+==72323==    by 0x13CB7E: ServerEngine::run() (ServerEngine.cpp:939)
+==72323==    by 0x11E8F7: main (main.cpp:71)
+==72323== 
+==72323== Open file descriptor 3: /home/mitadic/projects/workshop/webserv_workshop/python_tester/valgrind.log
+==72323==    <inherited from parent>
+==72323== 
+==72323== 
+==72323== HEAP SUMMARY:
+==72323==     in use at exit: 88,192 bytes in 98 blocks
+==72323==   total heap usage: 6,240 allocs, 6,142 frees, 99,619,972 bytes allocated
+==72323== 
+==72323== LEAK SUMMARY:
+==72323==    definitely lost: 0 bytes in 0 blocks
+==72323==    indirectly lost: 0 bytes in 0 blocks
+==72323==      possibly lost: 0 bytes in 0 blocks
+==72323==    still reachable: 88,192 bytes in 98 blocks
+==72323==         suppressed: 0 bytes in 0 blocks
+==72323== Reachable blocks (those to which a pointer was found) are not shown.
+==72323== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==72323== 
+==72323== For lists of detected and suppressed errors, rerun with: -s
+==72323== ERROR SUMMARY: 222 errors from 1 contexts (suppressed: 0 from 0)

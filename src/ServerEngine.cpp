@@ -374,24 +374,23 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 /* Read headers, add any buf spillover to body, and parse and validate the headers before proceeding */
 int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
 {
-	ssize_t the_trail_from_prev = 0;
+	ssize_t the_trail_from_prev_sz = 0;
 	if (reqs[idx].get_request_str().size() >= 3)
-		the_trail_from_prev = 3;
-	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev;
+		the_trail_from_prev_sz = 3;
+	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev_sz;
 
 	// this_buffer == 3 tailing chars of request_str (if applicable) + current buf, to catch broken CRLFCRLF
-	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start);
+	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start); // if no tail, will be ""
 	this_buffer += buf;
 	size_t crlf_begin = this_buffer.find("\r\n\r\n");
 	if (crlf_begin == std::string::npos)
 	{
-		reqs[idx].append_to_request_str(buf);
+		reqs[idx].append_to_request_str(buf); // pure buf without consideration for trail
 	}
 	else
 	{
 		reqs[idx].switch_to_reading_body();
-		// std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
-		std::string buf_as_str(buf + 0, buf + crlf_begin + 2);
+		std::string buf_as_str(this_buffer.c_str() + 0, this_buffer.c_str() + crlf_begin + 2);
 		reqs[idx].append_to_request_str(buf_as_str);
 
 		try {
@@ -406,7 +405,7 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<
 		}
 
 		// do trailing body this round of POLLIN
-		read_body(pfds_it, meta_it, idx, &buf[crlf_begin + 4], nbytes - (crlf_begin + 4));
+		read_body(pfds_it, meta_it, idx, (&this_buffer.c_str()[crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
 	}
 	return 0;
 }
