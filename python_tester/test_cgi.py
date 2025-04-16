@@ -12,8 +12,10 @@ def test_cgi_delete_501(webserver, base_url):
 
 def test_post_contact(webserver, secondary_url):
 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_contact_form.py/guest-book", data={"name": "Sophie", "message": "Hello", "email": "a@b.com"}, allow_redirects=False)
-	assert response.status_code == 200
+	assert response.status_code == 302
 	assert response.headers["Location"] == "/success.html"
+	response = requests.post(f"{secondary_url}/cgi-bin/secondary_contact_form.py/guest-book", data={"name": "Sophie", "message": "Hello", "email": "a@b.com"})
+	assert response.status_code == 200
 
 def test_post_contact_incomplete(webserver, secondary_url):
 	response = requests.post(f"{secondary_url}/cgi-bin/secondary_contact_form.py/guest-book", data={"name": "Sophie", "message": "Hello"})
