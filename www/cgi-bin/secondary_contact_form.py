@@ -6,11 +6,11 @@ import urllib.parse
 import logging
 from datetime import datetime
 
-# Initialize the logging module (to log to a file)
-log_dir = os.environ.get("PATH_TRANSLATED")
-os.makedirs(log_dir, exist_ok=True)  # Create 'logs' directory if it doesn't exist
+log_file = "www/logs/guest_book.log"
 
-log_file = os.path.join(log_dir, "guest_book.log")
+if not os.path.exists(log_file):
+	with open(log_file, "w") as f:
+		pass
 
 # Configure logging to append to the file
 logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -35,7 +35,7 @@ logging.info(f"User Request: Name={name}, Email={email}, Message={message}")
 # Check if all fields were filled
 if name and email and message:
 	# Redirect using HTTP Location header
-	# print("Status: 302 Found\r\n", end="")
+	print("Status: 302 Found\r\n", end="")
 	print("Location: /success.html\r\n", end="")
 	# print("Content-Length: 0\r\n", end="")
 	print("\r\n", end="")  # End of headers
