@@ -12,5 +12,6 @@ const char *content_types[CONTENT_TYPES_N] =
     "multipart/form-data",                  // file uploads
     "image/gif",
     "image/jpeg",
-    "image/png"
+    "image/png",
+	"audio/mpeg"
 };
