@@ -405,7 +405,8 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<
 		}
 
 		// do trailing body this round of POLLIN
-		read_body(pfds_it, meta_it, idx, (&this_buffer.c_str()[crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
+		// read_body(pfds_it, meta_it, idx, (&this_buffer.c_str()[crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
+		read_body(pfds_it, meta_it, idx, (&buf[0 - the_trail_from_prev_sz + crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
 	}
 	return 0;
 }
@@ -425,7 +426,7 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 		size_t content_length = reqs[idx].get_content_length();
 		if (content_length > meta_it->second.max_client_body || body_size > content_length)
 		{
-			Log::log("Corrupt Content-Length info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+			Log::log("Disallowed size (or corrupt Content-Length info), initiating early closing to avoid reading from socket buffer infinitely", WARNING);
 			reqs[idx].flag_that_we_should_close_early();
 			initiate_error_response(pfds_it, idx, CODE_413);
 			return 1;
