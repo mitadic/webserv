@@ -33,7 +33,19 @@ MALFORMED_REQUESTS_400 = [
 	"GET / HTTP/2400000000.0\r\n\r\n",
 		
     # v empty string
-	"GET / HTTP/""\r\n\r\n",
+	"GET / HTTP/\"\"\r\n\r\n",
+
+	# multiple transfer-encodings
+	"POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\nTransfer-Encoding: chunked\r\n\r\n",
+
+	# multiple content-lengths || transfer-encodings
+	"POST / HTTP/1.1\r\nContent-Length: 8\r\nTransfer-Encoding: chunked\r\n\r\n",
+
+	# negative content-length
+	"POST / HTTP/1.1\r\nContent-Length: -1\r\n\r\n",
+
+	# incorrect content-length
+	# "POST / HTTP/1.1\r\nContent-Length: 4\r\n\r\nabc",
 ]
 
 UNSUPPORTED_VERSIONS_505 = [

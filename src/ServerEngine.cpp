@@ -372,29 +372,26 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 }
 
 /* Read headers, add any buf spillover to body, and parse and validate the headers before proceeding */
-int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int& idx, const char* buf, const ssize_t& nbytes)
+int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
 {
-	ssize_t the_trail_from_prev = 0;
+	ssize_t the_trail_from_prev_sz = 0;
 	if (reqs[idx].get_request_str().size() >= 3)
-		the_trail_from_prev = 3;
-	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev;
+		the_trail_from_prev_sz = 3;
+	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev_sz;
 
 	// this_buffer == 3 tailing chars of request_str (if applicable) + current buf, to catch broken CRLFCRLF
-	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start);
+	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start); // if no tail, will be ""
 	this_buffer += buf;
 	size_t crlf_begin = this_buffer.find("\r\n\r\n");
 	if (crlf_begin == std::string::npos)
 	{
-		reqs[idx].append_to_request_str(buf);
+		reqs[idx].append_to_request_str(buf); // pure buf without consideration for trail
 	}
 	else
 	{
 		reqs[idx].switch_to_reading_body();
-		// std::string buf_as_str(buf + 0, buf + crlf_begin + the_trail_from_prev);
-		std::string buf_as_str(buf + 0, buf + crlf_begin + 2);
+		std::string buf_as_str(this_buffer.c_str() + 0, this_buffer.c_str() + crlf_begin + 2);
 		reqs[idx].append_to_request_str(buf_as_str);
-		for (ssize_t i = crlf_begin + 4; i < nbytes + the_trail_from_prev; i++)	// 3: tailsize; 4: rnrn size
-			reqs[idx].append_byte_to_body(buf[i - the_trail_from_prev]);
 
 		try {
 			reqs[idx].parse();
@@ -406,25 +403,117 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, const int
 			initiate_error_response(pfds_it, idx, e.code());
 			return 1;
 		}
+
+		// do trailing body this round of POLLIN
+		// read_body(pfds_it, meta_it, idx, (&this_buffer.c_str()[crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
+		read_body(pfds_it, meta_it, idx, (&buf[0 - the_trail_from_prev_sz + crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
 	}
 	return 0;
 }
 
-/* Read body */
+/** @param pfds_it client
+ * @param meta_it client meta
+ * @param idx of reqs, shorthand, also available in client meta
+ * @param buf c_str() and not necessarily 0-terminated
+ * @param nbytes size of buf
+ * Read body */
 int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
 {
-	size_t body_size = reqs[idx].get_request_body_raw().size();
-	size_t content_length = reqs[idx].get_content_length();
-	if (content_length > meta_it->second.max_client_body || body_size > content_length)
+	// if not chunked, read with Content-Length
+	if (reqs[idx].is_flagged_as_chunked() == false)
 	{
-		Log::log("Corrupt size info, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
-		reqs[idx].flag_that_we_should_close_early();
-		initiate_error_response(pfds_it, idx, CODE_413);
-		return 1;
+		size_t body_size = reqs[idx].get_request_body_raw().size();
+		size_t content_length = reqs[idx].get_content_length();
+		if (content_length > meta_it->second.max_client_body || body_size > content_length)
+		{
+			Log::log("Disallowed size (or corrupt Content-Length info), initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+			reqs[idx].flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, idx, CODE_413);
+			return 1;
+		}
+		for (ssize_t i = 0; i < nbytes; i++)
+			reqs[idx].append_byte_to_body(buf[i]);
+		return 0;
 	}
-	for (ssize_t i = 0; i < nbytes; i++)
-		reqs[idx].append_byte_to_body(buf[i]);
-	return 0;
+
+	// else read as chunked
+	int i = 0;
+	while (i < nbytes)
+	{
+		unsigned long res = 0;
+
+		// if needing new chunk_size (also the case if hex_str has stuff from prev BUF but no delimiter yet)
+		while (reqs[idx].get_chunk_size() == UNINITIALIZED && i < nbytes)
+		{
+			reqs[idx].set_chunk_size_hex_str(reqs[idx].get_chunk_size_hex_str() + buf[i]);
+			if (reqs[idx].get_chunk_size_hex_str().size() >= 2)
+			{
+				std::string tail_two = reqs[idx].get_chunk_size_hex_str().substr(reqs[idx].get_chunk_size_hex_str().size() - 2);
+				if (tail_two.find("\r\n") != std::string::npos)
+				{
+					std::istringstream s(reqs[idx].get_chunk_size_hex_str().substr(0, reqs[idx].get_chunk_size_hex_str().size() - 2));  // ditch delimiters
+					s >> std::hex >> res;
+					if (s.fail())
+					{
+						Log::log("Corrupt chunk_size, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+						reqs[idx].flag_that_we_should_close_early();
+						initiate_error_response(pfds_it, idx, CODE_400);
+						return 1;
+					}
+					if (res == 0)
+					{
+						reqs[idx].flag_that_done_reading_chunked_body();
+						return OK;
+					}
+					reqs[idx].set_chunk_size(res);
+					reqs[idx].set_nread_of_chunk_size(0);
+					reqs[idx].set_chunk_size_hex_str("");
+				}
+			}
+			i++;
+		}
+		
+		// read the chunk
+		while (reqs[idx].get_nread_of_chunk_size() < reqs[idx].get_chunk_size() && i < nbytes)
+		{
+			reqs[idx].append_byte_to_body(buf[i]);
+			reqs[idx].set_nread_of_chunk_size(reqs[idx].get_nread_of_chunk_size() + 1);
+			i++;
+		}
+
+		// just finished reading a chunk
+		if (reqs[idx].get_nread_of_chunk_size() != UNINITIALIZED && reqs[idx].get_nread_of_chunk_size() == reqs[idx].get_chunk_size() && i < nbytes)
+		{
+			// bypass delimiter if present
+			if (buf[i] == '\r')
+			{
+				i++;
+				if (i < nbytes && buf[i] == '\n')
+					i++;
+			}
+			else if (i == 0 && buf[i] == '\n')
+				i++;
+			else
+			{
+				Log::log("Bad chunk delimiter, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+				reqs[idx].flag_that_we_should_close_early();
+				initiate_error_response(pfds_it, idx, CODE_400);
+				return 1;
+			}
+			// reset
+			reqs[idx].set_chunk_size(UNINITIALIZED);
+		}
+
+		// went past max_body
+		if (reqs[idx].get_request_body_raw().size() > meta_it->second.max_client_body)
+		{
+			Log::log("Chunked body too large, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
+			reqs[idx].flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, idx, CODE_413);
+			return 1;
+		}
+	}
+	return OK;
 }
 
 /* Once it reads CRLF CRLF it begings parsing the headers and then reads body if applicable, then processes the request */
@@ -449,12 +538,13 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 	}
 	else
 	{
-		if (read_headers(pfds_it, idx, buf, nbytes) != OK)
+		if (read_headers(pfds_it, meta_it, idx, buf, nbytes) != OK)
 			return;
 	}
 	update_client_activity_timestamp(meta_it);
 
-	if (reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
+	if ((reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
+		|| (reqs[idx].done_reading_chunked_body()))
 	{
 		try
 		{
@@ -509,9 +599,9 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	{
 		std::ostringstream oss; oss << "Done writing to client on socket: " << pfds_it->fd;
 		Log::log(oss.str(), DEBUG);
-		if (reqs[idx].should_close_early())
+		if (reqs[idx].should_close_early() || !reqs[idx].should_keep_alive())
 		{
-			Log::log("Comply with \'should_close_early\', forget client and their req", DEBUG);
+			Log::log("Comply with \'should_close_early\' or with \'Connection: close\', erase req and forget client", DEBUG);
 			reqs.erase(reqs.begin() + idx);
 			forget_client(pfds_it, meta_it);
 		}

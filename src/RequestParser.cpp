@@ -53,6 +53,9 @@ void RequestParser::_parse_header_trailer(Request &req, std::string &header_val)
 
 void RequestParser::_parse_header_transfer_encoding(Request &req, std::string &header_val)
 {
+	if (req._content_length != UNINITIALIZED)
+		throw RequestException(CODE_400);
+
 	std::vector<std::string> values = split(header_val, ",");
 	for (std::vector<std::string>::iterator it = values.begin(); it != values.end(); it++)
 	{
@@ -344,10 +347,10 @@ void RequestParser::_parse_header_content_length(Request &req, std::string &head
 {
 	if (req._content_length != UNINITIALIZED) // already initialized
 		throw RequestException(CODE_400);
+	if (req._flagged_as_chunked) // also already initialized
+		throw RequestException(CODE_400);
 	if (webserv_atoi_set(header_val, req._content_length) != OK)
 		throw RequestException(CODE_400);
-	// if (req._content_length > MAX_CONTENT_LENGTH)
-	// 	throw RequestException(CODE_400);
 }
 
 void RequestParser::_parse_header_content_location(Request &req, std::string &header_val)

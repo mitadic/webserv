@@ -10,6 +10,7 @@ Request::Request() :
 	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
+	_done_reading_chunked_body(false),
 	_should_close_early(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(UNINITIALIZED),
@@ -18,7 +19,9 @@ Request::Request() :
 	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
 	_minor_http_v(UNINITIALIZED),
-	_cgi_status(NOT_CGI)
+	_cgi_status(NOT_CGI),
+	_chunk_size(UNINITIALIZED),
+	_nread_in_chunk_size(UNINITIALIZED)
 {}
 
 /* Parametrized constructor for when accepting client */
@@ -31,6 +34,7 @@ Request::Request(in_addr_t host, uint16_t port, int client_fd) :
 	_content_length(UNINITIALIZED),
 	_flagged_as_chunked(false),
 	_done_reading_headers(false),
+	_done_reading_chunked_body(false),
 	_should_close_early(false),
 	_content_type_idx(UNINITIALIZED),
 	_client_fd(client_fd),
@@ -39,7 +43,9 @@ Request::Request(in_addr_t host, uint16_t port, int client_fd) :
 	_method(UNINITIALIZED),
 	_major_http_v(UNINITIALIZED),
 	_minor_http_v(UNINITIALIZED),
-	_cgi_status(NOT_CGI)
+	_cgi_status(NOT_CGI),
+	_chunk_size(UNINITIALIZED),
+	_nread_in_chunk_size(UNINITIALIZED)
 {}
 
 Request::~Request() {
@@ -61,6 +67,7 @@ Request::Request(const Request& oth) : cgi(NULL)
 	_content_length = oth._content_length;
 	_flagged_as_chunked = oth._flagged_as_chunked;
 	_done_reading_headers = oth._done_reading_headers;
+	_done_reading_chunked_body = oth._done_reading_chunked_body;
 	_should_close_early = oth._should_close_early;
 	_await_reconnection = oth._await_reconnection;
 	_keep_alive = oth._keep_alive;
@@ -69,6 +76,8 @@ Request::Request(const Request& oth) : cgi(NULL)
 	_minor_http_v = oth._minor_http_v;
 	_major_http_v = oth._major_http_v;
 	_cgi_status = oth._cgi_status;
+	_chunk_size = oth._chunk_size;
+	_nread_in_chunk_size = oth._nread_in_chunk_size;
 }
 
 const std::string& Request::get_request_str() const { return _request_str; }
@@ -112,6 +121,9 @@ const std::vector<std::string>& Request::get_accepted_types() const { return _ac
 /* See if the request has specified Content-Type to be "chunked" in the headers */
 bool Request::is_flagged_as_chunked() { return _flagged_as_chunked; }
 
+/* See if chunked body has been read to the point of no new chunk_size specified */
+bool Request::done_reading_chunked_body() { return _done_reading_chunked_body; }
+
 /* See if finished reading the headers */
 bool Request::done_reading_headers() { return _done_reading_headers; }
 
@@ -120,6 +132,9 @@ bool Request::should_close_early() { return _should_close_early; }
 
 /* Flip the attribute to indicate that we're now reading body */
 void Request::switch_to_reading_body() { _done_reading_headers = true; }
+
+/* Flip the attribute to indicate that we're done reading the chunked body */
+void Request::flag_that_done_reading_chunked_body() { _done_reading_chunked_body = true; }
 
 /* Flip the attribute to indicate that we should close the connection early */
 void Request::flag_that_we_should_close_early() { _should_close_early = true; }
@@ -171,6 +186,13 @@ void Request::append_to_cgi_output(const std::string &s) { _cgi_output += s; }
 /* Increment _total_sent value by num */
 void Request::increment_total_sent_by(const int &num) { _total_sent += num; }
 
+const std::string Request::get_chunk_size_hex_str() const { return _chunk_size_hex_str; }
+const int& Request::get_chunk_size() const { return _chunk_size; }
+const int& Request::get_nread_of_chunk_size() const { return _nread_in_chunk_size; }
+void Request::set_chunk_size_hex_str(const std::string s) { _chunk_size_hex_str = s; }
+void Request::set_chunk_size(const int& n) { _chunk_size = n; }
+void Request::set_nread_of_chunk_size(const int& n ) { _nread_in_chunk_size = n; }
+
 const std::map<std::string, std::string> &Request::get_cookies() const
 {
 	return _cookies;
@@ -197,7 +219,7 @@ void Request::validate_self()
 {
 	if (_host == 0x00000000)
 		throw RequestException(CODE_400);
-	if (_method == POST && _content_length == 0 && _flagged_as_chunked == false)
+	if (_method == POST && _flagged_as_chunked == false && (_content_length == 0 || _content_length == UNINITIALIZED))
 		throw RequestException(CODE_411);
 	if (_major_http_v > 1 || _major_http_v < 0 || (_major_http_v == 1 && _minor_http_v > 1) || (_major_http_v == 0 && _minor_http_v < 9))
 		throw RequestException(CODE_505);

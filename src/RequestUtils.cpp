@@ -40,7 +40,10 @@ void trim_lws(std::string& s)
 	s = s.substr(start, end - start + 1);
 }
 
-/* Return OK upon success, else return 1 and don't set the num reference. Does not work with +- so no negs. Tolerates leading 0s */
+/** @param s the const string reference to extract from
+ * @param num the int reference to store the result into
+ * @return 0 for OK, 1 to signalize failure  
+ * Return OK upon success, else return 1 and don't set the num reference. Does not work with +- so no negs. Tolerates leading 0s */
 int	webserv_atoi_set(const std::string& s, int& num)
 {
     if (s.empty())
