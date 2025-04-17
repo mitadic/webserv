@@ -271,6 +271,13 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 			throw CgiException();
 		}
 		pipe_out[1] = UNINITIALIZED;
+		if (close(pipe_in[0]) < 0)  // update: close also this end used in child before waiting on child
+		{
+			std::ostringstream oss; oss << "close: " << std::strerror(errno);
+			Log::log(oss.str(), WARNING);
+			throw CgiException();
+		}
+		pipe_in[0] = UNINITIALIZED;
 
 		struct pollfd fd_in;
 		fd_in.fd = pipe_in[1];  // write end (bc we write)
