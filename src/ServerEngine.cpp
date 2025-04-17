@@ -812,6 +812,7 @@ void ServerEngine::process_cgi_timeout(std::vector<pollfd>::iterator& pfds_it, s
 	throw_away_cgi_proc_and_pipes(request);
 	request->set_cgi_status(CGI_DONE);
 	request->flag_that_we_should_close_early();
+	request->set_total_sent(0);  // reset for reuse, was used by write() but got interrupted, not to be used by send()
 	initiate_error_response(pfds_it, request, CODE_504);  // this would need more time per NGINX
 }
 
