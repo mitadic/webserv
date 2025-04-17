@@ -128,7 +128,7 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	info.host = meta.host;
 	info.port = meta.port;
 	info.max_client_body = meta.max_client_body;
-	info.reqs_idx = UNINITIALIZED;
+	info.request = NULL;
 	info.last_active = time(NULL);
 	info.has_had_response = false;
 	pfd_info_map[client] = info;
@@ -161,29 +161,31 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
 	Log::log(oss.str(), DEBUG);
+	delete meta_it->second.request;
+	meta_it->second.request = NULL;
 	terminate_pfd(pfds_it, meta_it);
 }
 
 /* terminate_pfd associated with CGI_PIPE_IN and set cgi's pipe_in[1] to -1 */
 void ServerEngine::discard_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int reqs_idx = meta_it->second.reqs_idx;
+	Request *request = meta_it->second.request;
 
 	std::ostringstream oss; oss << "Discarding cgi_pipe_in with FD: " << pfds_it->fd;
 	Log::log(oss.str(), INFO);
 	terminate_pfd(pfds_it, meta_it);
-	reqs[reqs_idx].cgi->pipe_in[1] = UNINITIALIZED;
+	request->cgi->pipe_in[1] = UNINITIALIZED;
 }
 
 /* terminate_pfd associated with CGI_PIPE_OUT and set cgi's pipe_out[0] to -1 */
 void ServerEngine::discard_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int reqs_idx = meta_it->second.reqs_idx;
+	Request *request = meta_it->second.request;
 
 	std::ostringstream oss; oss << "Discarding cgi_pipe_out with FD: " << pfds_it->fd;
 	Log::log(oss.str(), INFO);
 	terminate_pfd(pfds_it, meta_it);
-	reqs[reqs_idx].cgi->pipe_out[0] = UNINITIALIZED;
+	request->cgi->pipe_out[0] = UNINITIALIZED;
 }
 
 /**
@@ -192,10 +194,10 @@ void ServerEngine::discard_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it, 
  * @param idx of the Request to set error response to
  * @param code CODE_XYZ
  */
-void ServerEngine::initiate_error_response(std::vector<pollfd>::iterator& pfds_it, int idx, int code)
+void ServerEngine::initiate_error_response(std::vector<pollfd>::iterator& pfds_it, Request *request, int code)
 {
-	reqs[idx].set_response_status(code);
-	reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
+	request->set_response_status(code);
+	request->set_response(ErrorPageGenerator::createErrorPage(*request, server_blocks));
 	pfds_it->events = POLLOUT;
 }
 
@@ -214,7 +216,7 @@ void ServerEngine::set_matching_cgi_pipe_out_to_pollin(std::map<int, pfd_info>::
 {
 	for (std::map<int, pfd_info>::iterator pipe_out_meta_it = pfd_info_map.begin(); pipe_out_meta_it != pfd_info_map.end(); pipe_out_meta_it++)
 	{
-		if (pipe_out_meta_it->second.type == CGI_PIPE_OUT && pipe_out_meta_it->second.reqs_idx == meta_it->second.reqs_idx)  // found the cgi_pipe_out
+		if (pipe_out_meta_it->second.type == CGI_PIPE_OUT && pipe_out_meta_it->second.request == meta_it->second.request)  // found the cgi_pipe_out
 		{
 			for (std::vector<pollfd>::iterator pipe_out_pfd_it = pfds.begin(); pipe_out_pfd_it != pfds.end(); pipe_out_pfd_it++)
 			{
@@ -233,26 +235,26 @@ void ServerEngine::set_matching_cgi_pipe_out_to_pollin(std::map<int, pfd_info>::
  * (1) locate related client_pfd_it and use to initiate_error_response for related Request
  * (2) throw away cgi proc and pipes
  */
-void ServerEngine::process_write_failure(const int idx)
+void ServerEngine::process_write_failure(Request *request)
 {
 	Log::log("write() to cgi_pipe_in", ERROR);
-	throw_away_cgi_proc_and_pipes(idx);
+	throw_away_cgi_proc_and_pipes(request);
 
 	std::vector<pollfd>::iterator client_pfd_it;
 	for (client_pfd_it = pfds.begin(); client_pfd_it != pfds.end(); client_pfd_it++)
 	{
-		if (client_pfd_it->fd == reqs[idx].get_client_fd())
+		if (client_pfd_it->fd == request->get_client_fd())
 			break;
 	}
-	initiate_error_response(client_pfd_it, idx, CODE_500);
+	initiate_error_response(client_pfd_it, request, CODE_500);
 }
 
 void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	size_t sz_to_send = BUF_SZ;
-	const int idx = meta_it->second.reqs_idx;
-	int body_size = reqs[idx].get_content_length();
-	int sent_so_far = reqs[idx].get_total_sent();
+	Request *request = meta_it->second.request;
+	int body_size = request->get_content_length();
+	int sent_so_far = request->get_total_sent();
 
 	if (body_size - sent_so_far < BUF_SZ)
 	{
@@ -263,18 +265,18 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 	if (sz_to_send)
 	{
-		if (write(pfds_it->fd, &(reqs[idx].get_request_body_raw().data())[sent_so_far], sz_to_send) == -1)
+		if (write(pfds_it->fd, &(request->get_request_body_raw().data())[sent_so_far], sz_to_send) == -1)
 		{
-			process_write_failure(meta_it->second.reqs_idx);
+			process_write_failure(request);
 			return;
 		}
 		// std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send.data() << std::endl;
-		reqs[idx].increment_total_sent_by(sz_to_send);
+		request->increment_total_sent_by(sz_to_send);
 		update_client_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
-		reqs[idx].set_total_sent(0);  // reset to reuse same attribute for when writing to client_fd
+		request->set_total_sent(0);  // reset to reuse same attribute for when writing to client_fd
 		// set_matching_cgi_pipe_out_to_pollin(meta_it);  // UPDATE: is again already set from the get go, rm this
 		discard_cgi_pipe_in(pfds_it, meta_it);
 	}
@@ -284,18 +286,18 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
  * (1) locate related client_pfd_it and use to initiate_error_response for related Request
  * (2) throw away cgi proc and pipe(s) -- in this case it will only be the CGI_PIPE_OUT
  */
-void ServerEngine::process_read_failure(const int idx)
+void ServerEngine::process_read_failure(Request *request)
 {
 	Log::log("read() from cgi_pipe_out", ERROR);
-	throw_away_cgi_proc_and_pipes(idx);
+	throw_away_cgi_proc_and_pipes(request);
 
 	std::vector<pollfd>::iterator client_pfd_it;
 	for (client_pfd_it = pfds.begin(); client_pfd_it != pfds.end(); client_pfd_it++)
 	{
-		if (client_pfd_it->fd == reqs[idx].get_client_fd())
+		if (client_pfd_it->fd == request->get_client_fd())
 			break;
 	}
-	initiate_error_response(client_pfd_it, idx, CODE_500);
+	initiate_error_response(client_pfd_it, request, CODE_500);
 }
 
 /* read() should never turn out zero when POLLIN, we rely on POLLHUP to catch EOF */
@@ -308,32 +310,30 @@ void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it
 	nbytes = read(pfds_it->fd, buf, BUF_SZ);
 	if (nbytes < 0)
 	{
-		process_read_failure(meta_it->second.reqs_idx);
+		process_read_failure(meta_it->second.request);
 		return;
 	}
-	reqs[meta_it->second.reqs_idx].append_to_cgi_output(buf);
+	meta_it->second.request->append_to_cgi_output(buf);
 }
 
-/* Use client's meta information (host, port, fd) to push_back a Request. */
+/* Use client's meta information (host, port, fd) to do 'new Request' */
 void ServerEngine::initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator& meta_it)
 {
-	if (meta_it->second.reqs_idx == UNINITIALIZED)
+	if (meta_it->second.request == NULL)
 	{
 		std::ostringstream oss; oss << "Initializing new request for client_fd [" << meta_it->first << "] since no active one";
 		Log::log(oss.str(), DEBUG);
-		reqs.push_back(Request(meta_it->second.host, meta_it->second.port, meta_it->first));
-		meta_it->second.reqs_idx = reqs.size() - 1;
+		meta_it->second.request = new Request(meta_it->second.host, meta_it->second.port, meta_it->first);
+		if (meta_it->second.request == NULL)
+			Log::log("Malloc fail for Request, this is bad, mkay", ERROR);
 	}
 }
 
 /* Does not rm the client's meta, just resets the reqs_idx to UNINITIALIZED */
 void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int idx = meta_it->second.reqs_idx;
-	if (idx != UNINITIALIZED && idx < static_cast<int>(reqs.size())) {
-		reqs.erase(reqs.begin() + idx);
-	}
-	meta_it->second.reqs_idx = UNINITIALIZED;
+	delete meta_it->second.request;
+	meta_it->second.request = NULL;
 	meta_it->second.has_had_response = true;
 	pfds_it->events = POLLIN;
 
@@ -348,19 +348,12 @@ void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::ite
 
 
 /* Process hangup (0) or error (-1) */
-void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const ssize_t& nbytes)
+void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, Request *request, const ssize_t& nbytes)
 {
 	if (nbytes == 0)
 	{
 		std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, orderly shutdown";
 		Log::log(oss.str(), DEBUG);
-		if (meta_it->second.reqs_idx != UNINITIALIZED)
-		{
-			std::ostringstream oss; oss << "Found a pending request (potentially empty-initialized by server) \n"
-				<< "on client_fd [" << pfds_it->fd << "] with reqs index [" << meta_it->second.reqs_idx <<"] while receiving FIN. Deleting request...";
-			Log::log(oss.str(), DEBUG);
-			reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
-		}
 		forget_client(pfds_it, meta_it);
 	}
 	else if (nbytes == -1)
@@ -368,46 +361,46 @@ void ServerEngine::process_recv_failure(std::vector<pollfd>::iterator& pfds_it, 
 		// This scenario includes "Connection reset by peer", and without checking errno...better to drop client and req instead of 503?
 		std::ostringstream oss; oss << "recv: " << std::strerror(errno);
 		Log::log(oss.str(), ERROR);
-		initiate_error_response(pfds_it, idx, CODE_503);
+		initiate_error_response(pfds_it, request, CODE_503);
 	}
 }
 
 /* Read headers, add any buf spillover to body, and parse and validate the headers before proceeding */
-int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
+int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, Request* request, const char* buf, const ssize_t& nbytes)
 {
 	ssize_t the_trail_from_prev_sz = 0;
-	if (reqs[idx].get_request_str().size() >= 3)
+	if (request->get_request_str().size() >= 3)
 		the_trail_from_prev_sz = 3;
-	size_t tail_start = reqs[idx].get_request_str().size() - the_trail_from_prev_sz;
+	size_t tail_start = request->get_request_str().size() - the_trail_from_prev_sz;
 
 	// this_buffer == 3 tailing chars of request_str (if applicable) + current buf, to catch broken CRLFCRLF
-	std::string this_buffer = reqs[idx].get_request_str().substr(tail_start); // if no tail, will be ""
+	std::string this_buffer = request->get_request_str().substr(tail_start); // if no tail, will be ""
 	this_buffer += buf;
 	size_t crlf_begin = this_buffer.find("\r\n\r\n");
 	if (crlf_begin == std::string::npos)
 	{
-		reqs[idx].append_to_request_str(buf); // pure buf without consideration for trail
+		request->append_to_request_str(buf); // pure buf without consideration for trail
 	}
 	else
 	{
-		reqs[idx].switch_to_reading_body();
+		request->switch_to_reading_body();
 		std::string buf_as_str(this_buffer.c_str() + 0, this_buffer.c_str() + crlf_begin + 2);
-		reqs[idx].append_to_request_str(buf_as_str);
+		request->append_to_request_str(buf_as_str);
 
 		try {
-			reqs[idx].parse();
+			request->parse();
 			// is there a cgi? -> add it to pfds
 		}
 		catch (RequestException& e) {
 			Log::log("Corrupt headers, initiating early closing to prevent processing unknown socket buffer", WARNING);
-			reqs[idx].flag_that_we_should_close_early();
-			initiate_error_response(pfds_it, idx, e.code());
+			request->flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, request, e.code());
 			return 1;
 		}
 
 		// do trailing body this round of POLLIN
 		// read_body(pfds_it, meta_it, idx, (&this_buffer.c_str()[crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
-		read_body(pfds_it, meta_it, idx, (&buf[0 - the_trail_from_prev_sz + crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
+		read_body(pfds_it, meta_it, (&buf[0 - the_trail_from_prev_sz + crlf_begin + 4]), nbytes + the_trail_from_prev_sz - (crlf_begin + 4));
 	}
 	return 0;
 }
@@ -418,22 +411,23 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<
  * @param buf c_str() and not necessarily 0-terminated
  * @param nbytes size of buf
  * Read body */
-int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const int& idx, const char* buf, const ssize_t& nbytes)
+int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it, const char* buf, const ssize_t& nbytes)
 {
+	Request *request = meta_it->second.request;
 	// if not chunked, read with Content-Length
-	if (reqs[idx].is_flagged_as_chunked() == false)
+	if (request->is_flagged_as_chunked() == false)
 	{
-		size_t body_size = reqs[idx].get_request_body_raw().size();
-		size_t content_length = reqs[idx].get_content_length();
+		size_t body_size = request->get_request_body_raw().size();
+		size_t content_length = request->get_content_length();
 		if (content_length > meta_it->second.max_client_body || body_size > content_length)
 		{
 			Log::log("Disallowed size (or corrupt Content-Length info), initiating early closing to avoid reading from socket buffer infinitely", WARNING);
-			reqs[idx].flag_that_we_should_close_early();
-			initiate_error_response(pfds_it, idx, CODE_413);
+			request->flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, request, CODE_413);
 			return 1;
 		}
 		for (ssize_t i = 0; i < nbytes; i++)
-			reqs[idx].append_byte_to_body(buf[i]);
+			request->append_byte_to_body(buf[i]);
 		return 0;
 	}
 
@@ -444,46 +438,46 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 		unsigned long res = 0;
 
 		// if needing new chunk_size (also the case if hex_str has stuff from prev BUF but no delimiter yet)
-		while (reqs[idx].get_chunk_size() == UNINITIALIZED && i < nbytes)
+		while (request->get_chunk_size() == UNINITIALIZED && i < nbytes)
 		{
-			reqs[idx].set_chunk_size_hex_str(reqs[idx].get_chunk_size_hex_str() + buf[i]);
-			if (reqs[idx].get_chunk_size_hex_str().size() >= 2)
+			request->set_chunk_size_hex_str(request->get_chunk_size_hex_str() + buf[i]);
+			if (request->get_chunk_size_hex_str().size() >= 2)
 			{
-				std::string tail_two = reqs[idx].get_chunk_size_hex_str().substr(reqs[idx].get_chunk_size_hex_str().size() - 2);
+				std::string tail_two = request->get_chunk_size_hex_str().substr(request->get_chunk_size_hex_str().size() - 2);
 				if (tail_two.find("\r\n") != std::string::npos)
 				{
-					std::istringstream s(reqs[idx].get_chunk_size_hex_str().substr(0, reqs[idx].get_chunk_size_hex_str().size() - 2));  // ditch delimiters
+					std::istringstream s(request->get_chunk_size_hex_str().substr(0, request->get_chunk_size_hex_str().size() - 2));  // ditch delimiters
 					s >> std::hex >> res;
 					if (s.fail())
 					{
 						Log::log("Corrupt chunk_size, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
-						reqs[idx].flag_that_we_should_close_early();
-						initiate_error_response(pfds_it, idx, CODE_400);
+						request->flag_that_we_should_close_early();
+						initiate_error_response(pfds_it, request, CODE_400);
 						return 1;
 					}
 					if (res == 0)
 					{
-						reqs[idx].flag_that_done_reading_chunked_body();
+						request->flag_that_done_reading_chunked_body();
 						return OK;
 					}
-					reqs[idx].set_chunk_size(res);
-					reqs[idx].set_nread_of_chunk_size(0);
-					reqs[idx].set_chunk_size_hex_str("");
+					request->set_chunk_size(res);
+					request->set_nread_of_chunk_size(0);
+					request->set_chunk_size_hex_str("");
 				}
 			}
 			i++;
 		}
 		
 		// read the chunk
-		while (reqs[idx].get_nread_of_chunk_size() < reqs[idx].get_chunk_size() && i < nbytes)
+		while (request->get_nread_of_chunk_size() < request->get_chunk_size() && i < nbytes)
 		{
-			reqs[idx].append_byte_to_body(buf[i]);
-			reqs[idx].set_nread_of_chunk_size(reqs[idx].get_nread_of_chunk_size() + 1);
+			request->append_byte_to_body(buf[i]);
+			request->set_nread_of_chunk_size(request->get_nread_of_chunk_size() + 1);
 			i++;
 		}
 
 		// just finished reading a chunk
-		if (reqs[idx].get_nread_of_chunk_size() != UNINITIALIZED && reqs[idx].get_nread_of_chunk_size() == reqs[idx].get_chunk_size() && i < nbytes)
+		if (request->get_nread_of_chunk_size() != UNINITIALIZED && request->get_nread_of_chunk_size() == request->get_chunk_size() && i < nbytes)
 		{
 			// bypass delimiter if present
 			if (buf[i] == '\r')
@@ -497,20 +491,20 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 			else
 			{
 				Log::log("Bad chunk delimiter, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
-				reqs[idx].flag_that_we_should_close_early();
-				initiate_error_response(pfds_it, idx, CODE_400);
+				request->flag_that_we_should_close_early();
+				initiate_error_response(pfds_it, request, CODE_400);
 				return 1;
 			}
 			// reset
-			reqs[idx].set_chunk_size(UNINITIALIZED);
+			request->set_chunk_size(UNINITIALIZED);
 		}
 
 		// went past max_body
-		if (reqs[idx].get_request_body_raw().size() > meta_it->second.max_client_body)
+		if (request->get_request_body_raw().size() > meta_it->second.max_client_body)
 		{
 			Log::log("Chunked body too large, initiating early closing to avoid reading from socket buffer infinitely", WARNING);
-			reqs[idx].flag_that_we_should_close_early();
-			initiate_error_response(pfds_it, idx, CODE_413);
+			request->flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, request, CODE_413);
 			return 1;
 		}
 	}
@@ -520,44 +514,44 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 /* Once it reads CRLF CRLF it begings parsing the headers and then reads body if applicable, then processes the request */
 void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int		idx = meta_it->second.reqs_idx;
 	char	buf[BUF_SZ + 1];
 	ssize_t	nbytes;
+	Request *request = meta_it->second.request;
 
 	memset(buf, 0, BUF_SZ + 1);
 	nbytes = recv(pfds_it->fd, buf, BUF_SZ, MSG_DONTWAIT);
 
 	if (nbytes <= 0)
 	{
-		process_recv_failure(pfds_it, meta_it, idx, nbytes);
+		process_recv_failure(pfds_it, meta_it, request, nbytes);
 		return;
 	}
-	if (reqs[idx].done_reading_headers())
+	if (request->done_reading_headers())
 	{
-		if (read_body(pfds_it, meta_it, idx, buf, nbytes) != OK)
+		if (read_body(pfds_it, meta_it, buf, nbytes) != OK)
 			return;
 	}
 	else
 	{
-		if (read_headers(pfds_it, meta_it, idx, buf, nbytes) != OK)
+		if (read_headers(pfds_it, meta_it, request, buf, nbytes) != OK)
 			return;
 	}
 	update_client_activity_timestamp(meta_it);
 
-	if ((reqs[idx].done_reading_headers() && static_cast<size_t>(reqs[idx].get_request_body_raw().size()) == static_cast<size_t>(reqs[idx].get_content_length()))
-		|| (reqs[idx].done_reading_chunked_body()))
+	if ((request->done_reading_headers() && static_cast<size_t>(request->get_request_body_raw().size()) == static_cast<size_t>(request->get_content_length()))
+		|| (request->done_reading_chunked_body()))
 	{
 		try
 		{
-			process_request(pfds_it, idx);
+			process_request(pfds_it, request);
 		}
 		catch (std::exception& e)
 		{
 			Log::log(e.what(), ERROR);
 			if (dynamic_cast<RequestException*>(&e))
-				initiate_error_response(pfds_it, idx, dynamic_cast<RequestException*>(&e)->code());
+				initiate_error_response(pfds_it, request, dynamic_cast<RequestException*>(&e)->code());
 			else
-				initiate_error_response(pfds_it, idx, CODE_500);
+				initiate_error_response(pfds_it, request, CODE_500);
 		}
 	}
 }
@@ -565,16 +559,16 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	size_t sz_to_send = BUF_SZ;
-	int idx = meta_it->second.reqs_idx;
+	Request *request = meta_it->second.request;
 
 	// TODO: this check might be obsolete / superfluous
-	if (idx == UNINITIALIZED || idx >= static_cast<int>(reqs.size()))
+	if (request == NULL)
 	{
 		forget_client(pfds_it, meta_it);
 		return;
 	}
-	int response_size = reqs[idx].get_response().size();
-	int sent_so_far = reqs[idx].get_total_sent();
+	int response_size = request->get_response().size();
+	int sent_so_far = request->get_total_sent();
 
 	if (response_size - sent_so_far < BUF_SZ) {
 		if (response_size - sent_so_far < 0)
@@ -584,26 +578,24 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 
 	if (sz_to_send)
 	{
-		std::string str_to_send = reqs[idx].get_response().substr(reqs[idx].get_total_sent());
+		std::string str_to_send = request->get_response().substr(request->get_total_sent());
 		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
 		{
 			std::ostringstream oss; oss << "send(): Client closed connection (EPIPE) or socket buffer full (EAGAIN) or EWOULDBLOCK, closing socket: " << pfds_it->fd << ", and dropping the request.";
 			Log::log(oss.str(), WARNING);
-			reqs.erase(reqs.begin() + idx);
 			forget_client(pfds_it, meta_it);
 			return;
 		}
-		reqs[idx].increment_total_sent_by(sz_to_send);
+		request->increment_total_sent_by(sz_to_send);
 		update_client_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
 		std::ostringstream oss; oss << "Done writing to client on socket: " << pfds_it->fd;
 		Log::log(oss.str(), DEBUG);
-		if (reqs[idx].should_close_early() || !reqs[idx].should_keep_alive())
+		if (request->should_close_early() || !request->should_keep_alive())
 		{
 			Log::log("Comply with \'should_close_early\' or with \'Connection: close\', erase req and forget client", DEBUG);
-			reqs.erase(reqs.begin() + idx);
 			forget_client(pfds_it, meta_it);
 		}
 		else
@@ -612,11 +604,11 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 }
 
 /* Called only after POLLHUP on CGI_PIPE_OUT, includes parsing */
-void ServerEngine::process_raw_cgi_output(const int idx)
+void ServerEngine::process_raw_cgi_output(Request *request)
 {
 	CgiResponse cgi_response;
-	cgi_response.parse_raw_cgi_output(reqs[idx].get_cgi_output());
-	reqs[idx].set_response(cgi_response.get_formatted_response());
+	cgi_response.parse_raw_cgi_output(request->get_cgi_output());
+	request->set_response(cgi_response.get_formatted_response());
 }
 
 /* Has the sole waitpid() call */
@@ -647,30 +639,30 @@ void check_in_on_subprocess(const pid_t pid)
 */
 void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	const int idx = meta_it->second.reqs_idx;
+	Request *request = meta_it->second.request;
 	const pid_t pid = meta_it->second.cgi_pid;
 
 	discard_cgi_pipe_out(pfds_it, meta_it);
 	try
 	{
 		check_in_on_subprocess(pid);
-		std::ostringstream oss; oss << "Raw CGI output:\n******\n" << reqs[idx].get_cgi_output() << "\n******";
+		std::ostringstream oss; oss << "Raw CGI output:\n******\n" << request->get_cgi_output() << "\n******";
 		Log::log(oss.str(), SETUP);
-		process_raw_cgi_output(idx);
+		process_raw_cgi_output(request);
 	}
 	catch (RequestException& e)
 	{
-		reqs[idx].set_response_status(e.code());
-		reqs[idx].set_response(ErrorPageGenerator::createErrorPage(reqs[idx], server_blocks));
+		request->set_response_status(e.code());
+		request->set_response(ErrorPageGenerator::createErrorPage(*request, server_blocks));
 	}
 
-	std::ostringstream oss; oss << "Response to the CGI request:\n******\n" << reqs[idx].get_response() << "\n******";
+	std::ostringstream oss; oss << "Response to the CGI request:\n******\n" << request->get_response() << "\n******";
 	Log::log(oss.str(), SETUP);
 
 	// locate client pfd to set to POLLOUT
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
 	{
-		if (it_met->second.type == CLIENT_CONNECTION_SOCKET && it_met->second.reqs_idx == idx)
+		if (it_met->second.type == CLIENT_CONNECTION_SOCKET && it_met->second.request == request)
 		{
 			for (std::vector<pollfd>::iterator it_pfd = pfds.begin(); it_pfd != pfds.end(); it_pfd++)
 			{
@@ -689,11 +681,6 @@ void ServerEngine::process_unorderly_hangup(std::vector<pollfd>::iterator& pfds_
 {
 	std::ostringstream oss; oss << "poll: socket " << pfds_it->fd << " hung up, unorderly shutdown";
 	Log::log(oss.str(), DEBUG);
-	if (meta_it->second.reqs_idx != UNINITIALIZED)
-	{
-		Log::log("Deleting the dangling request due to the unorderly connection hangup", DEBUG);
-		reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
-	}
 	forget_client(pfds_it, meta_it);
 }
 
@@ -753,10 +740,10 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
  * return true */
 bool ServerEngine::is_client_and_cgi_timed_out(const pfd_info& pfd_meta)
 {
-	if (pfd_meta.reqs_idx == UNINITIALIZED)
+	if (pfd_meta.request == NULL)
 		return false;
 
-	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET && reqs[pfd_meta.reqs_idx].get_cgi_status() == EXECUTE)
+	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET && pfd_meta.request->get_cgi_status() == EXECUTE)
 	{
 		time_t now = time(NULL);
 		long delta = now - pfd_meta.last_active;
@@ -776,12 +763,6 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 	{
 		if (meta_it->second.has_had_response)  // silent close
 		{
-			// such a client should have reqs_idx == -1. But...what if...? .erase() just in case?
-			if (meta_it->second.reqs_idx != UNINITIALIZED)
-			{
-				Log::log("Found a stray request while silently closing a client! Deleting...", ERROR);
-				reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
-			}
 			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out, closing the connection silently.";
 			Log::log(oss.str(), DEBUG);
 			forget_client(pfds_it, meta_it);
@@ -789,12 +770,11 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
 		else
 		{
 			initialize_new_request_if_no_active_one(meta_it);  // need one to store the response 408
-			int idx = meta_it->second.reqs_idx;
 
 			std::ostringstream oss; oss << "Client connection " << pfds_it->fd << " has timed out without sending a request, responding 408.";
 			Log::log(oss.str(), DEBUG);
-			initiate_error_response(pfds_it, idx, CODE_408);
-			reqs[idx].flag_that_we_should_close_early();
+			initiate_error_response(pfds_it, meta_it->second.request, CODE_408);
+			meta_it->second.request->flag_that_we_should_close_early();
 		}
 	}
 	catch (RequestException& e) {
@@ -807,86 +787,86 @@ void ServerEngine::process_connection_timeout(std::vector<pollfd>::iterator& pfd
  * (2) if CGI_PIPE_IN, disable
  * (3) if CGI_PIPE_OUT, disable
 */
-void ServerEngine::throw_away_cgi_proc_and_pipes(const int& idx)
+void ServerEngine::throw_away_cgi_proc_and_pipes(Request *request)
 {
-	if (reqs[idx].cgi->pipe_out[0] >= 0)
-		kill_cgi_process(reqs[idx].cgi->pipe_out[0]);
+	if (request->cgi->pipe_out[0] >= 0)
+		kill_cgi_process(request->cgi->pipe_out[0]);
 
-	if (reqs[idx].cgi->pipe_in[1] >= 0)
+	if (request->cgi->pipe_in[1] >= 0)
 	{
-		locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_in[1]);
-		reqs[idx].cgi->pipe_in[1] = UNINITIALIZED;
+		locate_and_disable_cgi_pipe_pfd(request->cgi->pipe_in[1]);
+		request->cgi->pipe_in[1] = UNINITIALIZED;
 	}
-	if (reqs[idx].cgi->pipe_out[0] >= 0)
+	if (request->cgi->pipe_out[0] >= 0)
 	{
-		locate_and_disable_cgi_pipe_pfd(reqs[idx].cgi->pipe_out[0]);
-		reqs[idx].cgi->pipe_out[0] = UNINITIALIZED;
+		locate_and_disable_cgi_pipe_pfd(request->cgi->pipe_out[0]);
+		request->cgi->pipe_out[0] = UNINITIALIZED;
 	}
 }
 
 /* Only called for meta_it.type == CLIENT_CONNECTION_SOCKET */
 void ServerEngine::process_cgi_timeout(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
-	int idx = meta_it->second.reqs_idx;
+	Request *request = meta_it->second.request;
 
-	throw_away_cgi_proc_and_pipes(idx);
-	reqs[idx].set_cgi_status(CGI_DONE);
-	reqs[idx].flag_that_we_should_close_early();
-	initiate_error_response(pfds_it, idx, CODE_504);  // this would need more time per NGINX
+	throw_away_cgi_proc_and_pipes(request);
+	request->set_cgi_status(CGI_DONE);
+	request->flag_that_we_should_close_early();
+	initiate_error_response(pfds_it, request, CODE_504);  // this would need more time per NGINX
 }
 
-void ServerEngine::normalize_uri(std::vector<ServerBlock>& server_blocks, int req_idx)
+void ServerEngine::normalize_uri(std::vector<ServerBlock>& server_blocks, Request *request)
 {
 	// normalize URI with consideration of the location block
-	std::string originalUri = reqs[req_idx].get_request_uri();
-	const Location *matchingLocation1 = Utils::getLocation(reqs[req_idx], Utils::getServerBlock(reqs[req_idx], server_blocks));
-	reqs[req_idx].set_request_uri(originalUri + "/");
-	const Location *matchingLocation2 = Utils::getLocation(reqs[req_idx], Utils::getServerBlock(reqs[req_idx], server_blocks));
+	std::string originalUri = request->get_request_uri();
+	const Location *matchingLocation1 = Utils::getLocation(*request, Utils::getServerBlock(*request, server_blocks));
+	request->set_request_uri(originalUri + "/");
+	const Location *matchingLocation2 = Utils::getLocation(*request, Utils::getServerBlock(*request, server_blocks));
 	if (matchingLocation1 && matchingLocation2)
 	{
 		if (matchingLocation1->get_path() == matchingLocation2->get_path())
-			reqs[req_idx].set_request_uri(originalUri);
+			request->set_request_uri(originalUri);
 	}
 }
 
 /* Called as soon as Request reading has finished */
-void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const int& req_idx)
+void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, Request *request)
 {
 	RequestProcessor processor;
 	std::string set_session_id;
 
-	std::ostringstream oss; oss << "Raw Request:\n******\n" << reqs[req_idx].get_request_str() << "\r\n" << reqs[req_idx].get_request_body_as_str() << "\n******";
+	std::ostringstream oss; oss << "Raw Request:\n******\n" << request->get_request_str() << "\r\n" << request->get_request_body_as_str() << "\n******";
 	Log::log(oss.str(), SETUP);
 
-	if (reqs[req_idx].get_cookies().empty())  // there was no Cookie header -> create session id
+	if (request->get_cookies().empty())  // there was no Cookie header -> create session id
 	{
 		Log::log("-- Setting cookies for session -- ", WARNING);
-		reqs[req_idx].set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
-		set_session_id = "Set-Cookie: sessionid=" + reqs[req_idx].get_cookies().begin()->second + "\r\n";
+		request->set_cookies("sessionid=" + static_cast<std::ostringstream&>(std::ostringstream() << std::dec << time(NULL)).str());
+		set_session_id = "Set-Cookie: sessionid=" + request->get_cookies().begin()->second + "\r\n";
 	}
 
-	normalize_uri(server_blocks, req_idx);
+	normalize_uri(server_blocks, request);
 
 	std::string response;
-	response = processor.handleMethod(reqs[req_idx], server_blocks);
+	response = processor.handleMethod(*request, server_blocks);
 
-	if (reqs[req_idx].get_cgi_status() == EXECUTE)
+	if (request->get_cgi_status() == EXECUTE)
 	{
 		try
 		{
-			if (reqs[req_idx].get_method() == GET)
+			if (request->get_method() == GET)
 			{
-				reqs[req_idx].cgi->setup_cgi_get(pfds, pfd_info_map, req_idx);
+				request->cgi->setup_cgi_get(pfds, pfd_info_map, request);
 				Log::log("CGI GET set up", DEBUG);
 			}
-			else if (reqs[req_idx].get_method() == POST)
+			else if (request->get_method() == POST)
 			{
-				reqs[req_idx].cgi->setup_cgi_post(pfds, pfd_info_map, req_idx);
+				request->cgi->setup_cgi_post(pfds, pfd_info_map, request);
 				Log::log("CGI POST set up", DEBUG);
 			}
 			else  // should already be caught in detect_cgi(), but jic
 			{
-				std::ostringstream oss; oss << "CGI method " << reqs[req_idx].get_method() << " unimplemented, responding 501";
+				std::ostringstream oss; oss << "CGI method " << request->get_method() << " unimplemented, responding 501";
 				Log::log(oss.str(), WARNING);
 				throw RequestException(CODE_501);
 			}
@@ -897,9 +877,9 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 			std::ostringstream oss; oss << "CGI setup failed: " << e.what();
 			Log::log(oss.str(), WARNING);
 			if (dynamic_cast<RequestException*>(&e))
-				initiate_error_response(pfds_it, req_idx, dynamic_cast<RequestException*>(&e)->code());
+				initiate_error_response(pfds_it, request, dynamic_cast<RequestException*>(&e)->code());
 			else
-				initiate_error_response(pfds_it, req_idx, CODE_500);  // less than ideal, CgiException is just a blueprint currently
+				initiate_error_response(pfds_it, request, CODE_500);  // less than ideal, CgiException is just a blueprint currently
 		}
 		pfds_vector_modified = true;
 	}
@@ -907,8 +887,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 	{
 		if (!set_session_id.empty())
 			response.insert(response.find("\r\n") + 2, set_session_id);
-		reqs[req_idx].set_response(response);
-		std::ostringstream oss; oss << "Response:\n******\n" << reqs[req_idx].get_response() << "\n******";
+		request->set_response(response);
+		std::ostringstream oss; oss << "Response:\n******\n" << request->get_response() << "\n******";
 		Log::log(oss.str(), SETUP);
 		pfds_it->events = POLLOUT;  // get ready for writing, flag before potentially adding more pfds
 	}
@@ -1006,8 +986,6 @@ void ServerEngine::run()
 				{
 					// can this only occur for client_fd tho?
 					std::cout << "POLLERR | POLLNVAL" << std::endl;
-					if (meta_it->second.reqs_idx != UNINITIALIZED)
-						reqs.erase(reqs.begin() + meta_it->second.reqs_idx);
 					forget_client(pfds_it, meta_it);
 				}
 				else

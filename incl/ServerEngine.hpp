@@ -48,7 +48,7 @@ public:
 	void	terminate_pfd(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	forget_client(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	kill_cgi_process(const int&);
-	void	initiate_error_response(std::vector<pollfd>::iterator&, int idx, int code);
+	void	initiate_error_response(std::vector<pollfd>::iterator&, Request *request, int code);
 	void	initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator&);
 	void	liberate_client_for_next_request(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	print_pfds();
@@ -63,20 +63,20 @@ public:
 	void	discard_cgi_pipe_in(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	discard_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_eof_on_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	process_raw_cgi_output(const int idx);
-	void	process_recv_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const ssize_t&);
-	void	process_write_failure(const int);
-	void	process_read_failure(const int);
+	void	process_raw_cgi_output(Request *request);
+	void	process_recv_failure(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, Request *, const ssize_t&);
+	void	process_write_failure(Request *request);
+	void	process_read_failure(Request *request);
 	void	process_unorderly_hangup(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	process_connection_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
-	void	throw_away_cgi_proc_and_pipes(const int&);
+	void	throw_away_cgi_proc_and_pipes(Request *request);
 	void	process_cgi_timeout(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	locate_and_disable_cgi_pipe_pfd(const int&);
-	int		read_headers(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
-	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const int&, const char*, const ssize_t&);
+	int		read_headers(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, Request*, const char*, const ssize_t&);
+	int		read_body(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&, const char*, const ssize_t&);
 
-	void	process_request(std::vector<pollfd>::iterator&, const int&);
-	void	normalize_uri(std::vector<ServerBlock>& server_blocks, int req_idx);
+	void	process_request(std::vector<pollfd>::iterator&, Request *request);
+	void	normalize_uri(std::vector<ServerBlock>& server_blocks, Request *request);
 
 	bool	is_client_and_timed_out(const pfd_info& pfd_meta);
 	bool	is_client_and_cgi_timed_out(const pfd_info& pfd_meta);
@@ -86,7 +86,6 @@ public:
 	std::vector<ServerBlock> server_blocks;
 	std::map<int, pfd_info> pfd_info_map;  // pfd.fd to all meta
 	std::vector<struct pollfd> pfds;
-	std::vector<Request> reqs;
 
 	bool pfds_vector_modified;
 

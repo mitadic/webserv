@@ -10,6 +10,8 @@
 #include <netinet/in.h> // For sockaddr_in
 #include <unistd.h>		// close()
 
+class Request;
+
 enum e_retval {
 	OK = 0,
 	NOT_OK
@@ -44,7 +46,7 @@ enum e_cgi_status
 struct pfd_info {
 	int type;
 
-	int reqs_idx;			// needed only by CONNECTION, PIPE
+	Request *request;		// needed only by CONNECTION, PIPE
 	sockaddr_in sockaddr;	// needed only by LISTENER + socket_addr.sin_port has the [port]
 	in_addr_t host;			// mapping pretend IP [host] for req and processing
 	uint16_t port;			// representation from server_block in READABLE endianness
