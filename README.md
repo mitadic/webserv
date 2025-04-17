@@ -16,9 +16,9 @@ Project by [@mitadic](https://github.com/mitadic), [@chilituna](https://github.c
 Webserv is a small HTTP server in C++ 98 built from scratch. It can handle the methods GET, POST and DELETE and serve both static files from a root directory and dynamic content using CGI (Common Gateway Interface). To be able to serve multiple clients without blocking, I/O multiplexing is implemented via [poll()](https://man7.org/linux/man-pages/man2/poll.2.html).
 
 <p float="left">
-	<img src="./index.png" alt="Website" width="220">
-	<img src="./coffee.png" alt="Website" width="220">
-	<img src="./about.png" alt="Website" width="220">
+	<img src="./readme/index.png" alt="Website" width="220">
+	<img src="./readme/coffee.png" alt="Website" width="220">
+	<img src="./readme/about.png" alt="Website" width="220">
 </p>
 
 ## Usage
