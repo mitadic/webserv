@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/16 18:00:01 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/17 14:30:51 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ std::string createContentString(const std::string &file, const std::string &mime
 	std::string body = Utils::readFile(file);
 
 	std::ostringstream response;
-	response << "HTTP/1.1 200 Created\r\n"
+	response << "HTTP/1.1 200 OK\r\n"
 			 << "Content-Type: " << mimeType << "\r\n"
 			 << "Content-Length: " << body.size() << "\r\n"
 			 << "\r\n"
