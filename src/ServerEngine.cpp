@@ -655,7 +655,7 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 	{
 		check_in_on_subprocess(pid);
 		std::ostringstream oss; oss << "Raw CGI output:\n******\n" << reqs[idx].get_cgi_output() << "\n******";
-		Log::log(oss.str(), DEBUG);
+		Log::log(oss.str(), SETUP);
 		process_raw_cgi_output(idx);
 	}
 	catch (RequestException& e)
@@ -665,7 +665,7 @@ void ServerEngine::process_eof_on_pipe_out(std::vector<pollfd>::iterator& pfds_i
 	}
 
 	std::ostringstream oss; oss << "Response to the CGI request:\n******\n" << reqs[idx].get_response() << "\n******";
-	Log::log(oss.str(), DEBUG);
+	Log::log(oss.str(), SETUP);
 
 	// locate client pfd to set to POLLOUT
 	for (std::map<int, pfd_info>::iterator it_met = pfd_info_map.begin(); it_met != pfd_info_map.end(); it_met++)
