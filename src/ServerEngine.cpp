@@ -908,6 +908,8 @@ void ServerEngine::process_request(std::vector<pollfd>::iterator& pfds_it, const
 		if (!set_session_id.empty())
 			response.insert(response.find("\r\n") + 2, set_session_id);
 		reqs[req_idx].set_response(response);
+		std::ostringstream oss; oss << "Response:\n******\n" << reqs[req_idx].get_response() << "\n******";
+		Log::log(oss.str(), SETUP);
 		pfds_it->events = POLLOUT;  // get ready for writing, flag before potentially adding more pfds
 	}
 }
