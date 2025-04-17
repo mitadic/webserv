@@ -74,7 +74,7 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 	rm -rf .venv
-	rm -rf logs/*
+	rm -rf www/logs/*
 	rm -rf www/secondary/uploads/*
 
 re:	fclean all
