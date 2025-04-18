@@ -161,7 +161,7 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
  * - pipe_fd to the pfds vector
  * - pfd_info to the pfd_info_map (with type CGI_PIPE)
 */
-void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
+void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, Request *request)
 {
 	if (!Utils::fileExists(_pathname))
 		throw RequestException(CODE_404);
@@ -209,14 +209,14 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 
 		pfd_info info = {};
 		info.type = CGI_PIPE_OUT;
-		info.reqs_idx = reqs_idx;
+		info.request = request;
 		info.cgi_pid = pid;
 		pfd_info_map[pipe_out[0]] = info;
 	}
 }
 
 
-void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, int reqs_idx)
+void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, pfd_info>& pfd_info_map, Request *request)
 {
 	if (!Utils::fileExists(_pathname))
 		throw RequestException(CODE_404);
@@ -271,6 +271,13 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 			throw CgiException();
 		}
 		pipe_out[1] = UNINITIALIZED;
+		if (close(pipe_in[0]) < 0)  // update: close also this end used in child before waiting on child
+		{
+			std::ostringstream oss; oss << "close: " << std::strerror(errno);
+			Log::log(oss.str(), WARNING);
+			throw CgiException();
+		}
+		pipe_in[0] = UNINITIALIZED;
 
 		struct pollfd fd_in;
 		fd_in.fd = pipe_in[1];  // write end (bc we write)
@@ -284,13 +291,13 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 
 		pfd_info info_in = {};
 		info_in.type = CGI_PIPE_IN;
-		info_in.reqs_idx = reqs_idx;
+		info_in.request = request;
 		info_in.cgi_pid = pid;
 		pfd_info_map[pipe_in[1]] = info_in;
 
 		pfd_info info_out = {};
 		info_out.type = CGI_PIPE_OUT;
-		info_out.reqs_idx = reqs_idx;
+		info_out.request = request;
 		info_out.cgi_pid = pid;
 		pfd_info_map[pipe_out[0]] = info_out;
 	}
