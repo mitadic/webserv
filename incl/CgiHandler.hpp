@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiHandler.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mitadic <mitadic@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pbencze <pbencze@student.42berlin.de>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/19 18:09:08 by pbencze           #+#    #+#             */
-/*   Updated: 2025/04/17 17:31:30 by mitadic          ###   ########.fr       */
+/*   Updated: 2025/04/18 15:16:31 by pbencze          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,6 @@ class CgiHandler {
 		char **_argv; // argv[0] is the interpreter, argv[1] is the pathname, argv is terminated by NULL
 		std::vector<std::string> _env_vector;
 		char **_envp; // contains meta-variables e.g. PATH_INFO, QUERY_STRING
-		// TODO current working directory should be set to the directory containing the script; not sure where it is stored ?
 
 		void set_env_variables(const Request& req, const Location& loc, int method);
 };

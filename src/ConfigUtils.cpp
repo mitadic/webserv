@@ -17,7 +17,7 @@ in_addr_t   Config::ft_inet(const std::string& host)
         ip |= std::atoi(host_c) << (i * 8);
         host_c = std::strtok(NULL, ".");
     }
-    if (i < 0)  // will never be reached
+    if (i < 0)
         throw std::runtime_error("invalid IP address");
     return (ip); //does not convert from host byte to network byte order, so we gain readability and uniform handling in listeners setup
 }

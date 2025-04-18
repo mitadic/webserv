@@ -2,7 +2,7 @@
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
-# include <cstdlib> // std::atoi()
+# include <cstdlib>
 # include <cstring>
 # include <iostream>
 # include <map>
