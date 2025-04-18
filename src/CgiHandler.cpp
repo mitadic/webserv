@@ -31,7 +31,6 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	if (_extension == ".sh")
 		_interpreter = WHICH_SH;
 
-	// TODO add checks for valid request uri (maybe already in request parsing?). Response from Milos: maybe some rudimentary ones, but we don't have loc in request parsing
 	size_t pos = uri.find(deduce_extension(req, loc));
 	_pathname = "." + loc.get_root() + uri.substr(0, pos + _extension.length());
 	_pathinfo = uri.substr(pos + _extension.length());
@@ -47,14 +46,13 @@ CgiHandler::CgiHandler(const Request& req, const Location& loc, int method) {
 	pipe_out[1] = UNINITIALIZED;
 
 	_argv = new char*[3];
-	_argv[0] = const_cast<char *>(_interpreter.c_str()); // check later if cons_cast is ok
+	_argv[0] = const_cast<char *>(_interpreter.c_str());
 	_argv[1] = const_cast<char *>(_pathname.c_str());
 	_argv[2] = NULL;
 
 	set_env_variables(req, loc, method);
 }
 
-/* Copy constructor TODO --> DONE */
 CgiHandler::CgiHandler(const CgiHandler & oth) :
 		_client_fd(oth._client_fd),
 		_extension(oth._extension),
@@ -68,7 +66,7 @@ CgiHandler::CgiHandler(const CgiHandler & oth) :
 	if (oth._argv)
 	{
 		_argv = new char*[3];
-		_argv[0] = const_cast<char *>(_interpreter.c_str()); // check later if cons_cast is ok
+		_argv[0] = const_cast<char *>(_interpreter.c_str());
 		_argv[1] = const_cast<char *>(_pathname.c_str());
 		_argv[2] = NULL;
 	}
@@ -101,8 +99,8 @@ CgiHandler::~CgiHandler() {
 		close(pipe_in[1]);
 	if (pipe_out[0] != UNINITIALIZED)
 		close(pipe_out[0]);
-	if (pipe_out[0] != UNINITIALIZED)
-		close(pipe_out[0]);
+	if (pipe_out[1] != UNINITIALIZED)
+		close(pipe_out[1]);
 }
 
 std::string CgiHandler::deduce_extension(const Request& req, const Location& loc) const
@@ -127,7 +125,6 @@ void CgiHandler::set_env_variables(const Request& req, const Location& loc, int 
 	{
 		_env_vector.push_back("REQUEST_METHOD=POST");
 		std::ostringstream oss; oss << "CONTENT_LENGTH=" << req.get_content_length(); _env_vector.push_back(oss.str());
-		// is there a more elegant way to pass the multipart/form-data boundary?
 		if (strcmp(req.get_content_type(), "multipart/form-data") == 0)
 			_env_vector.push_back("CONTENT_TYPE=" + static_cast<std::string>(req.get_content_type()) + "; boundary=" + Utils::findBoundary(req));
 		else
@@ -232,7 +229,7 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 	{
 		std::ostringstream oss; oss << "pipe(): " << std::strerror(errno);
 		Log::log(oss.str(), WARNING);
-		close(pipe_in[0]);  // may not be necessary since I've added conditional removals to CGI destructor. What would be best practice here?
+		close(pipe_in[0]);
 		close(pipe_in[1]);
 		pipe_in[0] = UNINITIALIZED;
 		pipe_in[1] = UNINITIALIZED;

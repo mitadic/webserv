@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 			throw std::runtime_error("usage: ./webserv [config_file] [debug_level]");
 		else
 			set_up_according_to_argv(argc, argv, server_blocks);
-		Log::log("Server blocks are ready:", INFO);
+		Log::log("Server blocks are ready", INFO);
 		Log::log(server_blocks, SETUP);
 	}
 	catch (std::exception & e)

@@ -22,11 +22,11 @@ class Location;
 typedef enum e_log_level
 {
 	SETUP,
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR,
-    LOG_LEVELS_N
+	DEBUG,
+	INFO,
+	WARNING,
+	ERROR,
+	LOG_LEVELS_N
 } t_log_level;
 
 extern t_log_level g_debug_level;
@@ -37,14 +37,10 @@ extern const char *log_levels[LOG_LEVELS_N];
  * @brief Class with static method overloads for logging debug messages
  */
 class Log {
-    public:
-        static void log(const std::string message, t_log_level level);
-        static void log(std::vector<ServerBlock> & server_blocks, t_log_level level);
-
-        // ideas for future logging overloads:
-        // static void log(const Request & request);
-        // static void log(const Response & response);
-
+	public:
+		static void log(const std::string message, t_log_level level);
+		static void log(std::vector<ServerBlock> & server_blocks, t_log_level level);
+		static void log(std::vector<ServerBlock> & server_blocks);
 };
 
 #endif

@@ -161,6 +161,9 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
 	Log::log(oss.str(), DEBUG);
+	if (meta_it->second.request->get_cgi_status() == EXECUTE) {
+		throw_away_cgi_proc_and_pipes(meta_it->second.request);
+	}
 	delete meta_it->second.request;
 	meta_it->second.request = NULL;
 	terminate_pfd(pfds_it, meta_it);
@@ -469,7 +472,7 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 			}
 			i++;
 		}
-		
+
 		// read the chunk
 		while (request->get_nread_of_chunk_size() < request->get_chunk_size() && i < nbytes)
 		{
@@ -933,6 +936,7 @@ void ServerEngine::run()
 	remove_failed_blocks(server_blocks, failed_indexes);
 	if (server_blocks.empty())
 		return (Log::log("No server blocks set up. Exiting...", ERROR));
+	Log::log(server_blocks);
 
 	init_listener_pfds();
 
@@ -941,13 +945,15 @@ void ServerEngine::run()
 		int events_count = poll(&pfds[0], pfds.size(), CGI_TIMEOUT);
 		if (events_count == -1)
 		{
-			//if SIGINT (Ctrl+C) is received, exit gracefully
 			if (errno == EINTR) {
-				std::cout << "\nSignal received. Exiting..." << std::endl;
-				break;
+				std::clog << std::endl;
+				Log::log("Signal received. Exiting...", ERROR);
 			}
-			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
-			continue;
+			else {
+				std::ostringstream oss; oss << "Poll failed. Exiting... Error:" << strerror(errno);
+				Log::log(oss.str(), ERROR);
+			}
+			break;
 		}
 
 		std::vector<pollfd>::iterator pfds_it = pfds.begin();
@@ -1013,6 +1019,7 @@ void ServerEngine::run()
 			}
 		}
 	}
+	// exit gracefully
 	size_t i;
 	for (i = 0; i < pfds.size(); i++)
 	{

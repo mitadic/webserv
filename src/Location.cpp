@@ -154,7 +154,6 @@ void Location::set_cgi_extensions(std::string extensions)
 	char *token = std::strtok(str, " ");
 	while (token)
 	{
-		// optional: implement checks if extension is accepted
 		std::string extension = token;
 			_cgi_extensions.push_back(extension);
 		token = std::strtok(NULL, " ");
@@ -171,7 +170,7 @@ void Location::set_redirect(std::string redirection)
 		|| !Config::has_only_digits(const_cast<char *>(code.c_str())))
 		throw std::runtime_error("in location block: return directive has wrong arguments");
 	if (_path == url)
-		throw std::runtime_error("directive redirects to itself"); // this could create an infinite loop
+		throw std::runtime_error("directive redirects to itself");
 	int status = std::atoi(code.c_str());
 	if (status != 301 && status != 302 && status != 307 && status != 308)
 		throw std::runtime_error("return directive contains unknown status code");
