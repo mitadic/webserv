@@ -89,7 +89,7 @@ void ServerEngine::init_listener_pfds()
 		fd.events = POLLIN;
 		if (pfds.size() >= MAX_SERVER_BLOCKS)
 		{
-			std::cerr << "Max connections reached." << std::endl;
+			std::cerr << "Max server blocks reached." << std::endl;
 			return;
 		}
 
@@ -97,10 +97,10 @@ void ServerEngine::init_listener_pfds()
 	}
 }
 
-/** accept() returns a new client_fd. We initiate a new request and map the client to pfd_info_map with:
+/** accept() pushes back a new client_fd. We map the client_fd to pfd_info in pfd_info_map with:
  * (1) type CLIENT_CONNECTION_SOCKET
- * (2) reqs_idx of the newly initiated Request in vector<Request>
- * (3) port and host not really needed on a CLIENT_CONNECTION_SOCKET ? The respective request will have them?
+ * (2) Request* request = NULL;
+ * (3) host and port from the listener socket
 */
 void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 {
@@ -108,7 +108,8 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	int client = accept(listener_fd, (struct sockaddr*)&meta.sockaddr, (socklen_t*)&addrlen);
 	if (client == -1 || !make_non_blocking(client))
 	{
-		perror("Failed to grab connection. Accept error");
+		std::ostringstream oss; oss << "Failed to grab connection. Accept error: " << std::strerror(errno);
+		Log::log(oss.str(), ERROR);
 		return ;
 	}
 	struct pollfd fd;
@@ -116,7 +117,8 @@ void ServerEngine::accept_client(int listener_fd, pfd_info meta)
 	fd.events = POLLIN;
 	if (pfds.size() >= MAX_CONNECTIONS)
 	{
-		Log::log("Max connections reached", ERROR);
+		Log::log("Max connections reached, refusing connection by closing the client_fd", ERROR);
+		close(client);
 		return ;
 	}
 
