@@ -181,6 +181,7 @@ void CgiHandler::setup_cgi_get(std::vector<struct pollfd>& pfds, std::map<int, p
 
 	if (pid == 0)
 	{
+		close(STDERR_FILENO); // to prevent seeing BROKEN_PIPE in the parent
 		close(pipe_out[0]);  // close the end not used in child right away
 		dup2(pipe_out[1], STDOUT_FILENO);
 		close(pipe_out[1]);
@@ -246,6 +247,7 @@ void CgiHandler::setup_cgi_post(std::vector<struct pollfd>& pfds, std::map<int, 
 
 	if (pid == 0)
 	{
+		close(STDERR_FILENO); // to prevent seeing BROKEN_PIPE in the parent
 		close(pipe_in[1]);
 		dup2(pipe_in[0], STDIN_FILENO);
 		close(pipe_in[0]);
