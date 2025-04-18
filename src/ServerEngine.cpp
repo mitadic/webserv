@@ -384,8 +384,10 @@ int ServerEngine::read_headers(std::vector<pollfd>::iterator& pfds_it, std::map<
 	else
 	{
 		request->switch_to_reading_body();
-		std::string buf_as_str(this_buffer.c_str() + 0, this_buffer.c_str() + crlf_begin + 2);
-		request->append_to_request_str(buf_as_str);
+		if ((the_trail_from_prev_sz == 3) && (crlf_begin == 0))
+			;  // .pop_back()
+		else
+			request->append_to_request_str(std::string(this_buffer.c_str() + the_trail_from_prev_sz, this_buffer.c_str() + crlf_begin + 2));
 
 		try {
 			request->parse();
