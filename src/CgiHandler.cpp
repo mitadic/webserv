@@ -99,8 +99,8 @@ CgiHandler::~CgiHandler() {
 		close(pipe_in[1]);
 	if (pipe_out[0] != UNINITIALIZED)
 		close(pipe_out[0]);
-	if (pipe_out[0] != UNINITIALIZED)
-		close(pipe_out[0]);
+	if (pipe_out[1] != UNINITIALIZED)
+		close(pipe_out[1]);
 }
 
 std::string CgiHandler::deduce_extension(const Request& req, const Location& loc) const

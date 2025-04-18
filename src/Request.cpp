@@ -49,8 +49,10 @@ Request::Request(in_addr_t host, uint16_t port, int client_fd) :
 {}
 
 Request::~Request() {
-	if (cgi)
+	if (cgi) {
 		delete cgi;
+		cgi = NULL;
+	}
 }
 
 Request::Request(const Request& oth) : cgi(NULL)

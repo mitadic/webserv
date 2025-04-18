@@ -161,6 +161,9 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
 	Log::log(oss.str(), DEBUG);
+	if (meta_it->second.request->get_cgi_status() == EXECUTE) {
+		throw_away_cgi_proc_and_pipes(meta_it->second.request);
+	}
 	delete meta_it->second.request;
 	meta_it->second.request = NULL;
 	terminate_pfd(pfds_it, meta_it);
