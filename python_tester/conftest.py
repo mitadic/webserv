@@ -1,3 +1,4 @@
+import sys
 import pytest
 import subprocess
 import time
@@ -6,20 +7,21 @@ from pathlib import Path
 
 WEBSERV_PATH = "./webserv"
 
-# the deacorator is used to mark a function as a fixture
+valgrind_log = "python_tester/valgrind.log"
+valgrind_command = [
+	"valgrind",
+	"--leak-check=full",
+	"--track-fds=yes",
+	"--log-file=" + valgrind_log,
+	WEBSERV_PATH
+]
+
+# the decorator is used to mark a function as a fixture
 # the session scope means the fixture is created once per test session
 # any test function that includes webserver will trigger this fixture
 @pytest.fixture(scope="session")
 def webserver():
 	"""Start the webserver for the entire test session"""
-	valgrind_log = "python_tester/valgrind.log"
-	valgrind_command = [
-		"valgrind",
-		"--leak-check=full",
-		"--track-fds=yes",
-		"--log-file=" + valgrind_log,
-		WEBSERV_PATH
-	]
 	# process = subprocess.Popen([WEBSERV_PATH]) to run without valgrind
 	process = subprocess.Popen(valgrind_command) # to run with valgrind
 	time.sleep(2)  # Give server time to start
@@ -38,7 +40,7 @@ def webserver():
 		# Optionally, fail the test session if Valgrind detects issues
 		if "All heap blocks were freed" not in valgrind_output:
 			pytest.fail("Valgrind detected memory leaks. Check valgrind.log for details.")
-		if "4 open (3 std) at exit" not in valgrind_output:
+		if "3 open (3 std) at exit" not in valgrind_output:
 			pytest.fail("Leaking FDs. Make sure to run from non-VS-code terminal. Check valgrind.log for details.")
 
 # @pytest.fixture(scope="session")
