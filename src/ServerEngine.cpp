@@ -467,7 +467,7 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 			}
 			i++;
 		}
-		
+
 		// read the chunk
 		while (request->get_nread_of_chunk_size() < request->get_chunk_size() && i < nbytes)
 		{
@@ -939,13 +939,13 @@ void ServerEngine::run()
 		int events_count = poll(&pfds[0], pfds.size(), CGI_TIMEOUT);
 		if (events_count == -1)
 		{
-			//if SIGINT (Ctrl+C) is received, exit gracefully
-			if (errno == EINTR) {
-				std::cout << "\nSignal received. Exiting..." << std::endl;
-				break;
+			if (errno == EINTR)
+				Log::log("Signal received. Exiting...", ERROR);
+			else {
+				std::ostringstream oss; oss << "Poll failed. Exiting... Error:" << strerror(errno);
+				Log::log(oss.str(), ERROR);
 			}
-			std::cout << "Poll failed. Errn: " << errno << ". Trying again..." << std::endl;
-			continue;
+			break;
 		}
 
 		std::vector<pollfd>::iterator pfds_it = pfds.begin();
@@ -1011,6 +1011,7 @@ void ServerEngine::run()
 			}
 		}
 	}
+	// exit gracefully
 	size_t i;
 	for (i = 0; i < pfds.size(); i++)
 	{
