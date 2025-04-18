@@ -161,7 +161,8 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
 	Log::log(oss.str(), DEBUG);
-	if (meta_it->second.request->get_cgi_status() == EXECUTE) {
+	if (meta_it->second.request->get_cgi_status() == EXECUTE)
+	{
 		throw_away_cgi_proc_and_pipes(meta_it->second.request);
 	}
 	delete meta_it->second.request;
@@ -947,7 +948,7 @@ void ServerEngine::run()
 		{
 			if (errno == EINTR) {
 				std::clog << std::endl;
-				Log::log("Signal received. Exiting...", ERROR);
+				Log::log("Signal received. Exiting...", INFO);
 			}
 			else {
 				std::ostringstream oss; oss << "Poll failed. Exiting... Error:" << strerror(errno);
