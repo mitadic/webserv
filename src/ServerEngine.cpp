@@ -931,6 +931,7 @@ void ServerEngine::run()
 	remove_failed_blocks(server_blocks, failed_indexes);
 	if (server_blocks.empty())
 		return (Log::log("No server blocks set up. Exiting...", ERROR));
+	Log::log(server_blocks);
 
 	init_listener_pfds();
 
@@ -939,8 +940,10 @@ void ServerEngine::run()
 		int events_count = poll(&pfds[0], pfds.size(), CGI_TIMEOUT);
 		if (events_count == -1)
 		{
-			if (errno == EINTR)
+			if (errno == EINTR) {
+				std::clog << std::endl;
 				Log::log("Signal received. Exiting...", ERROR);
+			}
 			else {
 				std::ostringstream oss; oss << "Poll failed. Exiting... Error:" << strerror(errno);
 				Log::log(oss.str(), ERROR);

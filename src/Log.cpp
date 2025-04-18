@@ -3,6 +3,7 @@
 # include "Config.hpp"
 # include "ServerBlock.hpp"
 # include "Location.hpp"
+# include "Utils.hpp"
 
 const char *log_levels[LOG_LEVELS_N] = {
 	"SETUP",
@@ -69,7 +70,7 @@ void Log::log(std::vector<ServerBlock> & server_blocks, t_log_level level)
 	if (!DEBUGMODE || level < g_debug_level)
         return ;
     if (server_blocks.empty())
-    return ;
+    	return ;
     log("ServerBlocks: ", level);
     for (std::vector<ServerBlock>::const_iterator it = server_blocks.begin(); it != server_blocks.end(); ++it)
     {
@@ -77,4 +78,15 @@ void Log::log(std::vector<ServerBlock> & server_blocks, t_log_level level)
         std::clog << *it;
         std::clog << WHITE;
     }
+};
+
+void Log::log(std::vector<ServerBlock> & server_blocks)
+{
+	if (server_blocks.empty())
+		return ;
+	for (std::vector<ServerBlock>::const_iterator it = server_blocks.begin(); it != server_blocks.end(); ++it)
+	{
+		std::ostringstream oss; oss << "Server running on: " + Utils::host_to_str(it->get_host()) << ":" << it->get_port();
+		log(oss.str(), INFO);
+	}
 };
