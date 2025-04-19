@@ -40,65 +40,6 @@ void trim_lws(std::string& s)
 	s = s.substr(start, end - start + 1);
 }
 
-/** @param s the const string reference to extract from
- * @param num the int reference to store the result into
- * @return 0 for OK, 1 to signalize failure  
- * Return OK upon success, else return 1 and don't set the num reference. Does not work with +- so no negs. Tolerates leading 0s */
-int	webserv_atoi_set(const std::string& s, int& num)
-{
-    if (s.empty())
-		return 1;
-
-	long long res = 0;
-	std::string::const_iterator it = s.begin();
-	for (; it != s.end() && *it == '0'; it++)  // RFC allows leading 0
-		;
-	if (it == s.end())
-	{
-		num = 0;
-		return OK;
-	}
-
-	for (; it != s.end(); it++)
-	{
-		if (!std::isdigit(*it))  // RFC disallows +-, as well as any nondigits
-			return 1;
-		res = res * 10 + (*it - '0');
-		if (res > INT_MAX)
-			return 1;
-	}
-	num = res;
-	return OK;
-}
-
-/* Return OK upon success, else return 1 and don't set the num reference. Does not work with +- so no negs. Tolerates leading 0s */
-int	webserv_atouint16_set(const std::string& s, uint16_t& num)
-{
-    if (s.empty())
-		return 1;
-
-	size_t res = 0;
-	std::string::const_iterator it = s.begin();
-	for (; it != s.end() && *it == '0'; it++)  // RFC allows leading 0
-		;
-	if (it == s.end())
-	{
-		num = 0;
-		return OK;
-	}
-
-	for (; it != s.end(); it++)
-	{
-		if (!std::isdigit(*it))  // RFC disallows +-, as well as any nondigits
-			return 1;
-		res = res * 10 + (*it - '0');
-		if (res > 65535)
-			return 1;
-	}
-	num = res;
-	return OK;
-}
-
 /* Wrapper for webserv_atoi_set() */
 int set_http_v(const std::string& num, int& http_v)
 {

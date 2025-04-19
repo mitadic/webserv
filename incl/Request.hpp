@@ -37,7 +37,7 @@ public:
 	const std::string& get_cgi_output() const;
 	const int& get_response_status() const;
 	const int& get_total_sent() const;
-	const int& get_content_length() const;
+	const int64_t& get_content_length() const;
 	const int& get_content_type_idx() const;
 	const char *get_content_type() const;
 	const std::vector<std::string>& get_content_type_params() const;
@@ -97,7 +97,7 @@ private:
 	in_addr_t	_host;
 	int			_response_status;
 	int			_total_sent;
-	int			_content_length;	// refers to body
+	int64_t		_content_length;	// refers to body
 	bool		_flagged_as_chunked;
 	bool		_done_reading_headers;
 	bool		_done_reading_chunked_body;

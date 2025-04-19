@@ -97,7 +97,7 @@ const std::string& Request::get_cgi_job_id() const { return _cgi_job_id; }
 const std::string& Request::get_cgi_output() const { return _cgi_output; }
 const int& Request::get_response_status() const { return _response_status; }
 const int& Request::get_total_sent() const { return _total_sent; }
-const int& Request::get_content_length() const { return _content_length; }
+const int64_t& Request::get_content_length() const { return _content_length; }
 const int& Request::get_content_type_idx() const { return _content_type_idx; }
 const std::vector<std::string>& Request::get_content_type_params() const { return _content_type_params; }
 const char *Request::get_content_type() const {

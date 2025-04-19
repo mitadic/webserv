@@ -434,8 +434,9 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 			initiate_error_response(pfds_it, request, CODE_413);
 			return 1;
 		}
-		for (ssize_t i = 0; i < nbytes; i++)
+		for (ssize_t i = 0; i < content_length; i++)  // pipelining TODO: read only up to content_length
 			request->append_byte_to_body(buf[i]);
+		// pipelining: if appended < nbytes, then append remainder to a NEW request
 		return 0;
 	}
 

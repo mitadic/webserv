@@ -220,7 +220,7 @@ void RequestParser::_parse_header_host(Request &req, std::string &header_val)
 	else
 	{
 		std::string port_value_as_str = header_val.substr(end + 1);
-		if (webserv_atouint16_set(port_value_as_str, parsed_port) != OK)
+		if (webserv_atoi_set(port_value_as_str, parsed_port) != OK)
 			throw RequestException(CODE_400);
 	}
 

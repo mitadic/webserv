@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <climits>
-#include <stdint.h>  // uint16_t
+#include <stdint.h>  // uint16_t and UINT16_MAX
 
 #include "HttpHeaders.hpp"
 #include "Exceptions.hpp"
@@ -21,10 +21,20 @@
 #define LOOPBACK_NUMERIC 2130706433
 #define MAX_URI_LENGTH 4096  // NGINX default
 
+// because why allow a more modern C++ that has std::numeric_limits<T>::max();
+template<typename T>
+struct MaxValue;
+template<>
+struct MaxValue<int>;
+template<>
+struct MaxValue<long long>;
+template<typename T>
+T getMaxValue();
+
+template <typename T>
+int		webserv_atoi_set(const std::string& s, T& num);
 std::vector<std::string> split(const std::string& s, const std::string& delimiters);
 void    trim_lws(std::string& s);
-int		webserv_atoi_set(const std::string& s, int& num);
-int		webserv_atouint16_set(const std::string& s, uint16_t& num);
 int		set_http_v(const std::string& num, int& http_v);
 bool	is_empty_crlf(std::string& line);
 bool	is_lws(const char c);
@@ -35,3 +45,5 @@ void	check_stream_for_errors(std::istringstream& stream);
 int		get_http_header_idx(const std::string& s);
 bool	contains_non_digits(const std::string& s);
 int		match_code(int status_code);
+
+#include "../src/RequestUtils.tpp"
