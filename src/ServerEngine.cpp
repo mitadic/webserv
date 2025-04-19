@@ -425,16 +425,16 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 	// if not chunked, read with Content-Length
 	if (request->is_flagged_as_chunked() == false)
 	{
-		size_t body_size = request->get_request_body_raw().size();
-		size_t content_length = request->get_content_length();
-		if (content_length > meta_it->second.max_client_body || body_size > content_length)
+		int64_t body_size = request->get_request_body_raw().size();
+		int64_t content_length = request->get_content_length();
+		if (content_length > static_cast<int64_t>(meta_it->second.max_client_body) || body_size > content_length)
 		{
 			Log::log("Disallowed size (or corrupt Content-Length info), initiating early closing to avoid reading from socket buffer infinitely", WARNING);
 			request->flag_that_we_should_close_early();
 			initiate_error_response(pfds_it, request, CODE_413);
 			return 1;
 		}
-		for (ssize_t i = 0; i < content_length; i++)  // pipelining TODO: read only up to content_length
+		for (int64_t i = 0; i < content_length; i++)  // pipelining TODO: read only up to content_length
 			request->append_byte_to_body(buf[i]);
 		// pipelining: if appended < nbytes, then append remainder to a NEW request
 		return 0;
