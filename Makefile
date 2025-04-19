@@ -53,6 +53,7 @@ $(BUILD_DIR)/CMakeCache.txt:
 test: all
 	@if [ ! -d .venv ]; then virtualenv .venv; fi
 	@source .venv/bin/activate && \
+	pip install --upgrade pip && pip install pytest requests && \
 	pytest -v python_tester && \
 	deactivate
 
