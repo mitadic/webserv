@@ -29,6 +29,14 @@ BAD_CONFIG_FILES = [
 	"empty_location.conf",
 	"no_location.conf",
 	"no_root.conf",
+    "nasty_semicolons1.conf",
+    "nasty_semicolons2.conf",
+    "nasty_semicolons3.conf",
+    "nasty_semicolons4.conf",
+    "wrapping1",
+    "wrapping2",
+    "wrapping3",
+    "wrapping4",
 ]
 
 @pytest.mark.parametrize("config_file", BAD_CONFIG_FILES)
