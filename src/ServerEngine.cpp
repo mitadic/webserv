@@ -163,7 +163,7 @@ void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::ma
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
 	Log::log(oss.str(), DEBUG);
-	if (meta_it->second.request->get_cgi_status() == EXECUTE)
+	if (meta_it->second.request != NULL && meta_it->second.request->get_cgi_status() == EXECUTE)
 	{
 		throw_away_cgi_proc_and_pipes(meta_it->second.request);
 	}
@@ -434,9 +434,14 @@ int ServerEngine::read_body(std::vector<pollfd>::iterator& pfds_it, std::map<int
 			initiate_error_response(pfds_it, request, CODE_413);
 			return 1;
 		}
-		for (int64_t i = 0; i < content_length; i++)  // pipelining TODO: read only up to content_length
+		// pipelining: read only up to content_length (if it is less than nbytes)
+		int64_t to_read_into_this_requests_body = nbytes;
+		if (content_length < nbytes)
+			to_read_into_this_requests_body = content_length;
+
+		for (int64_t i = 0; i < to_read_into_this_requests_body; i++)
 			request->append_byte_to_body(buf[i]);
-		// pipelining: if appended < nbytes, then append remainder to a NEW request
+		// pipelining TODO: if appended < nbytes, then append remainder to a NEW request
 		return 0;
 	}
 
