@@ -144,7 +144,7 @@ void Request::flag_that_we_should_close_early() { _should_close_early = true; }
 /* If a request should ditch the client and wait for a new connection to be established */
 bool Request::should_await_reconnection() { return _await_reconnection; }
 
-/* If "Connection: keep alive" (default), as opposed to "Connection: close" */
+/* If "Connection: keep-alive" (default), as opposed to "Connection: close" */
 bool Request::should_keep_alive() { return _keep_alive; }
 
 /** @brief Append string to _request_str
