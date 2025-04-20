@@ -561,7 +561,7 @@ void RequestParser::parse_request_line(Request &req, std::string &line)
  */
 void RequestParser::parse_headers(Request &req, std::istringstream &stream, std::string &line)
 {
-	if (!std::getline(stream, line))
+	if (!std::getline(stream, line))  // spin 1 beyond REQUEST line and check health or eof, because shouldn't have absolutely 0 headers (Host is minimum)
 		check_stream_for_errors_or_eof(stream);
 
 	while (!is_empty_crlf(line) && !stream.eof())
@@ -577,16 +577,16 @@ void RequestParser::parse_headers(Request &req, std::istringstream &stream, std:
 void RequestParser::parse_header_line(Request &req, std::istringstream &stream, std::string &line)
 {
 	size_t colon_pos = line.find_first_of(":");
-	size_t lws_pos = line.find_first_of(HTTP_SEPARATORS);
-	if (colon_pos == 0 || colon_pos == line.size() || lws_pos == 0 || lws_pos < colon_pos)
-		throw RequestException(400);
+	size_t lws_pos = line.find_first_of(LWS_CHARS);
+	if (colon_pos == 0 || colon_pos == line.size() - 2 || lws_pos == 0 || lws_pos < colon_pos)  // missing key || missing value || LWS before key || LWS before the ':' delimiter 
+		throw RequestException(CODE_400);
 	const std::string header_key = line.substr(0, colon_pos);
 	std::string header_value = line.substr(colon_pos + 1);
 
 	int header_idx = get_http_header_idx(header_key);
 	dispatch_header_parser(req, header_idx, header_value);
 
-	// while folded continuation, whether recognized header or no
+	// while folded continuation, whether recognized header or no -- else will land on a next header
 	while (std::getline(stream, line) && !is_empty_crlf(line) && is_lws(line[0]))
 		dispatch_header_parser(req, header_idx, line);
 	if (!stream.eof())
