@@ -6,8 +6,8 @@ Project by [@mitadic](https://github.com/mitadic), [@chilituna](https://github.c
 ## Table of Contents
 - [About](#about)
 - [Usage](#usage)
-- [Configuration File](#configuration-file)
 - [Features](#features)
+- [Configuration File](#configuration-file)
 - [Terminology](#terminology)
 - [Resources](#resources)
 
@@ -76,9 +76,29 @@ curl -v -X POST http://localhost:8080/uploads -F "file=@test.txt"
 make test
 ```
 
+## Features
+
+* ✅ Implemented and tested.
+* 🚧 In Progress.
+* 🟥 Not Implemented.
+
+
+Feature | Status
+:--- | :---
+Direct resource management with `GET` `TEST` `DELETE` | ✅
+Non-blocking I/O | ✅
+Redirections | ✅
+CGI for .py and .php with `GET` `POST` | ✅
+Cookies | ✅
+HTTP/1.0 and 1.1 per RFC [2616](https://datatracker.ietf.org/doc/html/rfc2616) | ✅
+HTTPS | 🟥
+Multithreaded workers | 🟥
+Mac- and Linux-compatibility | ✅
+Pipelining within single TCP segment | 🚧
+
 ## Configuration File
 
-Our configuration file is inspired by the default NGINX configuration. It uses a simple structure with **server blocks** that listen on specific IP addresses and ports. Each server block can include **location directives** to define rules or configurations for specific paths.
+The configuration file is inspired by the default NGINX configuration. It uses a simple structure with **server blocks** that listen on specific IP addresses and ports. Each server block can include **location directives** to define rules or configurations for specific paths.
 
 ### Directives
 
@@ -137,26 +157,6 @@ server {
 	}
 }
 ```
-
-## Features
-
-* ✅ Implemented and tested.
-* 🚧 In Progress.
-* 🟥 Not Implemented.
-
-
-Feature | Status
-:--- | :---
-Direct resource management with `GET` `TEST` `DELETE` | ✅
-Non-blocking I/O | ✅
-Redirections | ✅
-CGI for .py and .php with `GET` `POST` | ✅
-Cookies | ✅
-HTTP/1.0 and 1.1 per RFC [2616](https://datatracker.ietf.org/doc/html/rfc2616) | ✅
-HTTPS | 🟥
-Multithreaded workers | 🟥
-Mac- and Linux-compatibility | ✅
-Pipelining within single TCP segment | 🚧
 
 ## The Status Codes utilized
 Meaning | Code | Scenario Example
