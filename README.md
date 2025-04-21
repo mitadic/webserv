@@ -13,7 +13,7 @@ Project by [@mitadic](https://github.com/mitadic), [@chilituna](https://github.c
 
 ## About
 
-Webserv is a small HTTP server in C++ 98 built from scratch. It can handle the methods GET, POST and DELETE and serve both static files from a root directory and dynamic content using CGI (Common Gateway Interface). To be able to serve multiple clients without blocking, I/O multiplexing is implemented via [poll()](https://man7.org/linux/man-pages/man2/poll.2.html).
+Webserv is a rudimentary HTTP server built using C++ 98 and [poll()](https://man7.org/linux/man-pages/man2/poll.2.html), with no external libraries utilized. It can serve both static files from a root directory and dynamic content using CGI (Common Gateway Interface), as it is compliant with RFC 2616 and RFC 3875.
 
 <p float="left">
 	<img src="./readme/index.png" alt="Website" width="220">
@@ -24,7 +24,7 @@ Webserv is a small HTTP server in C++ 98 built from scratch. It can handle the m
 ## Usage
 
 ### 1. Build the Project
-To compile the project, run the following command:
+To compile the project after cloning and entering the cloned directory, run:
 ```bash
 make
 ```
@@ -41,9 +41,9 @@ make
 ```
 
 #### Setting a Custom Debug Level
-You can specify a debug level: `SETUP`, `DEBUG`, `INFO`, `WARNING`, or `ERROR`.
+You can specify debug levels: `SETUP`, `DEBUG`, `INFO`, `WARNING`, or `ERROR`. The default one is `INFO`.
 ```bash
-./webserv [config_file] [debug_level]
+./webserv [debug_level]
 ```
 
 ### 3. Make Requests
@@ -71,7 +71,7 @@ curl -X DELETE http://localhost:8080/uploads/hi.txt
 curl -v -X POST http://localhost:8080/uploads -F "file=@test.txt"
 ```
 
-### 4. Run our Tests
+### 4. Run our End-To-End Tests
 ```bash
 make test
 ```
@@ -94,7 +94,7 @@ Here are the available directives and their purposes:
 	Sets the maximum allowed size for the client request body.
 
 - **`error_page [status code] [relative path]`**
-	Configures a custom error page for a specific HTTP status code.
+	Sets a custom error page for a specific HTTP status code.
 
 - **`root [root of the location]`**
 	Specifies the root directory for serving files.
@@ -102,7 +102,7 @@ Here are the available directives and their purposes:
 - **`index [default page to be served]`**
 	Defines the default file to serve when accessing a directory.
 
-- **`allowed_methods [GET || POST || DELETE]`**
+- **`allowed_methods [GET , POST , DELETE]`**
 	Allows HTTP methods for a location.
 
 - **`autoindex [on || off]`**
@@ -114,7 +114,7 @@ Here are the available directives and their purposes:
 - **`return [status code] [new location]`**
 	Redirects requests to a new location with a specific status code.
 
-- **`cgi_extension [.py || .sh || .php]`**
+- **`cgi_extension [.py , .sh , .php]`**
 	Defines the file extensions that will be processed using CGI.
 
 ### Example Configuration
@@ -157,13 +157,33 @@ server {
 * Executing CGI scripts based on certain extensions
 * Non-blocking server
 
-## Error handling
-* Method not allowed (405)
-* Page does not exist (404)
-* If index.html is not present and autoindex if off, Permission denied (403)
-* Directory deletion not allowed (403)
-* Client does not accept file type  (406)
-* Server side errors such as issues opening/saving/deleting/reading/writing file (500)
+## The Status Codes utilized
+Meaning | Code | Scenario Example
+:--- | :--- | :---
+OK | 200 | Generic "all good". E.g. page delivered
+Created | 201 | Confirming upload or form submission
+Accepted | 202 | Confirming arrival (noncommittal)
+Moved Permanently | 301 | Try to not ask for this URI in the future
+Found | 302 | You can expect to find stuff at this URI later again
+Temporary Redirect | 307 | Same semantics as `302`, but method must persist
+Permanent Redirect | 308 | Same semantics as `301`, but method must persist
+Bad Request | 400 | Generic "it's not me it's you"
+Forbidden | 403 | Directory deletion not allowed, missing index.html, etc
+Not found | 404 | No resource at specified URI
+Method not allowed | 405 | Trying to `DELETE` at specific location 
+Not Acceptable | 406 | Client does not accept file type
+Request Timeout | 408 | Connection established but no request ever came in
+Length Required | 411 | A `POST` request needs either `Content-Length` or `Transfer-Encoding` information
+Content Too Large | 413 | Request body is larger than limits defined by server
+URI Too Long | 414 | Longer than default (Webserv sets 4096)
+Unsupported Media Type | 415 | Format not supported by the server
+I'm a teapot | 418 | You asked for coffee in the URI and Webserv refused
+Internal Server Error | 500 | Generic "it's not you it's me"; undisclosed backend failure
+Not Implemented | 501 | e.g. method DELETE in a CGI request, not a feature of Webserv
+Service Unavailable | 503 | Conventionally sent with a `Retry-After`
+Gateway Timeout | 504 | CGI timeout
+HTTP Version Not Supported | 505 | e.g. HTTP/2.0
+
 
 ## Terminology
 ### NGINX
@@ -177,7 +197,7 @@ The Hypertext Transfer Protocol (HTTP) is an application-level
 protocol for distributed, collaborative, hypermedia information
 systems.
 
-Overall operation as defined in RFC 2616:
+The overall protocol as defined in RFC 2616:
 
 > "The HTTP protocol is a request/response protocol. A client sends a
 request to the server in the form of a request method, URI, and
