@@ -13,7 +13,7 @@ Project by [@mitadic](https://github.com/mitadic), [@chilituna](https://github.c
 
 ## About
 
-Webserv is a rudimentary HTTP server built using C++ 98 and [poll()](https://man7.org/linux/man-pages/man2/poll.2.html), with no external libraries utilized. It can serve both static files from a root directory and dynamic content using CGI (Common Gateway Interface), as it is compliant with RFC 2616 and RFC 3875.
+Webserv is a rudimentary prototype of an HTTP 1.1 server built using C++ 98 and [poll()](https://man7.org/linux/man-pages/man2/poll.2.html), with no external libraries utilized. It can serve both static files from a root directory and dynamic content using CGI (Common Gateway Interface), as it is compliant with RFC 2616 and RFC 3875.
 
 <p float="left">
 	<img src="./readme/index.png" alt="Website" width="220">
@@ -48,10 +48,10 @@ You can specify debug levels: `SETUP`, `DEBUG`, `INFO`, `WARNING`, or `ERROR`. T
 
 ### 3. Make Requests
 #### Using a Web Browser
-Open your browser (e.g., Chrome) and navigate to:
+Open a browser (Chrome or Firefox) and navigate to:
 ```
 http://127.0.0.1:8080
-http://127.0.0.2:9090
+http://127.0.0.1:8081
 ```
 
 #### Using Telnet
@@ -71,7 +71,7 @@ curl -X DELETE http://localhost:8080/uploads/hi.txt
 curl -v -X POST http://localhost:8080/uploads -F "file=@test.txt"
 ```
 
-### 4. Run our End-To-End Tests
+### 4. Run a collection of End-To-End Test
 ```bash
 make test
 ```
@@ -82,7 +82,7 @@ Our configuration file is inspired by the default NGINX configuration. It uses a
 
 ### Directives
 
-Here are the available directives and their purposes:
+The available `.conf` directives and their purposes:
 
 - **`host [ip address]`**
 	Specifies the IP address the server will bind to.
@@ -139,23 +139,24 @@ server {
 ```
 
 ## Features
-* Navigate through .html pages (GET) - Response: 200 OK
-	* Requesting directory loads index.html if available
-	* Navigating above root not allowed (URL gets sanitized)
-	* Log visited pages to page_visits.log
-* Browse through uploads via directory listing (GET) - Response: 200 OK
-* Submit message via contact form (POST(application/x-www-form-urlencoded) and CGI) - Response: 201 Created
-	* Messages are decoded and saved to a form_submissions.log
-* Upload files (POST (multipart/form-data) and CGI) - Response: 201 Created
-	* Upload requests are logged in files.log
-* Delete files (DELETE) - Response 204 No Content
-	* Delete requests are logged in files.log
-* Cookies (three-socketeers)
-	* Session ID is created a saved for each client
-	* Clients can enter and change their name, which is saved in "name" cookie
-* Redirection - Response: 301/302 depending if the redirection is temporary or permanent
-* Executing CGI scripts based on certain extensions
-* Non-blocking server
+
+* ✅ Implemented and tested.
+* 🚧 In Progress.
+* 🟥 Not Implemented.
+
+
+Feature | Status
+:--- | :---
+Direct resource management with `GET` `TEST` `DELETE` | ✅
+Non-blocking I/O | ✅
+Redirections | ✅
+CGI for .py and .php with `GET` `POST` | ✅
+Cookies | ✅
+HTTP/1.0 and 1.1 per RFC [2616](https://datatracker.ietf.org/doc/html/rfc2616) | ✅
+HTTPS | 🟥
+Multithreaded workers | 🟥
+Mac- and Linux-compatibility | ✅
+Pipelining within single TCP segment | 🚧
 
 ## The Status Codes utilized
 Meaning | Code | Scenario Example
@@ -163,6 +164,7 @@ Meaning | Code | Scenario Example
 OK | 200 | Generic "all good". E.g. page delivered
 Created | 201 | Confirming upload or form submission
 Accepted | 202 | Confirming arrival (noncommittal)
+No Content | 204 | DELETE success
 Moved Permanently | 301 | Try to not ask for this URI in the future
 Found | 302 | You can expect to find stuff at this URI later again
 Temporary Redirect | 307 | Same semantics as `302`, but method must persist
@@ -197,7 +199,7 @@ The Hypertext Transfer Protocol (HTTP) is an application-level
 protocol for distributed, collaborative, hypermedia information
 systems.
 
-The overall protocol as defined in RFC 2616:
+The overall protocol as defined in RFC [2616](https://datatracker.ietf.org/doc/html/rfc2616):
 
 > "The HTTP protocol is a request/response protocol. A client sends a
 request to the server in the form of a request method, URI, and
@@ -233,4 +235,5 @@ file descriptor is ready. Some other system call must then be used to actually p
 	* [Setting up a server](https://medium.com/@ahmadesekak/setting-up-a-server-using-c-sockets-124e404593c9)
 	* [Building a non-blocking web server](https://m4nnb3ll.medium.webserv-building-a-non-blocking-web-server-in-c-98-a-42-project-04c7365e4ec7)
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server)
+* [Beej's Guide to IPC](https://beej.us/guide/bgipc/html/split-wide/)
 * [Nginx directory structure](https://wiki.debian.org/Nginx/DirectoryStructure)
