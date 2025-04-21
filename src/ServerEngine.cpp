@@ -282,7 +282,6 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 		}
 		// std::cout << "DEBUG: successfully written to cgi_pipe_in: " << str_to_send.data() << std::endl;
 		request->increment_total_sent_by(sz_to_send);
-		update_client_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
@@ -356,7 +355,8 @@ void ServerEngine::liberate_client_for_next_request(std::vector<pollfd>::iterato
 	Log::log(oss.str(), DEBUG);
 }
 
-void ServerEngine::update_client_activity_timestamp(std::map<int, pfd_info>::iterator& meta_it)
+/* Update the 'last active' timestamp of the client_fd on any socket I/O and not on CGI-related I/O */
+void ServerEngine::update_socket_io_activity_timestamp(std::map<int, pfd_info>::iterator& meta_it)
 {
 	meta_it->second.last_active = time(NULL);
 }
@@ -559,7 +559,7 @@ void ServerEngine::read_from_client_fd(std::vector<pollfd>::iterator& pfds_it, s
 		if (read_headers(pfds_it, meta_it, request, buf, nbytes) != OK)
 			return;
 	}
-	update_client_activity_timestamp(meta_it);
+	update_socket_io_activity_timestamp(meta_it);
 
 	if ((request->done_reading_headers() && static_cast<size_t>(request->get_request_body_raw().size()) == static_cast<size_t>(request->get_content_length()))
 		|| (request->done_reading_chunked_body()))
@@ -615,7 +615,7 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 			return;
 		}
 		request->increment_total_sent_by(sz_to_send);
-		update_client_activity_timestamp(meta_it);
+		update_socket_io_activity_timestamp(meta_it);
 	}
 	else  // sz_to_send == 0
 	{
@@ -768,7 +768,7 @@ bool ServerEngine::is_client_and_timed_out(const pfd_info& pfd_meta)
  * return true */
 bool ServerEngine::is_client_and_cgi_timed_out(const pfd_info& pfd_meta)
 {
-	if (pfd_meta.request == NULL)
+	if (!pfd_meta.request)
 		return false;
 
 	if (pfd_meta.type == CLIENT_CONNECTION_SOCKET && pfd_meta.request->get_cgi_status() == EXECUTE)
@@ -1016,16 +1016,15 @@ void ServerEngine::run()
 				}
 				else if (pfds_it->revents & (POLLERR | POLLNVAL))
 				{
-					// can this only occur for client_fd tho?
 					std::cout << "POLLERR | POLLNVAL" << std::endl;
 					forget_client(pfds_it, meta_it);
 				}
-				else
+				else // currently still need the else (bc deleting meta_it when discarding pipes), but should be removed
 				{
+					if (is_client_and_cgi_timed_out(pfd_meta))
+						process_cgi_timeout(pfds_it, meta_it);
 					if (is_client_and_timed_out(pfd_meta))
 						process_connection_timeout(pfds_it, meta_it);
-					else if (is_client_and_cgi_timed_out(pfd_meta))
-						process_cgi_timeout(pfds_it, meta_it);
 				}
 				if (pfds_vector_modified)
 				{

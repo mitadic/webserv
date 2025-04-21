@@ -52,7 +52,7 @@ public:
 	void	initialize_new_request_if_no_active_one(std::map<int, pfd_info>::iterator&);
 	void	liberate_client_for_next_request(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
 	void	print_pfds();
-	void	update_client_activity_timestamp(std::map<int, pfd_info>::iterator&);
+	void	update_socket_io_activity_timestamp(std::map<int, pfd_info>::iterator&);
 	void	remove_failed_blocks(std::vector<ServerBlock> &server_blocks, std::vector<int> &failed_indexes);
 
 	void	read_from_cgi_pipe_out(std::vector<pollfd>::iterator&, std::map<int, pfd_info>::iterator&);
