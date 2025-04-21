@@ -51,7 +51,7 @@ $(BUILD_DIR)/CMakeCache.txt:
 	@cmake -S . -B $(BUILD_DIR)
 
 test: all
-	@if [ ! -d .venv ]; then virtualenv .venv; fi
+	@if [ ! -d .venv ]; then (python -m venv .venv || virtualenv .venv); fi
 	@source .venv/bin/activate && \
 	pip install --upgrade pip && pip install pytest requests && \
 	pytest -v python_tester && \
