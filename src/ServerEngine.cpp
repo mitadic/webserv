@@ -158,7 +158,11 @@ void ServerEngine::terminate_pfd(std::vector<pollfd>::iterator& pfds_it, std::ma
 	pfd_info_map.erase(meta_it);
 	pfds_vector_modified = true;
 }
-
+/**
+ * (1) throw away adjacent cgi proc and pipes, if any
+ * (2) delete the single request, if any
+ * (3) terminate the pfd (includes closing the fd)
+ */
 void ServerEngine::forget_client(std::vector<pollfd>::iterator& pfds_it, std::map<int, pfd_info>::iterator& meta_it)
 {
 	std::ostringstream oss; oss << "Forgetting client on socket FD: " << pfds_it->fd;
@@ -1039,12 +1043,26 @@ void ServerEngine::run()
 		}
 	}
 	// exit gracefully
-	size_t i;
-	for (i = 0; i < pfds.size(); i++)
+	size_t i = 0, j = 0;
+	while (pfds.size() > 0)
 	{
-		if (close(pfds[i].fd) == -1)
-			Log::log(strerror(errno), ERROR);
+		std::vector<pollfd>::iterator pfds_it = pfds.begin();
+		std::map<int, pfd_info>::iterator meta_it = pfd_info_map.find(pfds_it->fd);
+
+		if (meta_it->second.type == CLIENT_CONNECTION_SOCKET)
+		{
+			forget_client(pfds_it, meta_it);  // will also take care of any adjacent CGI_PIPE_IN / _OUT pfds
+			i++;
+		}
+		else if (meta_it->second.type == LISTENER_SOCKET)
+		{
+			if (close(pfds_it->fd) == -1)
+				Log::log(strerror(errno), ERROR);
+			pfds.erase(pfds_it);
+			pfd_info_map.erase(meta_it);
+			j++;
+		}
 	}
-	std::ostringstream oss; oss << "Closed " << i << " pfds before exiting";
+	std::ostringstream oss; oss << "Closed [" << i << "] connection_fds and ["<< j <<"] listener_fds  before exiting";
 	Log::log(oss.str(), DEBUG);
 }
