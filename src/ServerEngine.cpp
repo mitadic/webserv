@@ -271,7 +271,7 @@ void ServerEngine::write_to_cgi_pipe_in(std::vector<pollfd>::iterator& pfds_it, 
 
 	if (sz_to_send)
 	{
-		if (write(pfds_it->fd, &(request->get_request_body_raw().data())[sent_so_far], sz_to_send) == -1)
+		if (write(pfds_it->fd, &(request->get_request_body_raw().data())[sent_so_far], sz_to_send) < 1)  // checks both 0 and -1
 		{
 			process_write_failure(request);
 			return;
@@ -314,7 +314,12 @@ void ServerEngine::read_from_cgi_pipe_out(std::vector<pollfd>::iterator& pfds_it
 
 	memset(buf, 0, BUF_SZ + 1);
 	nbytes = read(pfds_it->fd, buf, BUF_SZ);
-	if (nbytes < 0)
+	if (nbytes == 0)
+	{
+		Log::log("POLLIN on cgi_pipe_out and read() returned 0, EOF ", DEBUG);  // not an error, just being transparent
+		return;
+	}
+	if (nbytes == -1)
 	{
 		process_read_failure(meta_it->second.request);
 		return;
@@ -593,9 +598,14 @@ void ServerEngine::write_to_client(std::vector<pollfd>::iterator& pfds_it, std::
 	if (sz_to_send)
 	{
 		std::string str_to_send = request->get_response().substr(request->get_total_sent());
-		if (send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT) == -1)
+		ssize_t nbytes = send(pfds_it->fd, str_to_send.c_str(), sz_to_send, MSG_DONTWAIT);
+		if (nbytes <= 0)
 		{
-			std::ostringstream oss; oss << "send(): Client closed connection (EPIPE) or socket buffer full (EAGAIN) or EWOULDBLOCK, closing socket: " << pfds_it->fd << ", and dropping the request.";
+			std::ostringstream oss;
+			if (nbytes == -1)
+				oss << "send(): Client closed connection (EPIPE) or socket buffer full (EAGAIN) or EWOULDBLOCK, closing socket: " << pfds_it->fd << ", and dropping the request.";
+			else
+				oss << "send(): Sent 0 bytes although there was stuff to be sent, closing socket: " << pfds_it->fd << ", and dropping the request.";
 			Log::log(oss.str(), WARNING);
 			forget_client(pfds_it, meta_it);
 			return;
