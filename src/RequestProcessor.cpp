@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/17 14:30:51 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/21 16:56:01 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -415,8 +415,8 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			if (Utils::fileExists(filePath + "/index.html"))
-				filePath += "/index.html";
+			if (!(location->get_index().empty()))
+				filePath += location->get_index();
 			else
 			{
 				if (location->is_autoindex()) // Show directory listing
