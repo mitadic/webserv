@@ -19,8 +19,8 @@ Webserv is a rudimentary prototype of an HTTP 1.1 server built using C++ 98 and 
 	<img src="./readme/index.png" alt="Website" width="220">
 	<img src="./readme/coffee.png" alt="Website" width="220">
 	<img src="./readme/about.png" alt="Website" width="220">
-	<img src="./readme/setup.png" alt="Website" width="420">
-	<img src="./readme/requests.png" alt="Website" width="420">
+	<img src="./readme/setup.png" alt="Website" width="440">
+	<img src="./readme/requests.png" alt="Website" width="440">
 </p>
 
 ## Usage
