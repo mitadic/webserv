@@ -103,39 +103,19 @@ The configuration file is inspired by the default NGINX configuration. It uses a
 ### Directives
 
 The available `.conf` directives and their purposes:
-
-- **`host [ip address]`**
-	Specifies the IP address the server will bind to.
-
-- **`listen [port number]`**
-	Defines the port number the server will listen on.
-
-- **`client_max_body_size [number of bytes]`**
-	Sets the maximum allowed size for the client request body.
-
-- **`error_page [status code] [relative path]`**
-	Sets a custom error page for a specific HTTP status code.
-
-- **`root [root of the location]`**
-	Specifies the root directory for serving files.
-
-- **`index [default page to be served]`**
-	Defines the default file to serve when accessing a directory.
-
-- **`allowed_methods [GET , POST , DELETE]`**
-	Allows HTTP methods for a location.
-
-- **`autoindex [on || off]`**
-	Enables or disables directory listing when no index file is found.
-
-- **`upload [path to upload folder]`**
-	Specifies the directory where uploaded files will be stored.
-
-- **`return [status code] [new location]`**
-	Redirects requests to a new location with a specific status code.
-
-- **`cgi_extension [.py , .sh , .php]`**
-	Defines the file extensions that will be processed using CGI.
+Directive | Purpose
+:--- | :---
+**`host [ip address]`** | Specifies the IP address the server will bind to.
+**`listen [port number]`** | Defines the port number the server will listen on.
+**`client_max_body_size [number of bytes]`** | Sets the maximum allowed size for the client request body.
+**`error_page [status code] [relative path]`** | Sets a custom error page for a specific HTTP status code.
+**`root [root of the location]`** | Specifies the root directory for serving files.
+**`index [default page to be served]`** | Defines the default file to serve when accessing a directory.
+**`allowed_methods [GET , POST , DELETE]`** | Allows HTTP methods for a location.
+**`autoindex [on \|\| off]`** | Enables or disables directory listing when no index file is found.
+**`upload [path to upload folder]`** | Specifies the directory where uploaded files will be stored.
+**`return [status code] [new location]`** | Redirects requests to a new location with a specific status code.
+**`cgi_extension [.py , .sh , .php]`** | Defines the file extensions that will be processed using CGI.
 
 ### Example Configuration
 
