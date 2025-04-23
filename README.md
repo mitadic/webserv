@@ -19,6 +19,8 @@ Webserv is a rudimentary prototype of an HTTP 1.1 server built using C++ 98 and 
 	<img src="./readme/index.png" alt="Website" width="220">
 	<img src="./readme/coffee.png" alt="Website" width="220">
 	<img src="./readme/about.png" alt="Website" width="220">
+	<img src="./readme/setup.png" alt="Website" width="420">
+	<img src="./readme/requests.png" alt="Website" width="420">
 </p>
 
 ## Usage
@@ -152,7 +154,7 @@ Permanent Redirect | 308 | Same semantics as `301`, but method must persist
 Bad Request | 400 | Generic "it's not me it's you"
 Forbidden | 403 | Directory deletion not allowed, missing index.html, etc
 Not found | 404 | No resource at specified URI
-Method not allowed | 405 | Trying to `DELETE` at specific location 
+Method not allowed | 405 | Trying to `DELETE` at specific location
 Not Acceptable | 406 | Client does not accept file type
 Request Timeout | 408 | Connection established but no request ever came in
 Length Required | 411 | A `POST` request needs either `Content-Length` or `Transfer-Encoding` information
