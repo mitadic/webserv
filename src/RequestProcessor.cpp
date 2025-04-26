@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/26 15:46:57 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/26 16:56:59 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -415,7 +415,14 @@ std::string RequestProcessor::processGet(const Request &req, const Location *loc
 	{
 		if (Utils::isDirectory(filePath))
 		{
-			if (!(location->get_index().empty()))
+			if (req.get_request_uri()[req.get_request_uri().size() - 1] != '/') // if the request uri does not end with a slash, update uri
+			{
+				filePath += "/";
+				const_cast<Request&>(req).set_request_uri(req.get_request_uri() + "/");
+			}
+			// Check if the uri is the same as the location path
+			// and if the location has an index file
+			if (location->get_path() == req.get_request_uri() && !(location->get_index().empty()))
 				filePath += location->get_index();
 			else
 			{
