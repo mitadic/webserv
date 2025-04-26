@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/30 15:28:33 by aarponen          #+#    #+#             */
-/*   Updated: 2025/03/30 18:48:30 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/26 15:04:07 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@
 # include <arpa/inet.h>  // For inet_pton
 # include <unistd.h>     // For close
 
-# define ADDRESS "http://127.0.0.2:8080"
+# define ADDRESS "http://127.0.0.1:8080"
 
 // Helper function to capture response data
 size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)

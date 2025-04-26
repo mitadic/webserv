@@ -13,7 +13,7 @@ TEST(HTTPTestsPOST, TestPOST_contact_form_success)
 	std::string body = "subject=Alise&message=moikka";
 
 	// Add Content-Type header
-	std::string response = performRequest("http://127.0.0.2:8080/contact.html", "POST", body, &response_code, "application/x-www-form-urlencoded");
+	std::string response = performRequest("http://127.0.0.1:8080/contact.html", "POST", body, &response_code, "application/x-www-form-urlencoded");
 
 	EXPECT_EQ(response_code, 201);												// Check if the response code is 201
 	EXPECT_NE(response.find("Form submitted successfully"), std::string::npos); // Check success message

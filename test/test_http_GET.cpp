@@ -51,11 +51,11 @@ TEST(HTTPTestsGET, TestGET_directory_listing)
 TEST(HTTPTestsGET, TestGET_navigate_above_root)
 {
     std::string raw_request = "GET /uploads/../../Makefile HTTP/1.1\r\n"
-                              "Host: 127.0.0.2:8080\r\n"
+                              "Host: 127.0.0.1:8080\r\n"
                               "Connection: close\r\n\r\n";
 
     try {
-        std::string response = sendRawHttpRequest(raw_request, "127.0.0.2", 8080);
+        std::string response = sendRawHttpRequest(raw_request, "127.0.0.1", 8080);
 
         // Check if the response contains the expected status code (403 Forbidden)
         EXPECT_NE(response.find("403 Forbidden"), std::string::npos);
@@ -68,12 +68,12 @@ TEST(HTTPTestsGET, TestGET_navigate_above_root)
 TEST(HTTPTestsGET, TestGET_unaccepted_type)
 {
     std::string raw_request = "GET /uploads/tunnel.png HTTP/1.1\r\n"
-                              "Host: 127.0.0.2:8080\r\n"
+                              "Host: 127.0.0.1:8080\r\n"
 							  "Accept: text/html\r\n"
                               "Connection: close\r\n\r\n";
 
     try {
-        std::string response = sendRawHttpRequest(raw_request, "127.0.0.2", 8080);
+        std::string response = sendRawHttpRequest(raw_request, "127.0.0.1", 8080);
 
         // Check if the response contains the expected status code (403 Forbidden)
         EXPECT_NE(response.find("406 Not Acceptable"), std::string::npos);

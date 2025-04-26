@@ -15,7 +15,7 @@ TEST(HTTPTestsDELETE, TestDELETE_success)
 	temp_file << "Temporary file content";
 	temp_file.close();
 
-	std::string response = performRequest(std::string(ADDRESS) + "/temp_file.txt", "DELETE", "", &response_code, "");
+	std::string response = performRequest(std::string(ADDRESS) + "/uploads/temp_file.txt", "DELETE", "", &response_code, "");
 
 	EXPECT_EQ(response_code, 204);														// Check if the response code is 204
 	EXPECT_FALSE(std::ifstream("./www/three-socketeers/uploads/temp_file.txt").good()); // Check if the file is deleted
@@ -26,7 +26,7 @@ TEST(HTTPTestsDELETE, TestDELETE_nonexisting_file)
 {
 	long response_code;
 
-	std::string response = performRequest(std::string(ADDRESS) + "/nothing.txt", "DELETE", "", &response_code, "");
+	std::string response = performRequest(std::string(ADDRESS) + "/uploads/nothing.txt", "DELETE", "", &response_code, "");
 	EXPECT_EQ(response_code, 404); // Check if the response code is 404
 	EXPECT_NE(response.find("Not Found"), std::string::npos); // Check if the error message is present
 }
@@ -36,7 +36,7 @@ TEST(HTTPTestsDELETE, TestDELETE_directory)
 {
 	long response_code;
 
-	std::string response = performRequest(std::string(ADDRESS) + "/alise/", "DELETE", "", &response_code, "");
+	std::string response = performRequest(std::string(ADDRESS) + "/uploads/alise/", "DELETE", "", &response_code, "");
 	EXPECT_EQ(response_code, 403); // Check if the response code is 403
 	EXPECT_NE(response.find("Forbidden"), std::string::npos); // Check if the error message is present
 	EXPECT_TRUE(std::ifstream("./www/three-socketeers/uploads/alise").good()); // Check if the directory is not deleted
@@ -45,12 +45,12 @@ TEST(HTTPTestsDELETE, TestDELETE_directory)
 // Test DELETE request with path traversal (not allowed)
 TEST(HTTPTestsDELETE, TestDELETE_path_travelsal)
 {
-    std::string raw_request = "DELETE /../index.html HTTP/1.1\r\n"
-                              "Host: 127.0.0.2:8080\r\n"
+    std::string raw_request = "DELETE /uploads/../index.html HTTP/1.1\r\n"
+                              "Host: 127.0.0.1:8080\r\n"
                               "Connection: close\r\n\r\n";
 
     try {
-        std::string response = sendRawHttpRequest(raw_request, "127.0.0.2", 8080);
+        std::string response = sendRawHttpRequest(raw_request, "127.0.0.1", 8080);
 
         // Check if the response contains the expected status code (403 Forbidden)
         EXPECT_NE(response.find("403 Forbidden"), std::string::npos);

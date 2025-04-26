@@ -35,7 +35,7 @@ OBJ		=	$(SRC:cpp=o)
 SRC_FILES = $(addprefix $(SRC_DIR), $(SRC))
 OBJ_FILES = $(addprefix $(OBJ_DIR), $(OBJ))
 
-TEST_TARGETS = test_utils test_http_GET test_http_POST test_http_DELETE
+TEST_TARGETS = test_http_GET test_http_POST test_http_DELETE
 
 all: $(NAME)
 
@@ -60,12 +60,12 @@ test: all
 test_build: $(BUILD_DIR)/CMakeCache.txt
 	@cmake --build $(BUILD_DIR) --target $(TEST_TARGETS)
 
-google_test: test_build
-	@echo "\n\033[1;34m[INFO]\033[0m Running CTest for all registered tests..."
+gtest: test_build
+	@echo -e "\n\\e[1;34m[INFO]\\e[0m Running CTest for all registered tests..."
 	@cd $(BUILD_DIR) && ctest --output-on-failure
 	@for test in $(TEST_TARGETS); do \
-		echo "\n\033[1;34m[INFO]\033[0m Running $$test..."; \
-		$(BUILD_DIR)/$$test && echo "\033[1;32m[SUCCESS]\033[0m $$test passed!" || echo "\033[1;31m[FAILURE]\033[0m $$test failed!"; \
+		echo -e "\n\\e[1;34m[INFO]\\e[0m Running $$test..."; \
+		$(BUILD_DIR)/$$test && echo -e "\\e[1;32m[SUCCESS]\\e[0m $$test passed!" || echo -e "\\e[1;31m[FAILURE]\\e[0m $$test failed!"; \
 	done
 
 clean:

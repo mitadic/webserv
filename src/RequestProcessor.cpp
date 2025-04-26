@@ -6,7 +6,7 @@
 /*   By: aarponen <aarponen@student.42berlin.de>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/24 16:49:24 by aarponen          #+#    #+#             */
-/*   Updated: 2025/04/21 16:56:01 by aarponen         ###   ########.fr       */
+/*   Updated: 2025/04/26 15:46:57 by aarponen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -580,15 +580,22 @@ std::string RequestProcessor::processPost(const Request &req, const Location *lo
 std::string RequestProcessor::processDelete(const Request &req, const Location *location)
 {
 
+	bool success = false;
+	logDelete(req, req.get_request_uri(), success);
+
 	if (!location->is_del())
 		throw RequestException(CODE_405);
 
-	if (!Utils::uriIsSafe(req.get_request_uri()))
+	// Remove possible location path from the request URI
+	std::string request_uri = req.get_request_uri();
+	if (request_uri.find(location->get_path()) == 0)
+		request_uri.erase(0, location->get_path().length());
+
+	// Check if the request URI is safe
+	if (!Utils::uriIsSafe(request_uri))
 		throw RequestException(CODE_403);
 
 	std::string filePath = "." + location->get_root() + req.get_request_uri();
-	bool success = false;
-	logDelete(req, req.get_request_uri(), success);
 
 	Log::log("Attempting to delete file: " + filePath, WARNING);
 

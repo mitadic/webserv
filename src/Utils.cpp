@@ -165,6 +165,8 @@ bool Utils::uriIsSafe(const std::string &uri)
 	std::string segment;
 	int depth = 0;
 
+	Log::log("Checking URI safety: " + uri, DEBUG);
+
 	while (std::getline(stream, segment, '/'))
 	{
 		if (segment == "..")
