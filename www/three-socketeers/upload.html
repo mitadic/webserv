@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Files</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+  </head>
+  <body>
+	<div class="greeting" id="greeting"></div>
+	<a href="index.html" class="btn backhome">Back to homepage</a>
+    <!-- Header/Logo section -->
+    <div class="container">
+		<div class="logo"></div>
+      	<h1>Upload File</h1>
+      	<h2>Select a file and click "Upload".</p>
+
+      <!-- Upload Form -->
+      <form id="uploadForm" action="/upload.html" method="post" enctype="multipart/form-data">
+        <label for="file"></label>
+        <input type="file" id="file" name="file" required>
+        <button type="submit" class="btn">Upload</button>
+      </form>
+    </div>
+	<script>
+        const form = document.getElementById("uploadForm");
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+			const formData = new FormData(form);
+
+			try {
+				const response = await fetch(form.action, {
+					method: form.method,
+					body: formData
+				});
+
+				if (response.ok) {
+					window.location.href = '/upload_done.html';
+				} else {
+					alert("Upload failed. Please try again.");
+				}
+			} catch (error) {
+				console.error("Error:", error);
+				alert("An error occurred. Please try again.");
+			}
+		});
+	</script>
+	<script>
+
+		// Function to get a cookie
+		function getCookie(name) {
+			const cookies = document.cookie.split(';');
+			for (let i = 0; i < cookies.length; i++) {
+				const cookie = cookies[i].trim();
+				if (cookie.startsWith(name + '=')) {
+					return cookie.substring(name.length + 1);
+				}
+			}
+			return null;
+		}
+
+		// Display greeting if the name is stored in cookies
+		const greetingElement = document.getElementById('greeting');
+		const storedName = getCookie('username');
+		if (storedName) {
+			greetingElement.textContent = `Hello, ${storedName}!`;
+		}
+	</script>
+
+
+    <!-- Footer -->
+    <footer>
+      <p>© 2025 aarponen / mitadic / pbencze</p>
+    </footer>
+  </body>
+</html>

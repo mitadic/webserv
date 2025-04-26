@@ -1,0 +1,5 @@
+print("content-type: text/plain", end="\r\n")
+print("fruit-type: banana", end="\r\n")
+print("answer-to-the-universe: 42", end="\r\n")
+print("", end="\r\n")
+print("hello", end="")

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Three Socketeers | Home</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&family=Zain:ital,wght@0,200;0,300;0,400;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="/css/styles.css">
+	</head>
+	<body>
+		<div class="greeting" id="greeting"></div>
+
+		<!-- //  Logo & Welcome text  //-->
+		<div class="container">
+			<div class="logo"></div>
+			<h1> Welcome!</h1>
+			<h2> Three Socketeers at your service.</h2>
+
+			<!-- //  Name input form  //-->
+			<form id="nameForm">
+				<input type="text" id="username" placeholder="Enter your name" required>
+				<button type="submit" class="btn">Submit</button>
+			</form>
+
+			<!-- //  Navigation buttons  // -->
+		 	<ul class="button-list">
+				<li><a href="about.html" class="btn">About</a></li>
+				<li><a href="upload.html" class="btn">Upload</a></li>
+				<li><a href="delete.html" class="btn">Delete</a></li>
+				<li><a href="contact.html" class="btn">Contact</a></li>
+			</ul>
+		</div>
+
+		 <!--//  FOOTER  //-->
+		 <footer>
+			<p>© 2025 aarponen / mitadic / pbencze </p>
+		 </footer>
+
+		<script>
+			// Function to set a cookie with additional attributes for safety
+			function setCookie(name, value) {
+				document.cookie = `${name}=${value}; path=/; Secure;`;
+			}
+
+			// Function to get a cookie
+			function getCookie(name) {
+				const cookies = document.cookie.split(';');
+				for (let i = 0; i < cookies.length; i++) {
+					const cookie = cookies[i].trim();
+					if (cookie.startsWith(name + '=')) {
+						return cookie.substring(name.length + 1);
+					}
+				}
+				return null;
+			}
+
+			// Display greeting if the name is stored in cookies
+			const greetingElement = document.getElementById('greeting');
+			const storedName = getCookie('username');
+			if (storedName) {
+				greetingElement.textContent = `Hello, ${storedName}!`;
+			}
+
+			// Handle form submission
+			document.getElementById('nameForm').addEventListener('submit', function (e) {
+				e.preventDefault();
+				const username = document.getElementById('username').value;
+				setCookie('username', username);
+				greetingElement.textContent = `Hello, ${username}!`;
+				document.getElementById('nameForm').reset();
+			});
+		</script>
+	</body>
+</html>
