@@ -21,6 +21,7 @@ Webserv is a rudimentary prototype of an HTTP 1.1 server built using C++ 98 and 
 	<img src="./readme/about.png" alt="Website" width="220">
 	<img src="./readme/setup.png" alt="Website" width="440">
 	<img src="./readme/requests.png" alt="Website" width="440">
+	<img src="./readme/upload.gif" alt="Uploading a file and viewing it in browser." width="440">
 </p>
 
 ## Usage
@@ -76,6 +77,7 @@ curl -v -X POST http://localhost:8080/uploads -F "file=@test.txt"
 ### 4. Run a collection of End-To-End Test
 ```bash
 make test
+make gtest
 ```
 
 ## Features
