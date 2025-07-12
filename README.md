@@ -1,7 +1,12 @@
-
 # Webserv
 
 Project by [@mitadic](https://github.com/mitadic), [@chilituna](https://github.com/chilituna) and [@pebencze](https://github.com/pebencze). 🚀🌐
+
+## Demo
+
+|![final](https://github.com/user-attachments/assets/5e6d011a-336a-476e-895d-07deed383e05)|
+|:---:|
+| Serving 4 distinct services, as set up in the config file, each with its own session cookies, with debug level `INFO` |
 
 ## Table of Contents
 - [About](#about)
@@ -77,7 +82,6 @@ curl -v -X POST http://localhost:8080/uploads -F "file=@test.txt"
 ### 4. Run a collection of End-To-End Test
 ```bash
 make test
-make gtest
 ```
 
 ## Features
@@ -207,7 +211,18 @@ The term can refer to hardware or software or both working together. A web serve
 > "Monitoring multiple file descriptors is useful in applications such as network servers that must simultaneously monitor multiple client sockets, or applications that must simultaneously monitor input from a terminal and a pipe or socket. Note that none of these techniques performs I/O. They merely tell us that a
 file descriptor is ready. Some other system call must then be used to actually perform the I/O."
 
-## Resources
+## Credits & Feedback
+
+If you have any feedback, feel free to drop a line.
+
+| Team          | <img src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png" alt="gh_logo.png" width="15" height="15"/> | <img src="https://cdn3.iconfinder.com/data/icons/web-ui-3/128/Mail-2-512.png" alt="email_icon.jpg" width="15" height="15"/> | Credits |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | :--- |
+| Alise Arponen | [@chilituna](https://github.com/chilituna) 										    | aarponen@student.42.fr                                                                                                  | request processing, routing, GTest
+| Petra Bencze  | [@pebencze](https://github.com/pebencze)                                                                              | pbencze@student.42.fr                                                                                                  | server config, redirections, CGI
+| Milos Tadic   | [@mitadic](https://github.com/MilosTadic01)                                                                                         | mitadic@student.42.fr                                                                                             | request parsing, poll() exec, pytest
+
+
+### Studying resources
 * Requests For Comments (documentation of the HTTP/1.1 protocol, administered by the Internet Engineering Taskforce; the golden standards of HTTP):
 	* [RFC2616](https://datatracker.ietf.org/doc/html/rfc2616): 1999 RFC for HTTP/1.1
 	* [RFC9112](https://datatracker.ietf.org/doc/html/rfc9112): latest version
@@ -221,3 +236,12 @@ file descriptor is ready. Some other system call must then be used to actually p
 * [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/split/client-server-background.html#a-simple-stream-server)
 * [Beej's Guide to IPC](https://beej.us/guide/bgipc/html/split-wide/)
 * [Nginx directory structure](https://wiki.debian.org/Nginx/DirectoryStructure)
+
+### Thank you
+
+We thank our peers at 42 Berlin for their limitless drive for discovery and for their rigor and precision in providing feedback. We are likewise grateful to 42 Berlin itself for fostering a culture of inclusive excellence.
+
+## License
+
+[CC0 1.0 Universal](/LICENSE.txt)
+
